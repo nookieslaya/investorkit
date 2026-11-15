@@ -26,3 +26,8 @@
 - E2E nie przeszedł do testowania UI: środowisko odmawia socketu Chromium. CI i Compose nie były uruchomione.
 - Silnik finansowy, operacje i analizy nie są wdrożone. Nie wykonano płatności, integracji AI ani automatycznego pobierania raportów.
 - Szczegóły: docs/VERIFICATION.md. Nie traktować tej wersji jako gotowego publicznego SaaS.
+
+### Publikacja GitHub — 15.11.2026
+- Odtworzono historię Git z bundle i opublikowano publiczne repozytorium https://github.com/nookieslaya/investorkit.
+- Dodano ignorowanie `.DS_Store`; lokalny build/typecheck/4 unit PASS na Node 24.
+- Pierwszy CI PASS: migracja PostgreSQL17, build/typecheck, 4 unit, 8 integration, 1 Chromium E2E. F11 zamknięte; lokalny Compose i wizualna inspekcja UI pozostają do wykonania.

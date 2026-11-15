@@ -25,4 +25,8 @@ Nie wykonano: testów matematyki (silnik niewdrożony), importu XTB (brak próbk
 - Odtworzono pełną historię z `investorkit.bundle`; `git bundle verify` i `git fsck --full` PASS. Pliki źródłowe były zgodne z commitem `0f2f662`.
 - Node 24.22.3; `npm ci`, `npm run build`, `npm run typecheck` i `npm test` PASS (4 testy jednostkowe). Lockfile bez zmian.
 - Docker CLI jest dostępny, ale daemon nie działa. W tej sesji nie uruchomiono migracji, testów integracyjnych ani E2E; wcześniejsze wyniki powyżej pozostają historyczne.
-- Po potwierdzeniu braku repozytorium utworzono publiczne https://github.com/nookieslaya/investorkit za zgodą właściciela. Wynik pierwszego CI oczekuje na wysłanie commita.
+- Po potwierdzeniu braku repozytorium utworzono publiczne https://github.com/nookieslaya/investorkit za zgodą właściciela. Pierwszy CI dla commita `b71f14b` zakończył się sukcesem.
+
+## GitHub Actions — 15.11.2026
+
+[Przebieg CI](https://github.com/nookieslaya/investorkit/actions/runs/43749258894) dla `b71f14b`: PASS. Node 24, PostgreSQL17 w izolowanym kontenerze GitHub Actions; instalacja zależności, build, typecheck, migracja, 4 testy unit, 8 integration i 1 Playwright E2E w Chromium. F11 DONE. Historyczna lokalna blokada Chromium nie dotyczy tego przebiegu. F03 nadal PARTIAL (lokalny Compose), F08/F09 nadal PARTIAL (brak wizualnej inspekcji desktop/mobile/dark mode).

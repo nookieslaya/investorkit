@@ -16,7 +16,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F08 | React/Tailwind/shadcn, Router, Query | 2 | F02 | PARTIAL: build i theme; wizualna inspekcja zablokowana |
 | F09 | Rejestracja/logowanie i portfel UI | 2 | F06,F08 | PARTIAL: UI/API wdrożone, E2E zablokowany przed startem |
 | F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: 4 unit i8 integration PASS |
-| F11 | Playwright i CI | 2 | F09,F10 | PARTIAL: CI/E2E przygotowane, socket Chromium blokuje lokalny test |
+| F11 | Playwright i CI | 2 | F09,F10 | DONE: GitHub Actions PASS, Chromium E2E 1/1 (15.11.2026) |
 | F12 | OpenAPI i contract tests | 2 | F07 | TODO: dokument generowany z DTO |
 | P01 | Decimal i operacje domain | 2 | F01 | TODO: brak number w obliczeniach |
 | P02 | BUY/SELL koszt i prowizja | 3 | P01 | TODO: golden cases1/2 |
@@ -53,6 +53,6 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | B06 | Backup + restore drill + audyt dostępności | 3 | B05 | TODO: przed publicznym pilotem |
 | B07 | Decyzja o płatnym pilotażu | 1 | B03 | TODO: dopiero wtedy backlog billing |
 
-Najbliższy punkt kontynuacji: domknąć F03/F08–F09/F11 w lokalnym środowisku, F12, potem P01. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
+Najbliższy punkt kontynuacji: F12, potem P01; osobno domknąć lokalny F03 i wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
 
-Aktualizacja środowiska macOS 15.11.2026: build/typecheck/4 unit PASS na Node 24. Docker CLI dostępny, daemon wyłączony; F03/F08/F09/F11 zachowują status PARTIAL. Utworzono publiczne repozytorium `nookieslaya/investorkit`; przed dalszą implementacją zweryfikować pierwszy przebieg CI.
+Aktualizacja środowiska macOS 15.11.2026: build/typecheck/4 unit PASS na Node 24. Docker CLI dostępny, daemon wyłączony; F03/F08/F09 zachowują status PARTIAL; F11 zamknięte po przejściu CI. Utworzono publiczne repozytorium `nookieslaya/investorkit`; pierwszy przebieg CI PASS: build/typecheck, migracja, 4 unit, 8 integration, 1 E2E w Chromium.
