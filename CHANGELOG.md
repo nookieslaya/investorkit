@@ -46,3 +46,9 @@
 - Niemutowalny stan pozycji: koszt lokalny, średnia i wynik sprzedaży po prowizji, proporcjonalna alokacja i pełne zamknięcie bez resztek.
 - Zod DTO dla instrumentu/transakcji, kontrola jednostki walutowej prowizji, skali i oversell. Wspólny decimalSchema odrzuca końcowe nowe linie.
 - 28 testów pozycji, golden cases1/2 kosztu; brak nowych endpointów i migracji. Salda, historyczny koszt PLN i FX pozostają w P03.
+
+### P03 i widoczny panel gotówki — 15.11.2026
+- Deterministyczny replay chronologiczny, trzy subkonta, historyczne wpłaty netto i koszt PLN/FX12, walidacja każdego stanu po operacjach wstecznych.
+- Na prośbę użytkownika pionowy zakres gotówki: migracja z composite FK/CHECK, API odczytu/zapisu z blokadą portfela i idempotencją, salda/formularz/historia w UI. BUY/SELL w API/UI nadal niewdrożone.
+- Migracja lokalna po kopii bazy; konto i portfel zachowane, bez wstawiania danych demonstracyjnych do jego historii. Testy na osobnej bazie i portach.
+- Rozszerzone E2E wpłat/wypłat/FX i zrzuty desktop/mobile/dark; OpenAPI obejmuje8 operacji.

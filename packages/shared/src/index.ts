@@ -38,3 +38,23 @@ export const positionTradeSchema = z.object({
 }).strict();
 export type PositionInstrument = z.infer<typeof positionInstrumentSchema>;
 export type PositionTrade = z.infer<typeof positionTradeSchema>;
+
+export type Currency = z.infer<typeof currencySchema>;
+export const fxRateSchema = z.string().regex(/^(0|[1-9]\d{0,15})(\.\d{1,12})?$(?![\s\S])/);
+const historicalFxShape = {
+  fxToBase: fxRateSchema, fxAsOf: z.iso.datetime(), fxSource: z.literal('manual'), occurredAt: z.iso.datetime(),
+};
+export const cashOperationInputSchema = z.object({
+  kind: z.enum(['DEPOSIT', 'WITHDRAWAL']), currency: currencySchema, amount: decimalSchema,
+  ...historicalFxShape, note: z.string().max(300).default(''),
+}).strict();
+export const ledgerTradeSchema = positionTradeSchema.extend(historicalFxShape);
+export const ledgerOperationSchema = z.discriminatedUnion('kind', [cashOperationInputSchema, ledgerTradeSchema]);
+export type CashOperationInput = z.infer<typeof cashOperationInputSchema>;
+export const cashOperationSchema = cashOperationInputSchema.extend({ id: z.uuid(), createdAt: z.iso.datetime() });
+export const cashHistorySchema = z.object({ items: z.array(cashOperationSchema), limit: z.literal(1000) });
+const signedDecimalSchema = z.string().regex(/^-?(0|[1-9]\d{0,17})(\.\d{1,10})?$(?![\s\S])/);
+export const cashSummarySchema = z.object({
+  balances: z.array(z.object({ currency: currencySchema, amount: decimalSchema })),
+  netContributionsBase: signedDecimalSchema, baseCurrency: z.literal('PLN'), operationCount: z.number().int().nonnegative(),
+});

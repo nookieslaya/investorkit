@@ -20,15 +20,15 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F12 | OpenAPI i contract tests | 2 | F07 | DONE: OpenAPI z Zod, endpoint i artefakt JSON, kontrola aktualności CI oraz testy odpowiedzi |
 | P01 | Decimal i operacje domain | 2 | F01 | DONE: FinancialDecimal precision40/HALF_EVEN, guardy i jawne zaokrąglenia; 16 testów arytmetyki |
 | P02 | BUY/SELL koszt i prowizja | 3 | P01 | DONE: lokalny koszt BUY/SELL, prowizje, średnia, oversell i pełne zamknięcie; golden cases1/2 kosztu PASS |
-| P03 | Gotówka, wpłaty, wypłaty, FX | 3 | P02 | TODO: golden case3 + salda |
+| P03 | Gotówka, wpłaty, wypłaty, FX | 3 | P02 | DONE: replay sald, wpłaty/wypłaty, FX12, historyczny koszt PLN i golden3 kosztu; gotówka API/UI |
 | P04 | Wycena, kompletność, P/L | 3 | P03 | TODO: stale/missing/future |
 | P05 | Symulator oba źródła środków | 3 | P04 | TODO: case4, brak skutków ubocznych |
 | P06 | Koncentracja i stress | 2 | P04 | TODO: case5, unknown buckets |
 | P07 | Testy regresji i granic | 3 | P02–06 | TODO: case6/7, ułamki i zero |
-| A01 | Migracje instrument/ledger/FK/check | 2 | P01,F04 | TODO: cross-tenant FK reject |
+| A01 | Migracje instrument/ledger/FK/check | 2 | P01,F04 | PARTIAL: cash_operations z composite FK/CHECK i migracją; instrument/BUY/SELL ledger jeszcze TODO |
 | A02 | Instrument i ręczne quote/FX API | 2 | A01 | TODO: owner scope |
-| A03 | Operacje API i blokada salda | 3 | P03,A01 | TODO: concurrent BUY nie wydaje dwa razy |
-| A04 | Formularze operacji i historia | 3 | A03,F09 | TODO: walidacja/empty/error |
+| A03 | Operacje API i blokada salda | 3 | P03,A01 | PARTIAL: gotówka z blokadą portfela/idempotencją i pełnym replay; concurrent withdrawal PASS; BUY/SELL API TODO |
+| A04 | Formularze operacji i historia | 3 | A03,F09 | PARTIAL: formularz i historia gotówki + walidacja/empty/error; BUY/SELL UI TODO |
 | A05 | Dashboard i pozycje | 3 | P04,A04 | TODO: brak sztucznych danych |
 | A06 | Symulator UI/API | 3 | P05,A05 | TODO: assumptions + before/after |
 | A07 | Ryzyko UI i ustawienia | 2 | P06,A05 | TODO: progi i scenariusze |
@@ -53,10 +53,12 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | B06 | Backup + restore drill + audyt dostępności | 3 | B05 | TODO: przed publicznym pilotem |
 | B07 | Decyzja o płatnym pilotażu | 1 | B03 | TODO: dopiero wtedy backlog billing |
 
-Najbliższy punkt kontynuacji: P03, potem P04–P07; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
+Najbliższy punkt kontynuacji: P04, potem P05–P07; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
 
 Aktualizacja środowiska macOS 15.11.2026: build/typecheck/4 unit PASS na Node 24. Docker CLI dostępny, daemon wyłączony; F03/F08/F09 zachowują status PARTIAL; F11 zamknięte po przejściu CI. Utworzono publiczne repozytorium `nookieslaya/investorkit`; pierwszy przebieg CI PASS: build/typecheck, migracja, 4 unit, 8 integration, 1 E2E w Chromium.
 
 F12 ukończone 15.11.2026: dokumentacja wyłącznie wdrożonych operacji własnych; Better Auth poza zakresem. Testy JSON Schema odpowiedzi uruchamiane na dedykowanej bazie `investorkit_contract_test`. F03 zamknięte po lokalnym uruchomieniu Compose i migracji; użytkownik potwierdził rejestrację/logowanie i utworzenie portfela.
 
 P02 ukończone 15.11.2026: 28 testów pozycji (łącznie51 unit); wynik i koszt są w walucie instrumentu. Gotówka, historyczny koszt PLN i FX pozostają w P03. Referencyjne unrealized58 z case2 jest sprawdzone arytmetycznie, bez deklarowania wdrożonej wyceny (P04). Brak nowych endpointów i migracji.
+
+P03 (15.11.2026) rozszerzone na prośbę użytkownika o widoczny fragment API/UI: salda3 walut, historyczne wpłaty netto, formularz wpłaty/wypłaty i historia. A01/A03/A04 częściowo przesunięte do przodu wyłącznie dla gotówki. BUY/SELL pozostaje w czystym silniku. Migracja0001 przejrzana i zastosowana w środowisku użytkownika po lokalnej kopii bazy; bez dodawania testowych operacji do jego portfela. E2E i integracja pracują na osobnej bazie i portach.

@@ -37,6 +37,12 @@ export class FinancialDecimal {
     this.#value = value;
     Object.freeze(this);
   }
+  static parseFxRate(value: unknown): FinancialDecimal {
+    if (typeof value !== 'string' || !/^(0|[1-9]\d{0,15})(\.\d{1,12})?$(?![\s\S])/.test(value)) throw new DecimalDomainError('INVALID_DECIMAL');
+    const rate = new FinancialDecimal(new Calculation(value));
+    if (rate.isZero()) throw new DecimalDomainError('NON_POSITIVE_VALUE');
+    return rate;
+  }
   static parse(value: unknown): FinancialDecimal {
     if (typeof value !== 'string' || value.trim() !== value || !canonicalDecimal.test(value)) throw new DecimalDomainError('INVALID_DECIMAL');
     return new FinancialDecimal(new Calculation(value));

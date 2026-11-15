@@ -18,6 +18,7 @@
     "zod": "4.6.7",
     "drizzle-orm": "0.45.4",
     "@investorkit/db": "*",
-    "@investorkit/shared": "*"
+    "@investorkit/shared": "*",
+    "@investorkit/portfolio-engine": "*"
   }
 }

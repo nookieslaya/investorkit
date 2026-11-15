@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
-  portfolioIdParamsSchema, healthSchema, unavailableSchema,
+  portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema,
 } from '@investorkit/shared';
 
 type ResponseContract = { description: string; schema: z.ZodType };
@@ -9,6 +9,7 @@ interface OperationContract {
   operationId: string;
   summary: string;
   authenticated?: boolean;
+  idempotency?: boolean;
   body?: z.ZodType;
   params?: typeof portfolioIdParamsSchema;
   responses: Record<number, ResponseContract>;
@@ -19,6 +20,19 @@ const protectedErrors = { ...commonErrors, 401: error('Brak ważnej sesji.') };
 
 // Only implemented first-party operations. Better Auth owns /api/auth/* contracts.
 export const apiContracts: Record<string, Partial<Record<'get' | 'post', OperationContract>>> = {
+  '/api/v1/portfolios/{id}/cash': { get: {
+    operationId: 'cashSummary', summary: 'Salda gotówki i wpłaty netto PLN według historycznych kursów.', authenticated: true, params: portfolioIdParamsSchema,
+    responses: { 200: { description: 'Saldo każdego subkonta i historyczne wpłaty netto.', schema: cashSummarySchema }, ...protectedErrors, 400: error('Nieprawidłowy UUID.'), 404: error('Brak portfela.'), 422: error('Niedozwolony stan ledgeru.') },
+  } },
+  '/api/v1/portfolios/{id}/cash-operations': {
+    get: { operationId: 'cashHistory', summary: 'Historia gotówki od najnowszej operacji; limit 1000 operacji na portfel.', authenticated: true, params: portfolioIdParamsSchema,
+      responses: { 200: { description: 'Historia (wyłącznie właściciel).', schema: cashHistorySchema }, ...protectedErrors, 400: error('Nieprawidłowy UUID.'), 404: error('Brak portfela.') } },
+    post: { operationId: 'createCashOperation', summary: 'Wpłata/wypłata z historycznym FX, blokadą portfela i idempotencją.', authenticated: true,
+      params: portfolioIdParamsSchema, body: cashOperationInputSchema, idempotency: true,
+      responses: { 201: { description: 'Zapisana operacja lub identyczne ponowienie.', schema: cashOperationSchema }, ...protectedErrors,
+        400: error('Błędne dane lub brak UUID Idempotency-Key.'), 403: error('Niedozwolony Origin.'), 404: error('Brak portfela.'),
+        409: error('Klucz użyty z innymi danymi.'), 413: error('Zbyt duże body.'), 415: error('Nieobsługiwany Content-Type.'), 422: error('Brak środków, błędny FX, przyszła data, przepełnienie lub limit operacji.') } },
+  },
   '/health': { get: {
     operationId: 'health', summary: 'Liveness bez dostępu do bazy.',
     responses: { 200: { description: 'Serwer działa.', schema: healthSchema }, ...commonErrors },
@@ -66,9 +80,12 @@ export function buildOpenApiDocument() {
       Object.fromEntries(Object.entries(methods).map(([method, contract]) => [method, {
         operationId: contract.operationId, summary: contract.summary,
         security: contract.authenticated ? [{ session: [] }, { localSession: [] }] : [],
-        ...(contract.params ? { parameters: [{ name: 'id', in: 'path', required: true, schema: jsonSchema(contract.params.shape.id, 'input') }] } : {}),
+        parameters: [
+          ...(contract.params ? [{ name: 'id', in: 'path', required: true, schema: jsonSchema(contract.params.shape.id, 'input') }] : []),
+          ...(contract.body ? [{ name: 'Origin', in: 'header', required: true, description: 'Musi być równy WEB_ORIGIN.', schema: { type: 'string', format: 'uri' } }] : []),
+          ...(contract.idempotency ? [{ name: 'Idempotency-Key', in: 'header', required: true, description: 'UUID; ten sam klucz i body zwracają tę samą operację.', schema: { type: 'string', format: 'uuid' } }] : []),
+        ],
         ...(contract.body ? {
-          parameters: [{ name: 'Origin', in: 'header', required: true, description: 'Musi być równy skonfigurowanemu WEB_ORIGIN.', schema: { type: 'string', format: 'uri' } }],
           requestBody: { required: true, content: { 'application/json': { schema: jsonSchema(contract.body, 'input') } } },
         } : {}),
         responses: Object.fromEntries(Object.entries(contract.responses).map(([status, response]) => [status, {

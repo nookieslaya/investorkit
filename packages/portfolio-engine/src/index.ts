@@ -1,5 +1,5 @@
-/** P01 arithmetic + P02 local-currency positions. Cash/FX, valuation and API integration remain pending. */
-export const PORTFOLIO_ENGINE_VERSION = '0.2.0-positions';
+/** P01–P03: arithmetic, position cost and cash replay with historical FX. Valuation remains pending. */
+export const PORTFOLIO_ENGINE_VERSION = '0.3.0-ledger';
 export {
   DECIMAL_POLICY, DecimalDomainError, FinancialDecimal,
   parseAmount, parseUnitPrice, parseQuantity, parseCommission, sumDecimals,
@@ -8,3 +8,5 @@ export type { DecimalErrorCode, PercentageResult } from './decimal.js';
 
 export { Position, PositionDomainError } from './position.js';
 export type { PositionErrorCode, PositionSnapshot, TradeResult } from './position.js';
+export { replayLedger, LedgerDomainError } from './ledger.js';
+export type { LedgerErrorCode } from './ledger.js';

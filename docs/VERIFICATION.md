@@ -54,3 +54,11 @@ F12 GitHub Actions dla `079da72`: [przebieg](https://github.com/nookieslaya/inve
 - Dodatkowa poprawka wspólnego decimalSchema odrzuca końcowe nowe linie, które JavaScript `$` sam dopuszcza. Regresja w testach kontraktów. Brak zmiany dokumentowanych endpointów/OpenAPI.
 - Lockfile zmieniony wyłącznie o wewnętrzne workspace engine→shared; bez nowych bibliotek zewnętrznych.
 - P02 liczy lokalny koszt i wynik sprzedaży, bez sald, historycznego FX/kosztu PLN, wycen i API/UI. Dane lokalnego użytkownika nie były użyte do testów. GitHub Actions dla `0658e15`: [przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43752114594) PASS — build/typecheck, OpenAPI, migracja, 51 unit, 10 integration i1 E2E Chromium.
+
+## P03 + API/UI gotówki — 15.11.2026
+- Wygenerowana i przejrzana migracja0001: wyłącznie CREATE cash_operations, FK, indeksy, CHECK; bez DROP/UPDATE istniejących danych. Migracja PASS na investorkit_contract_test i bazie lokalnej aplikacji; przed lokalną migracją prywatny pg_dump w ignorowanym .local-backups. Konto i portfel zachowane; bez danych testowych w historii użytkownika.
+- Lokalnie build/typecheck, 61 unit, 17 integration oraz rozszerzony Chromium E2E PASS. Integracja i E2E wyłącznie na TEST_DATABASE_URL=investorkit_contract_test; E2E uruchamia własne porty5174/3002. Nie używa aktywnego serwera ani cookies użytkownika.
+- Integracja: izolacja sesji/404, równoległe identyczne klucze, konflikt klucza, powtórka z równoważnym formatem decimal, równoległe wypłaty bez podwójnego wydania, operacja wsteczna, FX12, overflow, walidacja i bezpośrednie odrzucenie cross-tenant FK w PostgreSQL.
+- Unit: golden3 kosztu bazowego, salda, historyczne FX BUY/SELL, wpłaty netto≤0, przyszły/brakujący FX, brak automatycznej wymiany, pokrycie prowizji SELL, chronologia i zamknięcie kosztu. Reguły wyceny i stale pozostają P04.
+- E2E: wpłata1000PLN, wypłata150, odrzucenie wypłaty1000, wpłata10USD FX4.2, netto892PLN, trwałość po reload, logout. Zrzuty cash-desktop.png i cash-mobile-dark.png obejrzane; brak obcięć/poziomego overflow. Nie jest to pełny audyt WCAG.
+- OpenAPI odświeżone (8 operacji), bez nowych bibliotek zewnętrznych; API→portfolio-engine jako zależność workspace. Build zgłasza informacyjny próg bundle>500kB (bez błędu); dzielenie kodu można wykonać przy rozbudowie kolejnych widoków.

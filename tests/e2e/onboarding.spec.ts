@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-test('registers, persists a private portfolio and signs out', async ({ page }) => {
+test('registers, persists a private portfolio and signs out', async ({ page }, testInfo) => {
   await page.goto('/');
   await page.getByLabel('Imię', { exact: true }).fill('Tester');
   await page.getByLabel('Adres email').fill(`e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`);
@@ -10,6 +10,33 @@ test('registers, persists a private portfolio and signs out', async ({ page }) =
   await expect(page.getByRole('heading', { name: 'Portfel testowy' })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Portfel testowy' })).toBeVisible();
+  const pln = page.getByRole('article').filter({ hasText: 'Gotówka PLN' });
+  await page.getByLabel('Kwota', { exact: true }).fill('1000');
+  await page.getByLabel('Notatka (opcjonalnie)').fill('Pierwsza wpłata');
+  await page.getByRole('button', { name: 'Zapisz wpłatę', exact: true }).click();
+  await expect(pln).toContainText('1 000,00');
+  await page.getByLabel('Rodzaj operacji').selectOption('WITHDRAWAL');
+  await page.getByLabel('Kwota', { exact: true }).fill('150');
+  await page.getByRole('button', { name: 'Zapisz wypłatę', exact: true }).click();
+  await expect(pln).toContainText('850,00');
+  await page.getByLabel('Kwota', { exact: true }).fill('1000');
+  await page.getByRole('button', { name: 'Zapisz wypłatę', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Brak wystarczających środków');
+  await page.getByLabel('Rodzaj operacji').selectOption('DEPOSIT');
+  await page.getByRole('combobox', { name: 'Waluta', exact: true }).selectOption('USD');
+  await page.getByLabel('Kwota', { exact: true }).fill('10');
+  await page.getByLabel('Kurs historyczny (PLN za 1 USD)', { exact: true }).fill('4,20');
+  await page.getByRole('button', { name: 'Zapisz wpłatę', exact: true }).click();
+  await expect(page.getByRole('article').filter({ hasText: 'Gotówka USD' })).toContainText('10,00');
+  await expect(page.getByRole('article').filter({ hasText: 'Wpłaty netto' })).toContainText('892,00');
+  await page.reload();
+  await expect(pln).toContainText('850,00');
+  await expect(page.getByText('Pierwsza wpłata', { exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('cash-desktop.png'), fullPage: true });
+  const darkButton = page.getByRole('button', { name: 'Włącz ciemny motyw' });
+  if (await darkButton.isVisible()) await darkButton.click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: testInfo.outputPath('cash-mobile-dark.png'), fullPage: true });
   await page.getByRole('button', { name: 'Wyloguj' }).click();
   await expect(page.getByRole('heading', { name: 'Zacznij swój portfel' })).toBeVisible();
 });

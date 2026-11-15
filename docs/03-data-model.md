@@ -1,5 +1,5 @@
 # Model danych
-Status: pełny model docelowego MVP; foundation implementuje auth i portfolios. Pozostałe tabele wymagają osobnych migracji i testów zgodnie z backlogiem.
+Status: pełny model docelowego MVP; foundation implementuje auth i portfolios, a pionowy etap P03 także cash_operations (poniżej). Pozostałe tabele wymagają osobnych migracji i testów zgodnie z backlogiem.
 
 ## Konwencje
 PK UUID dla domeny; auth text IDs zgodne z Better Auth. timestamptz UTC, UI Europe/Warsaw. numeric(28,10): ceny, ilości, opłaty; FX numeric(28,12); koszty AI USD numeric(18,8). API wyłącznie string decimal. CHECK wartości dodatnie/nieujemne; quantity scale instrumentu ≤10. Zdarzenia mają occurred_at i stabilny sequence, created_at, created_by. Obliczenia wewnętrzne precision 40, zaokrąglenie dopiero do precyzji przechowywania/prezentacji.
@@ -32,3 +32,8 @@ Własność: composite FK (portfolio_id,owner_id) → portfolios(id,owner_id), a
 BUY zmniejsza gotówkę o quantity×price+fee. SELL zwiększa o quantity×price−fee i proporcjonalnie zmniejsza koszt pozycji. DEPOSIT/WITHDRAWAL zmienia środki i wpłaty netto. Kompensujące zdarzenie korekty + revision zamiast cichego nadpisania po imporcie. Początkowy stan = wpłaty + transakcje, bez ukrytego salda początkowego.
 Waluta prowizji w MVP musi odpowiadać walucie transakcji; inna waluta → jawny błąd wymagający normalizacji w importerze. Każde subkonto walutowe zasila się oddzielnie. Wymiana walut i transfery są przyszłymi typami zdarzeń, nie formularzem MVP. Import wymagający odtworzenia nieobsługiwanej wymiany walut jest blokowany z jawnym powodem; po otrzymaniu próbki trzeba ocenić, czy wymagane księgowanie mieści się w istniejących typach operacji. Nie traktować wymiany wewnętrznej jako nowej zewnętrznej wpłaty.
 Przyszłe typy dywidend/splitów/transferów wymagają jawnego wersjonowania event union i migracji. Nie wrzucamy nieobsługiwanych zdarzeń do BUY.
+
+## Wdrożony fragment gotówkowy P03
+cash_operations przechowuje owner_id+portfolio_id z composite FK do portfolios(id,owner_id), globalne sequence do stabilnego rozstrzygania remisu dat, rodzaj DEPOSIT/WITHDRAWAL, amount numeric(28,10), currency, fx_to_base numeric(28,12), fx_as_of, fx_source=manual, occurred_at, note≤300, idempotency_key UUID i request_hash. Unikalność portfolio+key. CHECK: dozwolone rodzaje/waluty, dodatnie kwoty/kursy, PLN FX1, data FX≤operacja. Migracja0001 nie modyfikuje auth/portfolios. Salda nie są niezależnie przechowywane: obliczane z ledgeru z walidacją każdego prefiksu.
+
+Każda mutacja blokuje nadrzędny portfel FOR UPDATE przed odczytem historii i deduplikacją; zapis i idempotencja są w jednej transakcji. Stan źródłowy zachowuje precyzję wejściową. Przy integracji BUY/SELL trzeba rozszerzyć/przenieść ten fragment do wspólnego ledgeru z zachowaniem historii i kluczy, zanim udostępni się API transakcji; nie tworzyć drugiej niezależnej historii sald.

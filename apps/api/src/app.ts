@@ -2,8 +2,10 @@ import Fastify, { LogController } from 'fastify';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { fromNodeHeaders } from 'better-auth/node';
-import { ZodError } from 'zod';
-import { createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema } from '@investorkit/shared';
+import { z, ZodError } from 'zod';
+import { createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema } from '@investorkit/shared';
+import { CashApiError } from './cash-repository.js';
+import { LedgerDomainError, DecimalDomainError } from '@investorkit/portfolio-engine';
 import { buildOpenApiDocument } from './openapi.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
@@ -27,6 +29,12 @@ export async function buildApp(config: Config, services: Services, logging = tru
     req.log.info({ route: req.routeOptions.url, statusCode: reply.statusCode, durationMs: reply.elapsedTime }, 'Request completed');
   });
   app.setErrorHandler((err, req, reply) => {
+    if (err instanceof CashApiError) return reply.code(err.statusCode).send(fail(err.code, err.message, req.id));
+    if (err instanceof LedgerDomainError || err instanceof DecimalDomainError) {
+      const message = err.code === 'INSUFFICIENT_CASH' ? 'Brak wystarczających środków w tej walucie.'
+        : 'Sprawdź kwotę, kurs i daty. Kurs PLN musi wynosić 1, a daty nie mogą być przyszłe.';
+      return reply.code(422).send(fail(err.code, message, req.id));
+    }
     if (err instanceof ZodError) return reply.code(400).send(fail('VALIDATION_ERROR', 'Sprawdź wprowadzone dane.', req.id));
     const error = err as { statusCode?: number; code?: string; cause?: { code?: string } };
     if (error.code === '23505' || error.cause?.code === '23505') return reply.code(409).send(fail('PORTFOLIO_LIMIT', 'Możesz utworzyć jeden portfel.', req.id));
@@ -71,6 +79,20 @@ export async function buildApp(config: Config, services: Services, logging = tru
       const row = await services.portfolios.find(req.ownerId, id);
       if (!row) return reply.code(404).send(fail('NOT_FOUND', 'Nie znaleziono portfela.', req.id));
       return portfolioSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
+    });
+    scoped.get('/portfolios/:id/cash', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return cashSummarySchema.parse(await services.portfolios.cashSummary(req.ownerId, id));
+    });
+    scoped.get('/portfolios/:id/cash-operations', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return cashHistorySchema.parse(await services.portfolios.cashHistory(req.ownerId, id));
+    });
+    scoped.post('/portfolios/:id/cash-operations', async (req, reply) => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      const key = z.uuid().parse(req.headers['idempotency-key']).toLowerCase();
+      const input = cashOperationInputSchema.parse(req.body);
+      return reply.code(201).send(await services.portfolios.createCashOperation(req.ownerId, id, input, key));
     });
     scoped.post('/portfolios', async (req, reply) => {
       const row = await services.portfolios.create(req.ownerId, createPortfolioSchema.parse(req.body));

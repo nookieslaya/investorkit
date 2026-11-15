@@ -5,7 +5,7 @@
 - Semantyka finansowa: docs/04-calculations.md. Kontrakty: docs/05-api.md. Pełny zakres: docs/INVESTORKIT-MVP.md.
 - Realizuj małe zadanie z backlogu. Nie generuj całego systemu w jednej zmianie.
 - Oddziel specyfikację docelową od istniejącego kodu. Nie opisuj szkicu ani kontraktu jako działającej integracji.
-- portfolio-engine zawiera P01 (decimal) i P02 (BUY/SELL i koszt pozycji w walucie instrumentu). Gotówka, historyczny koszt PLN/FX, ledger i wyceny pozostają niewdrożone; report-engine jest szkieletem.
+- portfolio-engine zawiera P01–P03: decimal, BUY/SELL, gotówka i historyczny koszt PLN/FX. API/UI obsługują wyłącznie wpłaty/wypłaty; instrumenty, transakcje BUY/SELL w API i wyceny pozostają niewdrożone. report-engine jest szkieletem.
 
 ## Granice architektury
 - apps/web: widoki, routing, query cache, formatowanie; bez dostępu do DB i sekretów.
@@ -38,7 +38,7 @@
 - npm run build:packages przed testami importującymi workspace exports.
 - npm run typecheck, npm test i npm run build dla adekwatnej zmiany.
 - npm run test:integration wymaga TEST_DATABASE_URL: dedykowana, migrowana baza jednorazowa. Nigdy baza produkcyjna.
-- npm run test:e2e wymaga Chromium i testowej DB w .env; test może tworzyć konta.
+- npm run test:e2e wymaga Chromium i TEST_DATABASE_URL. Nie używa istniejących serwerów; lokalnie E2E_WEB_PORT=5174 E2E_API_PORT=3002, by nie zatrzymywać aplikacji użytkownika. Test tworzy konta w dedykowanej bazie.
 - Matematyka: golden cases i granice z dokumentacji, w tym SELL częściowy, fees, FX, ułamki, zero i brak wyceny.
 - Import: powtórny i równoległy import, nakładające się eksporty, identyczne legalne transakcje.
 - Nie usuwaj testu, by ukryć błąd; nie deklaruj testów jako wykonanych, jeśli środowisko je blokuje.

@@ -1,24 +1,17 @@
 # Stan projektu i następna sesja
 
-15.11.2026: foundation działa lokalnie i jest opublikowane w publicznym repozytorium https://github.com/nookieslaya/investorkit (`origin`, `main`). Użytkownik potwierdził rejestrację, logowanie i utworzenie portfela. F03 i F11 DONE. Lokalny Docker Compose PostgreSQL17 działa, migracja wykonana. F08/F09 nadal PARTIAL: pozostaje wizualna inspekcja desktop/mobile/dark mode.
+15.11.2026: P01–P03 DONE. Publiczne repozytorium https://github.com/nookieslaya/investorkit, origin/main. Działa lokalny frontend localhost:5173, API127.0.0.1:3001 i Compose PostgreSQL17. Konto i portfel użytkownika zachowane. Użytkownik chce widzieć zmiany na froncie; P03 objęło pionowy fragment gotówki (części A01/A03/A04), zamiast wyłącznie silnika.
 
-F12 DONE: `apps/api/src/openapi.ts` generuje OpenAPI 3.0.3 z DTO Zod bez nowych zależności. Endpoint `/api/v1/openapi.json` dostępny bez sesji, artefakt `docs/openapi.json`; `npm run openapi:generate` / `npm run openapi:check` po `build:packages`. Dokument obejmuje tylko pięć wdrożonych operacji własnych (health/ready/portfele); Better Auth i docelowy MVP poza zakresem. Testy sprawdzają rzeczywiste odpowiedzi przez niezależny walidator JSON Schema, również błędy i izolację właściciela.
+Zaimplementowane:
+- P01 decimal40/HALF_EVEN; P02 lokalny koszt BUY/SELL; P03 `replayLedger` sortuje daty, zachowuje kolejność wejścia przy remisie i sprawdza każde saldo po operacjach wstecznych. Osobna gotówkaPLN/EUR/USD, historyczne wpłaty netto i koszt bazowy PLN, częściowa i całkowita sprzedaż oraz realizedBase. Jawne FX12: PLN=1, przyszły/brakujący FX odrzucony, bez automatycznej konwersji.
+- W API/UI tylko DEPOSIT/WITHDRAWAL. Tabela cash_operations: composite tenant FK, CHECK, UUID idempotencji i hash normalizowanego body; blokada portfela w transakcji, replay całej osi czasu przed zapisem. Limit1000 operacji na portfel. Snapshot pieniężny zaokrąglany HALF_EVEN do10 miejsc z kontrolą overflow; ledger przechowuje oryginalne amount/FX.
+- Panel: salda3 walut, historyczne wpłaty netto PLN, wpłata/wypłata, historyczny kurs i data EUR/USD, notatka, historia i stan błędów. Formularz przechowuje klucz ponowienia przy błędzie sieci. Nie ma wartości rynkowej/P&L ani zapisu BUY/SELL.
+- OpenAPI obejmuje8 operacji własnych; kontrola aktualności CI. Auth delegowany do Better Auth.
 
-Następna sesja:
-1. Przeczytaj README, backlog, docs/04-calculations.md. Następne małe zadanie: P03 (gotówka, wpłaty/wypłaty, historyczny FX/koszt PLN), potem P04–P07 z golden cases. P01 DONE: `FinancialDecimal` i guardy, precision40/HALF_EVEN, jawna serializacja do numeric(28,10); P02 lokalnego BUY/SELL DONE, historyczny koszt PLN/FX i wyceny nadal niewdrożone; bez dashboardu z fikcyjnymi wynikami.
-2. Potem A01–A09: composite tenant FK, blokady ledgeru i idempotencja przed udostępnieniem operacji.
-3. XTB po otrzymaniu próbki; AI po bezpiecznych uploadach, budżecie i ACL. Bez płatności i automatycznego pobierania raportów.
+Następny krok: P04 (wycena, kompletność, P/L); P05–P07 potem. Aby prezentować kolejne wyniki na froncie, potrzebny będzie ograniczony zakres instrumentów i ręcznych cen z A01/A02; nie używać fikcyjnych cen. A01/A03/A04 są PARTIAL dla gotówki; przed BUY/SELL w API trzeba połączyć cash_operations z pełnym ledgerem i zabezpieczyć wspólną oś czasu/blokadę/idempotencję. Nie prowadzić niezależnych sald gotówki dla dwóch ledgerów.
 
-Weryfikacja F12: Node24, build/typecheck/7 unit i10 integration PASS; osobna migrowana baza `investorkit_contract_test`, bez testów na danych użytkownika. F12 CI PASS (7 unit, 10 integration, 1 Chromium E2E): https://github.com/nookieslaya/investorkit/actions/runs/43750687345; wyniki i ograniczenia w VERIFICATION.md. Lokalne `.env`, node_modules i buildy są ignorowane przez Git. Nie zmieniaj bazy użytkownika na testową.
+Migracja0001_past_gauntlet.sql (CREATE cash_operations bez usuwania danych) przejrzana, zastosowana na dedykowanej bazie testowej i bazie lokalnej aplikacji. Przed zmianą wykonano lokalny pg_dump w ignorowanym `.local-backups/` (prywatne dane; nie publikować). Nie dodano fikcyjnych transakcji do portfela użytkownika.
 
-Kluczowe decyzje: baza PLN; instrumenty PLN/EUR/USD; wagi obejmują gotówkę; średni koszt analityczny nie jest rozliczeniem podatkowym. Decimal strings i historyczny FX; brak wyceny oznacza niekompletny wynik; raport prywatny domyślnie. Historia: ../CHANGELOG.md.
+Testy: TEST_DATABASE_URL wskazuje wyłącznie migrowaną investorkit_contract_test. E2E wymaga tej zmiennej i uruchamia własne serwery; lokalnie E2E_WEB_PORT5174 / E2E_API_PORT3002, bez reuse. E2E tworzy konta i operacje tylko w bazie testowej. Aktualne wyniki i ograniczenia w VERIFICATION.md. Zrzuty cash-desktop.png i cash-mobile-dark.png w test-results zostały obejrzane; bez obcięć i poziomego overflow.
 
-P01 15.11.2026: brak nowych zależności (decimal.js10.6.0 już w lockfile). 16 testów podstawy arytmetyki, łącznie23 unit. Opis publicznego API arytmetyki i ograniczeń w docs/04-calculations.md. Kwoty/ilości/ceny do10 miejsc; FX12 i powiązane DTO dopiero w P03. Kod domeny nie ma IO ani zegara. Wyniki lokalne/CI: VERIFICATION.md.
-
-P01 CI PASS (23 unit, 10 integration, 1 E2E Chromium): https://github.com/nookieslaya/investorkit/actions/runs/43751311427. Następne zadanie: P03.
-
-P02: `Position.empty(instrument)` i `.applyTrade(unknown)` (walidacja Zod z shared) zwracają nowe stany. Metadane: instrumentId UUID, currency, quantityScale0–10. Transakcja: kind BUY/SELL, instrumentId, currency, quantity, unitPrice, commission, commissionCurrency. Snapshot zawiera quantity, remainingCostLocal, averageCostLocal|null; wynik transakcji gross/commission/cashDelta/releasedCost/realizedLocal jest jawnie w walucie instrumentu. Snapshot diagnostyczny zachowuje precision40 i nie jest gotowym rekordem DB. Saldo/stać-na-BUY to P03; odtwarzanie pełnego ledgeru i walidacja operacji wstecznych nadal przed nami.
-
-28 nowych testów pozycji, łącznie51 unit PASS; build/typecheck/OpenAPI PASS. Nowa zależność wewnętrzna engine → shared służy wspólnym DTO Zod; bez nowych pakietów zewnętrznych i zmian ich wersji. Poprawiono odrzucanie końcowych nowych linii przez wspólny decimalSchema.
-
-P02 CI PASS: 51 unit, 10 integration, 1 E2E Chromium; https://github.com/nookieslaya/investorkit/actions/runs/43752114594. Następny etap: P03.
+Nie wdrożono: instrumentów/quote API, BUY/SELL API/UI, wyceny, symulatora, importu XTB (brak próbki), raportów AI. Brak płatności i automatycznego pobierania raportów. Średni koszt jest analityczny, nie podatkowy. Sekrety/buildy/test-results/backupy są ignorowane w Git.

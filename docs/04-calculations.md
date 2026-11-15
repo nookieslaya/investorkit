@@ -52,3 +52,16 @@ Szok jednej pozycji: wartość' = wartość − wartość pozycji×spadek; FX st
 Golden cases1 i część kosztowa2 PASS: q3/koszt333/średnia111; SELL1 po150−1 → realized38/q2/koszt222. Referencyjne 2×140−222=58 sprawdzone arytmetycznie; aktualna wycena i kompletność danych pozostają w P04. Ułamkowy BUY USD0.125×80+0.5 daje koszt lokalny10.5USD, średnia84USD/szt.; koszt42PLN wymaga historycznego FX4 i należy do P03. Nie wolno przeliczać pozostałego kosztu lokalnego na bazowy według bieżącego FX.
 
 P02 nie prowadzi sald ani wpłat netto, nie pobiera kursów/cen, nie sortuje ledgeru, nie waliduje operacji wstecznych i nie oblicza podatków. Brak zegara/IO. Stabilne błędy `PositionDomainError.code`: INSTRUMENT_MISMATCH, CURRENCY_MISMATCH, COMMISSION_CURRENCY_MISMATCH, INSUFFICIENT_QUANTITY; pozostałe granice sygnalizują ZodError/DecimalDomainError.
+
+## P03 — replay, gotówka i historyczne FX (wdrożone)
+`replayLedger({instruments,operations,asOf})` waliduje Zod DTO i sortuje po occurredAt, a przy remisie zachowuje kolejność wejścia (w DB kolejność sequence). Bez odczytu zegara w silniku. Każda operacja sprawdza saldo własnej waluty; żaden prefiks nie może dać salda<0. API po dodaniu operacji wstecznej odtwarza całą historię, więc dodatnie saldo końcowe nie ukryje wcześniejszego debetu.
+
+DEPOSIT/WITHDRAWAL zmienia subkonto i wpłaty netto o signedAmount×historycznyFX. BUY/SELL zmienia subkonto o cashDeltaLocal z P02, a bazę kosztu PLN liczy osobno przy każdym BUY z historycznym FX (z prowizją). SELL uwalnia proporcję pozostałego kosztu bazowego i realizuje wynik według FX sprzedaży. Całkowite zamknięcie zeruje bazę kosztu. Wpłaty netto mogą być≤0, np. po wypłacie przy innym FX; nie są stopą zwrotu.
+
+FX to dodatni decimal string≤16 cyfr całkowitych i12 ułamkowych, zgodny z numeric(28,12); dlaPLN dokładnie1. Brak kursu, zły kierunek bazowy (PLN≠1), przyszła data kursu względem operacji i przyszła operacja względem asOf są błędami. Źródło obecnego wejścia=manual. Historyczny FX może być stary; reguły aktualnej wyceny/stale to P04.
+
+Obliczenia pośrednie zachowują40 cyfr znaczących. Snapshot końcowych sald, wpłat netto, kosztu bazowego i realizedBase ma10 miejsc HALF_EVEN z kontrolą numeric(28,10); źródłowe operacje i kursy nie są zaokrąglane do snapshotu. Średnia bazowa zachowuje precision40. Przy kolejnym replay zawsze liczymy od operacji, a nie zaokrąglonych snapshotów.
+
+Golden3: wpłata20USD FX4, BUY0.125×80+0.5USD FX4 → gotówka9.5USD, koszt pozycji42PLN, wpłaty netto80PLN. Wartość47.25 i unrealized5.25 przy cenie90/FX4.2 sprawdzone jako arytmetyka referencyjna; kompletna wycena i kontrola quote/fx freshness nadal P04.
+
+P03 API/UI zapisuje wyłącznie wpłaty/wypłaty. Pozostałe typy istnieją w czystym silniku, bez domniemanej integracji z tabelą cash_operations.

@@ -42,10 +42,17 @@ Idempotency-Key: scoping użytkownik+portfel+endpoint; ponowienie tego samego bo
 
 ## Wdrożony OpenAPI (F12)
 
-`GET /api/v1/openapi.json` udostępnia dokument bez sesji, pod globalnym limitem żądań i z `Cache-Control: no-store`. Lokalnie: http://localhost:5173/api/v1/openapi.json. Dokument obejmuje pięć operacji: GET /health, GET /ready, GET/POST /api/v1/portfolios i GET /api/v1/portfolios/{id}. Nie deklaruje planowanych endpointów jako wdrożonych. Endpoint dokumentacji opisany jest w metadanych, bez rekurencyjnego schematu własnej odpowiedzi.
+`GET /api/v1/openapi.json` udostępnia dokument bez sesji, pod globalnym limitem żądań i z `Cache-Control: no-store`. Lokalnie: http://localhost:5173/api/v1/openapi.json. Dokument obejmuje osiem operacji: GET /health, GET /ready, GET/POST /api/v1/portfolios, GET /api/v1/portfolios/{id} oraz opisane poniżej trzy operacje gotówkowe. Nie deklaruje planowanych endpointów jako wdrożonych. Endpoint dokumentacji opisany jest w metadanych, bez rekurencyjnego schematu własnej odpowiedzi.
 
 Rejestr operacji: `apps/api/src/openapi.ts`; schematy body/parametrów/odpowiedzi pochodzą z `packages/shared`. Konwersja natywna `z.toJSONSchema` (https://zod.dev/json-schema), target `openapi-3.0`: wejście `io: input` zachowuje opcjonalne `baseCurrency` z domyślnym PLN; odpowiedzi `io: output` wymagają wszystkich pól. Nazwa jest przycinana przed walidacją długości w Zod; JSON Schema nie wykonuje normalizacji tekstu.
 
 `npm run build:packages`, potem `npm run openapi:generate` aktualizuje `docs/openapi.json`; `npm run openapi:check` i test unit wykrywają nieaktualny dokument (także w CI). Po zmianie handlera należy zaktualizować rejestr operacji i testy. Kontrakty odpowiedzi testowane są niezależnym walidatorem JSON Schema Fastify, bez koercji, usuwania pól i uzupełniania domyślnych wartości.
 
 Portfele wymagają cookie Better Auth (prefiks `__Secure-` w produkcji) i zgodnego Origin dla POST. Handler `/api/auth/*` zachowuje protokół Better Auth, nie standardowy envelope błędów aplikacji; nie jest objęty tym dokumentem. Lista portfeli obecnie zwraca wyłącznie `{items}` bez cursor/limit. `/ready` zwraca osobne `{status: unavailable}` przy 503. Pozostałe błędy własnych endpointów używają wspólnego envelope; komunikaty i identyfikatory żądań nie zawierają SQL ani sekretów.
+
+## Wdrożone P03 — gotówka
+- GET /api/v1/portfolios/{id}/cash → balances[{currency,amount}], netContributionsBase, baseCurrency=PLN, operationCount. To stan gotówki i historycznych przepływów, nie wycena portfela.
+- GET /api/v1/portfolios/{id}/cash-operations → {items,limit:1000}; najnowsza occurredAt/sequence pierwsza, maksymalnie1000 wpisów na portfel w tej wersji (kolejny zapis422). Bez paginacji i edycji na tym etapie.
+- POST /api/v1/portfolios/{id}/cash-operations: Idempotency-Key UUID i {kind:DEPOSIT/WITHDRAWAL,currency,amount,occurredAt,fxToBase,fxAsOf,fxSource:manual,note?}. DatyUTC, kwota≤18/10, kurs≤16/12; kwota i FX dodatnie, PLN FX1. Własność z sesji. 201 zawiera id,createdAt oraz pola operacji; bez ownerId,hash,key. Powtórzenie tego samego klucza i znormalizowanego body zwraca tę samą201; inne body409. Normalizacja kwoty/kursu i dat jest deterministyczna. 422: debet na dowolnym prefiksie, przyszła data, błędny FX, overflow lub limit historii. Standardowe400/401/403/404/413/415/429/500 jak w OpenAPI.
+
+Zapisy wymagają transakcji i blokady portfela; nie ma fallback FX1 dla walut obcych. Pola przyszłego endpointu pełnych operacji BUY/SELL nie są przyjmowane przez ten kontrakt.

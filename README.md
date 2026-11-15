@@ -13,17 +13,18 @@ Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Foundation u
 - npm workspaces i TypeScript strict; dokładne wersje + package-lock.json.
 - React/Vite, TanStack Router/Query, Tailwind4; lokalny komponent Button w konwencji shadcn/ui (Radix Slot/CVA), aliasy i components.json; pozostałe komponenty dodawać w miarę potrzeb.
 - Responsywny interfejs PL, motywy light/dark (domyślnie ustawienie systemu), formularze konta/portfela, stany loading/error/empty. Puste wartości są oznaczone kreską, bez fikcyjnych wyników.
-- PostgreSQL/Drizzle: auth + portfolios, wygenerowana migracja, unikalny właściciel portfela i FK.
+- PostgreSQL/Drizzle: auth, portfolios i cash_operations; migracje, composite tenant FK, CHECK i blokada portfela.
 - Better Auth: signup/signin/signout/sesja; origin guard, HttpOnly/SameSite, rate limiting, brak logowania body i sekretów.
 - API: GET /health, GET /ready, GET/POST /api/auth/*, GET/POST /api/v1/portfolios, GET /api/v1/portfolios/:id. Autoryzacja sesyjna i owner scope; limit jednego portfela w DB.
 - Kontrakty Zod, decimal-string boundary, jawnie zablokowany adapter XTB.
+- P03: chronologiczny replay, gotówka w PLN/EUR/USD, historyczny koszt bazowy/FX i wpłaty netto; panel sald, wpłaty/wypłaty i historia na froncie.
 - P02: niemutowalne pozycje BUY/SELL, średni koszt i wynik sprzedaży w walucie instrumentu, prowizje i blokada oversell; przypadki kontrolne1/2 kosztu PASS.
 - P01: czysta arytmetyka `FinancialDecimal` (decimal.js, precision40, HALF_EVEN), walidacja kwot/ilości/prowizji i jawne granice zaokrągleń.
 - Vitest unit/integration, Playwright onboarding, workflow CI.
 - OpenAPI 3.0.3 generowane z Zod: [dokument](docs/openapi.json), lokalnie `/api/v1/openapi.json`; testy odpowiedzi i kontrola aktualności w CI.
 
 ## Jeszcze niezaimplementowane
-Salda gotówki, wpłaty/wypłaty, historyczny koszt bazowy PLN/FX, przetwarzanie ledgeru i wyceny, dashboard z realnymi wynikami, symulator, dziennik, import, upload/AI, landing z zapisem zainteresowania. portfolio-engine zawiera arytmetykę P01 i lokalny koszt pozycji P02; report-engine pozostaje szkieletem. Brak integracji silnika z API/UI. Model pozostałych tabel jest specyfikacją, a nie migracją. Brak płatności i automatycznego pobierania raportów.
+Wycena pozycji i całego portfela, instrumenty/BUY/SELL w API i UI, symulator, dziennik, import, upload/AI, landing z zapisem zainteresowania. portfolio-engine zawiera P01–P03; API/UI korzystają z części gotówkowej. report-engine pozostaje szkieletem. Model pozostałych tabel jest specyfikacją, a nie migracją. Brak płatności i automatycznego pobierania raportów.
 
 ## Uruchomienie lokalne
 Wymagania: Node24 LTS, npm11+, Docker z Compose. Rozpakuj archiwum i wejdź do katalogu investorkit.
@@ -44,13 +45,14 @@ npm run build
 npm run typecheck
 npm test
 ```
-Integracja wymaga osobnej, migrowanej bazy testowej (nigdy produkcyjnej). Utwórz np. investorkit_test w swoim PostgreSQL, ustaw DATABASE_URL w lokalnym .env na tę bazę, uruchom migracje, a następnie:
+Integracja i E2E wymagają osobnej, migrowanej bazy testowej. Lokalne `.env` pozostaw dla Twojej aplikacji. Zewnętrzna zmienna DATABASE_URL nadpisuje wartość z env-file podczas migracji. Przykład (baza musi istnieć):
 ```bash
-TEST_DATABASE_URL=postgresql://investorkit:local_dev_only@127.0.0.1:5432/investorkit_test npm run test:integration
+DATABASE_URL=postgresql://investorkit:local_dev_only@127.0.0.1:5432/investorkit_contract_test npm run db:migrate
+TEST_DATABASE_URL=postgresql://investorkit:local_dev_only@127.0.0.1:5432/investorkit_contract_test npm run test:integration
 npx playwright install chromium
-npm run test:e2e
+TEST_DATABASE_URL=postgresql://investorkit:local_dev_only@127.0.0.1:5432/investorkit_contract_test E2E_WEB_PORT=5174 E2E_API_PORT=3002 npm run test:e2e
 ```
-E2E rejestruje konto testowe w DB wskazanej przez .env. Używaj bazy jednorazowej; testy integracyjne usuwają własne konta, E2E pozostawia konto do diagnostyki. Dostępna opcja PLAYWRIGHT_EXECUTABLE_PATH wskazuje własne Chromium. CI dostaje wyłącznie tymczasową bazę i sekret.
+E2E uruchamia osobne serwery i nie używa istniejącej sesji aplikacji. `TEST_DATABASE_URL` jest wymagane; konta testowe E2E pozostają tylko w tej bazie. CI używa tymczasowego PostgreSQL. Scenariusz obejmuje konto, portfel, wpłatę/wypłatę, odrzucenie debetu i historyczny kurs USD; generuje zrzuty desktop/mobile/dark w `test-results/`.
 
 ## Migracje
 ```bash
@@ -63,8 +65,13 @@ Przejrzyj SQL przed zatwierdzeniem. Nie stosujemy drizzle-kit push w produkcji. 
 Obecny auth jest sprawdzony lokalnie, lecz przed publicznym pilotem wymagane są email verification/reset, proces usunięcia/eksportu danych, polityka prywatności, restore drill oraz test E2E w środowisku obsługującym Chromium. Lista w backlogu B04–B06. Brak połączenia z brokerem i przechowywania jego haseł. Ograniczenia procesu in-memory rate limit są opisane w architekturze.
 
 ## Kontynuacja
-F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P02 ukończone; następnie P03–P07; osobno pozostaje wizualna inspekcja UI. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck i 4 testy unit na Node 24; szczegóły w raporcie weryfikacji.
+F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P03 ukończone; następnie P04–P07; osobno pozostaje wizualna inspekcja UI. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck i 4 testy unit na Node 24; szczegóły w raporcie weryfikacji.
 
 CI potwierdza build, typecheck, migrację, 4 testy jednostkowe, 8 integracyjnych i 1 E2E: [pierwszy przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43749258894).
 
 Generowanie OpenAPI po zmianie DTO: `npm run build:packages && npm run openapi:generate`. Kontrola aktualności: `npm run openapi:check`. Zakres i ograniczenia: [kontrakty API](docs/05-api.md).
+
+## Gotówka w działającym interfejsie
+Po zalogowaniu i utworzeniu portfela widać salda PLN/EUR/USD, wpłaty netto według historycznych kursów oraz formularz i historię. Wybierz walutę, kwotę i datę; dla EUR/USD podaj historyczny kurs PLN za1 jednostkę oraz datę kursu. Dane są zapisywane i pozostają po odświeżeniu. Nie ma automatycznej wymiany walut. Wyceny papierów i P/L są jeszcze w przygotowaniu.
+
+API: `GET /api/v1/portfolios/:id/cash`, `GET/POST /api/v1/portfolios/:id/cash-operations`. POST wymaga UUID `Idempotency-Key`; identyczne ponowienie zwraca tę samą operację. Limit tej wersji:1000 operacji gotówkowych na portfel. Historia jest append-only; korekty i edycja nie są udostępnione.

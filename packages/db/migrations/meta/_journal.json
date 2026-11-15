@@ -8,6 +8,13 @@
       "when": 1794766845464,
       "tag": "0000_wandering_hannibal_king",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794770857856,
+      "tag": "0001_past_gauntlet",
+      "breakpoints": true
     }
   ]
 }
