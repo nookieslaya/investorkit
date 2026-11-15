@@ -1,14 +1,14 @@
 # Stan projektu i następna sesja
-15.11.2026: specyfikacja docs01–09 gotowa. Foundation zaimplementowane: monorepo, auth+portfolio schema/migracja, API z owner scope, UI konta/portfela, Compose i CI. Potwierdzone testy w VERIFICATION.md. Żadnego deployu/płatności/automatycznego pobierania.
+
+15.11.2026: foundation działa lokalnie i jest opublikowane w publicznym repozytorium https://github.com/nookieslaya/investorkit (`origin`, `main`). Użytkownik potwierdził rejestrację, logowanie i utworzenie portfela. F03 i F11 DONE. Lokalny Docker Compose PostgreSQL17 działa, migracja wykonana. F08/F09 nadal PARTIAL: pozostaje wizualna inspekcja desktop/mobile/dark mode.
+
+F12 DONE: `apps/api/src/openapi.ts` generuje OpenAPI 3.0.3 z DTO Zod bez nowych zależności. Endpoint `/api/v1/openapi.json` dostępny bez sesji, artefakt `docs/openapi.json`; `npm run openapi:generate` / `npm run openapi:check` po `build:packages`. Dokument obejmuje tylko pięć wdrożonych operacji własnych (health/ready/portfele); Better Auth i docelowy MVP poza zakresem. Testy sprawdzają rzeczywiste odpowiedzi przez niezależny walidator JSON Schema, również błędy i izolację właściciela.
 
 Następna sesja:
-1. Przeczytaj README, backlog i matematykę. Zainstaluj npm ci; wygeneruj env, uruchom DB i migracje.
-2. F11 DONE: CI i 1 E2E w Chromium PASS. Osobno wizualnie sprawdź desktop/mobile i dark mode (F08/F09) oraz lokalny Compose (F03).
-3. F12: OpenAPI/contract tests. Następnie P01–P07: czysty silnik i golden cases, bez dashboardu na fikcyjnych liczbach.
-4. Potem A01–A09. Weryfikuj composite tenant FK, blokady ledgeru i idempotency keys przed udostępnieniem operacji.
-5. XTB parser dopiero po próbce, AI po wdrożeniu bezpiecznych uploadów/budżetu/ACL.
+1. Przeczytaj README, backlog, docs/04-calculations.md. Następne małe zadanie: P01 (decimal i operacje domain), potem P02–P07 z golden cases. Silnik finansowy nadal jest szkieletem; bez dashboardu z fikcyjnymi wynikami.
+2. Potem A01–A09: composite tenant FK, blokady ledgeru i idempotencja przed udostępnieniem operacji.
+3. XTB po otrzymaniu próbki; AI po bezpiecznych uploadach, budżecie i ACL. Bez płatności i automatycznego pobierania raportów.
 
-Kluczowe decyzje: baza portfela PLN, instrumentyPLN/EUR/USD; wagi obejmują gotówkę; koszt średni analityczny, nie podatkowy; pieniądze jako decimal strings; historię kosztów FX zapisujemy przy operacji; brak wyceny = niekompletny wynik; raport prywatny domyślnie; publiczny cache po sprawdzeniu źródła.
-Start z gotową wiadomością dla Codexa: CODEX-START.md. Historia wykonanych prac: ../CHANGELOG.md. Publiczne repozytorium: https://github.com/nookieslaya/investorkit; gałąź `main`, remote `origin`. Sekrety i DB testowa nie są w pakiecie. Lokalne buildy/node_modules także nie są w archiwum; odtwarzalne z lockfile. Wszystkie wymagania docelowego MVP i statusy są w backlogu.
+Weryfikacja F12: Node24, build/typecheck/7 unit i10 integration PASS; osobna migrowana baza `investorkit_contract_test`, bez testów na danych użytkownika. E2E dla F12 sprawdzane w GitHub Actions; wyniki i ograniczenia w VERIFICATION.md. Lokalne `.env`, node_modules i buildy są ignorowane przez Git. Nie zmieniaj bazy użytkownika na testową.
 
-Aktualizacja lokalna 15.11.2026 (macOS): historia Git odtworzona z bundle w bieżącym katalogu `investorkit`, gałąź `main`. Node 24 i GitHub CLI zainstalowane. `npm ci`, build, typecheck i 4 testy unit PASS; lockfile bez zmian. Docker daemon wyłączony, integracja/E2E niepowtórzone. Utworzono publiczne repozytorium https://github.com/nookieslaya/investorkit za zgodą użytkownika; `origin` ustawiony. Pierwszy CI PASS: build, typecheck, migracja, 4 unit, 8 integration i 1 Playwright E2E w Chromium. Dowód: https://github.com/nookieslaya/investorkit/actions/runs/43749258894. Następne zadanie implementacyjne: F12.
+Kluczowe decyzje: baza PLN; instrumenty PLN/EUR/USD; wagi obejmują gotówkę; średni koszt analityczny nie jest rozliczeniem podatkowym. Decimal strings i historyczny FX; brak wyceny oznacza niekompletny wynik; raport prywatny domyślnie. Historia: ../CHANGELOG.md.

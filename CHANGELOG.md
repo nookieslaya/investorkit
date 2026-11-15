@@ -31,3 +31,8 @@
 - Odtworzono historię Git z bundle i opublikowano publiczne repozytorium https://github.com/nookieslaya/investorkit.
 - Dodano ignorowanie `.DS_Store`; lokalny build/typecheck/4 unit PASS na Node 24.
 - Pierwszy CI PASS: migracja PostgreSQL17, build/typecheck, 4 unit, 8 integration, 1 Chromium E2E. F11 zamknięte; lokalny Compose i wizualna inspekcja UI pozostają do wykonania.
+
+### F12 — OpenAPI i kontrakty, 15.11.2026
+- OpenAPI 3.0.3 generowane natywnie z Zod dla wdrożonych endpointów własnych; publiczny endpoint dokumentacji i wersjonowany JSON.
+- Kontrola aktualności w CI i testy rzeczywistych odpowiedzi względem JSON Schema, w tym izolacja właściciela i błędy; bez nowych zależności.
+- Lokalny Compose i migracja potwierdzone, użytkownik sprawdził konto/portfel; F03 DONE. Następny etap: P01.

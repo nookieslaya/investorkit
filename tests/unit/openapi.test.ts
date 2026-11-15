@@ -1,0 +1,36 @@
+import { readFileSync } from 'node:fs';
+import { afterAll, describe, expect, it } from 'vitest';
+import { buildOpenApiDocument } from '../../apps/api/src/openapi.js';
+import { createContractValidator } from '../response-contract.js';
+const validator = await createContractValidator();
+afterAll(() => validator.close());
+const document = buildOpenApiDocument();
+describe('generated OpenAPI', () => {
+  it('keeps the checked-in document current and limits it to implemented first-party routes', () => {
+    expect(JSON.parse(readFileSync(new URL('../../docs/openapi.json', import.meta.url), 'utf8'))).toEqual(document);
+    expect(document.openapi).toBe('3.0.3');
+    expect(Object.keys(document.paths).sort()).toEqual(['/health', '/ready', '/api/v1/portfolios', '/api/v1/portfolios/{id}'].sort());
+    const ids = Object.values(document.paths).flatMap(methods => Object.values(methods).map(operation => operation.operationId));
+    expect(new Set(ids).size).toBe(5);
+  });
+  it('distinguishes input defaults from required output fields and documents session/origin', () => {
+    const post = document.paths['/api/v1/portfolios']?.['post'];
+    expect(post?.requestBody?.content['application/json'].schema.required).toEqual(['name']);
+    expect(post?.requestBody?.content['application/json'].schema.additionalProperties).toBe(false);
+    expect(post?.responses['201']?.content['application/json'].schema.required).toEqual(['id', 'name', 'baseCurrency', 'createdAt']);
+    expect(post?.security).toEqual([{ session: [] }, { localSession: [] }]);
+    expect(post?.parameters).toContainEqual(expect.objectContaining({ name: 'Origin', in: 'header', required: true }));
+    expect(document.paths['/health']?.['get']?.security).toEqual([]);
+    expect(document.paths['/api/v1/portfolios/{id}']?.['get']?.parameters).toContainEqual(expect.objectContaining({ name: 'id', in: 'path', required: true }));
+  });
+  it('detects response drift including missing fields, private fields, currency and dates', async () => {
+    const portfolio = { id: 'f6f92d67-ecaa-4ec6-a9ef-e80f1df4f763', name: 'Mój portfel', baseCurrency: 'PLN', createdAt: '2026-11-15T12:00:00Z' };
+    expect(await validator.accepts('/api/v1/portfolios', 'post', 201, portfolio)).toBe(true);
+    for (const invalid of [
+      { ...portfolio, id: 'invalid' }, { ...portfolio, createdAt: 'yesterday' },
+      { ...portfolio, baseCurrency: 'USD' }, { ...portfolio, ownerId: 'private' },
+      { id: portfolio.id, name: portfolio.name, baseCurrency: 'PLN' },
+    ]) expect(await validator.accepts('/api/v1/portfolios', 'post', 201, invalid)).toBe(false);
+    expect(await validator.accepts('/api/v1/portfolios', 'get', 401, { error: { code: 'UNAUTHENTICATED', message: 'Zaloguj się.' } })).toBe(false);
+  });
+});

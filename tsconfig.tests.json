@@ -5,6 +5,7 @@
   },
   "include": [
     "tests/**/*.ts",
+    "scripts/**/*.mts",
     "vitest*.ts",
     "playwright.config.ts"
   ]

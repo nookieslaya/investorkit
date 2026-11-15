@@ -9,6 +9,9 @@ export const createPortfolioSchema = z.object({
 export const portfolioSchema = z.object({
   id: z.uuid(), name: z.string(), baseCurrency: z.literal('PLN'), createdAt: z.iso.datetime(),
 });
+export const portfolioIdParamsSchema = z.object({ id: z.uuid() });
+export const healthSchema = z.object({ status: z.literal('ok') });
+export const unavailableSchema = z.object({ status: z.literal('unavailable') });
 export const portfoliosSchema = z.object({ items: z.array(portfolioSchema) });
 export type Portfolio = z.infer<typeof portfolioSchema>;
 export type CreatePortfolio = z.infer<typeof createPortfolioSchema>;

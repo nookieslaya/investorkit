@@ -2,8 +2,9 @@ import Fastify, { LogController } from 'fastify';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { fromNodeHeaders } from 'better-auth/node';
-import { z, ZodError } from 'zod';
-import { createPortfolioSchema, portfolioSchema } from '@investorkit/shared';
+import { ZodError } from 'zod';
+import { createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema } from '@investorkit/shared';
+import { buildOpenApiDocument } from './openapi.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
 import type { portfolioRepository } from './portfolio-repository.js';
@@ -35,6 +36,7 @@ export async function buildApp(config: Config, services: Services, logging = tru
     return reply.code(status).send(fail(status === 429 ? 'RATE_LIMITED' : 'REQUEST_FAILED', status === 500 ? 'Wystąpił błąd serwera.' : 'Nie można wykonać żądania.', req.id));
   });
   app.setNotFoundHandler((req, reply) => reply.code(404).send(fail('NOT_FOUND', 'Nie znaleziono zasobu.', req.id)));
+  app.get('/api/v1/openapi.json', async () => buildOpenApiDocument());
   app.get('/health', async () => ({ status: 'ok' }));
   app.get('/ready', async (_req, reply) => {
     try { await services.ready(); return { status: 'ok' }; }
@@ -65,7 +67,7 @@ export async function buildApp(config: Config, services: Services, logging = tru
       return { items: rows.map(row => portfolioSchema.parse({ ...row, createdAt: row.createdAt.toISOString() })) };
     });
     scoped.get('/portfolios/:id', async (req, reply) => {
-      const { id } = z.object({ id: z.uuid() }).parse(req.params);
+      const { id } = portfolioIdParamsSchema.parse(req.params);
       const row = await services.portfolios.find(req.ownerId, id);
       if (!row) return reply.code(404).send(fail('NOT_FOUND', 'Nie znaleziono portfela.', req.id));
       return portfolioSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });

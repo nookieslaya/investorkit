@@ -20,7 +20,9 @@
     "test:e2e": "playwright test",
     "db:generate": "npm run generate -w @investorkit/db",
     "db:migrate": "npm run migrate -w @investorkit/db",
-    "setup:env": "node scripts/init-env.mjs"
+    "setup:env": "node scripts/init-env.mjs",
+    "openapi:generate": "node --import tsx scripts/generate-openapi.mts",
+    "openapi:check": "node --import tsx scripts/generate-openapi.mts --check"
   },
   "devDependencies": {
     "typescript": "7.0.2",

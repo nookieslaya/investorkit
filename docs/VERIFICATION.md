@@ -30,3 +30,11 @@ Nie wykonano: testów matematyki (silnik niewdrożony), importu XTB (brak próbk
 ## GitHub Actions — 15.11.2026
 
 [Przebieg CI](https://github.com/nookieslaya/investorkit/actions/runs/43749258894) dla `b71f14b`: PASS. Node 24, PostgreSQL17 w izolowanym kontenerze GitHub Actions; instalacja zależności, build, typecheck, migracja, 4 testy unit, 8 integration i 1 Playwright E2E w Chromium. F11 DONE. Historyczna lokalna blokada Chromium nie dotyczy tego przebiegu. F03 nadal PARTIAL (lokalny Compose), F08/F09 nadal PARTIAL (brak wizualnej inspekcji desktop/mobile/dark mode).
+
+## F12 i uruchomienie lokalne — 15.11.2026
+
+- Lokalny Compose: PostgreSQL17 healthy, migracja PASS. Użytkownik potwierdził rejestrację, logowanie i stworzenie portfela. F03 DONE. Wizualna inspekcja mobile/dark mode nadal niewykonana.
+- F12: build, typecheck, 7 unit i 10 integration PASS na Node24. Integracja korzystała wyłącznie z nowej, migrowanej bazy `investorkit_contract_test`; dane lokalnego portfela użytkownika poza testami.
+- Sprawdzono wygenerowany OpenAPI, jego aktualność oraz odpowiedzi JSON API: 200/201, 400, 401, 403, 404, 409, 413, 415, 429, 500 i503. Testy walidatora wykrywają brak pól, nieprawidłowe UUID/daty/waluty i dodatkowe pola prywatne.
+- `npm run openapi:check` PASS; lokalny `/api/v1/openapi.json` dostępny przez proxy Vite. Brak nowych zależności; lockfile bez zmian. Better Auth pozostaje poza wygenerowanym dokumentem.
+- E2E lokalnie w tej zmianie nieuruchamiane, aby nie używać bazy i aktywnej sesji użytkownika. Pełny przebieg weryfikuje GitHub Actions.

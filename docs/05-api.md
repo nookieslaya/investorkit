@@ -1,5 +1,5 @@
 # Kontrakty API v1
-Status: specyfikacja docelowa; wdrożone endpointy wymienia README. Wspólne Zod DTO są źródłem kontraktu, OpenAPI generowane w zadaniu F12. JSON decimal jako string z kropką, bez separatorów tysięcy i notacji naukowej. Daty ISO8601 UTC. Kwoty ≤18 cyfr całkowitych, ≤10 ułamkowych; reject zamiast cichego obcięcia. currency enum PLN/EUR/USD.
+Status: specyfikacja docelowa; wdrożone endpointy wymienia README. Wspólne Zod DTO są źródłem kontraktu. Wdrożony zakres opisuje generowany [OpenAPI 3.0.3](openapi.json); tabela poniżej nadal obejmuje także funkcje planowane. JSON decimal jako string z kropką, bez separatorów tysięcy i notacji naukowej. Daty ISO8601 UTC. Kwoty ≤18 cyfr całkowitych, ≤10 ułamkowych; reject zamiast cichego obcięcia. currency enum PLN/EUR/USD.
 
 Sesja cookie; state-changing requests wymagają zgodnego Origin (lub osobnej uwierzytelnionej ścieżki CLI w przyszłości). Odpowiedź listy {items,nextCursor}; limit domyślny25/max100, cursor opaque. Błąd {error:{code,message,requestId,issues?}}. 400 walidacja, 401 brak sesji, 404 brak/cudzy zasób, 409 konflikt, 413 limit, 422 błąd domeny, 429 limit, 503 brak zależności. Nie ujawniać zapytań SQL/stack. PATCH używa revision/If-Match, konflikt409.
 
@@ -39,3 +39,13 @@ Przykład BUY:
 {"kind":"BUY","instrumentId":"uuid","occurredAt":"2026-11-15T12:00:00Z","quantity":"0.125","unitPrice":"80","commission":"0.5","currency":"USD","fxToBase":"4"}
 ```
 Idempotency-Key: scoping użytkownik+portfel+endpoint; ponowienie tego samego body zwraca ten sam wynik, inne body przy tym kluczu409. Hash body i status odpowiedzi przechowywane atomowo z operacją. Transakcyjna blokada portfela zapobiega równoległemu wydaniu tej samej gotówki.
+
+## Wdrożony OpenAPI (F12)
+
+`GET /api/v1/openapi.json` udostępnia dokument bez sesji, pod globalnym limitem żądań i z `Cache-Control: no-store`. Lokalnie: http://localhost:5173/api/v1/openapi.json. Dokument obejmuje pięć operacji: GET /health, GET /ready, GET/POST /api/v1/portfolios i GET /api/v1/portfolios/{id}. Nie deklaruje planowanych endpointów jako wdrożonych. Endpoint dokumentacji opisany jest w metadanych, bez rekurencyjnego schematu własnej odpowiedzi.
+
+Rejestr operacji: `apps/api/src/openapi.ts`; schematy body/parametrów/odpowiedzi pochodzą z `packages/shared`. Konwersja natywna `z.toJSONSchema` (https://zod.dev/json-schema), target `openapi-3.0`: wejście `io: input` zachowuje opcjonalne `baseCurrency` z domyślnym PLN; odpowiedzi `io: output` wymagają wszystkich pól. Nazwa jest przycinana przed walidacją długości w Zod; JSON Schema nie wykonuje normalizacji tekstu.
+
+`npm run build:packages`, potem `npm run openapi:generate` aktualizuje `docs/openapi.json`; `npm run openapi:check` i test unit wykrywają nieaktualny dokument (także w CI). Po zmianie handlera należy zaktualizować rejestr operacji i testy. Kontrakty odpowiedzi testowane są niezależnym walidatorem JSON Schema Fastify, bez koercji, usuwania pól i uzupełniania domyślnych wartości.
+
+Portfele wymagają cookie Better Auth (prefiks `__Secure-` w produkcji) i zgodnego Origin dla POST. Handler `/api/auth/*` zachowuje protokół Better Auth, nie standardowy envelope błędów aplikacji; nie jest objęty tym dokumentem. Lista portfeli obecnie zwraca wyłącznie `{items}` bez cursor/limit. `/ready` zwraca osobne `{status: unavailable}` przy 503. Pozostałe błędy własnych endpointów używają wspólnego envelope; komunikaty i identyfikatory żądań nie zawierają SQL ani sekretów.
