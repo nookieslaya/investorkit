@@ -17,3 +17,5 @@ Weryfikacja: lokalnie build/typecheck,74 unit,26 integration i rozszerzony1 E2E 
 Następny etap: P05 symulator obu źródeł środków i jego UI/API (A06). Użyj istniejącego ledgeru, instrumentów i jawnych cen/FX; bez skutków ubocznych i zapisu symulacji jako transakcji. Potem P06/A07 ryzyko i P07 regresje. Progi świeżości API aktualnie72h; konfigurowalne w silniku, ustawienia UI w A07. Limity100 instrumentów,500 cen/instrument,1000 kursów/użytkownika; brak paginacji, korekt i edycji. Nie mylić prostego procentu z TWR/XIRR i średniego kosztu z PIT.
 
 Niewdrożone: symulator, koncentracja/stress, dziennik, import XTB (brak próbki), PDF/AI, snapshoty historyczne, publiczny deployment/płatności. Sekrety/test-results/buildy/backupy ignorowane w Git. Nie dodawać mikroserwisów, zewnętrznych live-feedów ani płatności w kolejnym etapie.
+
+P04 końcowy CI PASS dla d654065: https://github.com/nookieslaya/investorkit/actions/runs/43757903165 (74 unit,26 integration,1 E2E). Aplikacja lokalna dostępna. Następny etap P05/A06.

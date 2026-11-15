@@ -73,3 +73,7 @@ P03 CI dla `68a1e8e`: [przebieg](https://github.com/nookieslaya/investorkit/acti
 - Wykryto i poprawiono nullable enum w wygenerowanym OAS3: enum jawnie dopuszcza null niezależnie od nullable. Testy odpowiedzi pozostały ścisłe i sprawdzają rzeczywiste API. OpenAPI15 operacji aktualne.
 - E2E: dotychczasowy onboarding/gotówka, instrumentUSD, zakup0.1×80+0.5, brak wyceny, stara cena, świeża cena90, FX4.2, wartość894.10/P&L2.10, oversell odrzucony, sprzedaż0.05×100−0.1 → wartość895.78/P&L3.78/cash6.4USD i trwałość po reload. Zrzuty investments-desktop.png i investments-mobile-dark.png obejrzane; na telefonie pozycje jako karty, bez poziomego overflow.
 - Bez nowych zależności projektu. Build zachowuje informacyjne ostrzeżenie bundle>500kB (nie błąd); brak pełnego audytu WCAG, importu/AI, live feeds i publicznego deployu.
+
+P04 CI: główna zmiana `2071025` PASS (https://github.com/nookieslaya/investorkit/actions/runs/43757680608). Końcowy `d654065` ze stałą kolejnością odczytu metadanych: [przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43757903165) PASS — build/typecheck, OpenAPI, migracje,74 unit,26 integration i1 E2E.
+
+Środowisko hosta: systemowy Node26 miał brakującą bibliotekę dynamiczną; reinstalacja Homebrew przywróciła go w wersji26.13.1. Projekt i testy nadal używają Node24.22.3. Zależności projektu/lockfile bez aktualizacji wersji.
