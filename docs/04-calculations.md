@@ -24,3 +24,17 @@ Szok jednej pozycji: wartość' = wartość − wartość pozycji×spadek; FX st
 5. Aktywa600/300/100 +cash100 → top3 90.909…%, pozycja600 54.545…%; szok50% całości papierów →600.
 6. SELL przy zerowej ilości, niedostateczna gotówka, ujemna opłata, brak FX i future quote → błąd; dwie identyczne legalne transakcje nie są automatycznie duplikatem.
 7. Wycofanie całości wkładów → mianownik ≤0 → procent null; niepełna wycena → brak pełnego P/L.
+
+## Zaimplementowana podstawa P01
+
+`@investorkit/portfolio-engine` eksportuje `FinancialDecimal` i guardy: `parseAmount`, `parseQuantity`, `parseUnitPrice`, `parseCommission`, `sumDecimals`. To arytmetyka bez waluty/jednostki; kolejne operacje domenowe muszą jawnie przenosić walutę, kierunek FX i jednostki. P01 nie wykonuje BUY/SELL, przeliczeń FX, wycen ani zapisów ledgeru.
+
+- Wejście `FinancialDecimal.parse(unknown)`: wyłącznie zwykły decimal string, opcjonalny minus, maksymalnie 18 cyfr całkowitych i10 ułamkowych; bez koercji, spacji, separatorów, exponent, NaN/Infinity. Wyniki P/L mogą być ujemne. Kwoty i prowizje wymagają nieujemności; ceny i ilości dodatniości. `parseQuantity` przyjmuje skalę instrumentu 0–10 i odrzuca nadmiarowe miejsca; końcowe zera nie zwiększają skali wartości.
+- Prywatny `Decimal.clone` z ustawieniami domyślnymi, precision40 i HALF_EVEN, niezależny od globalnego `Decimal.set`. Wartości i operacje są niemutowalne; brak eksportu surowego Decimal i konwersji do number. Liczby JS służą tylko skali, konfiguracji i wynikowi porównania.
+- `plus/minus/times/dividedBy` zachowują 40 cyfr znaczących po każdej operacji, bez dodatkowego ograniczania do skali zapisu. Nie obiecujemy arytmetyki o nieskończonej precyzji ani niezależności sumy od kolejności przy ograniczonej precyzji; `sumDecimals` zachowuje kolejność wejścia.
+- `toString`/`toJSON`: zwykły decimal string bez exponent, zbędnych zer i ujemnego zera. Wyniki pośrednie mogą przekraczać zakres wejściowy i skalę zapisu; nie traktować ich automatycznie jako publicznego DTO.
+- `toFixed(scale)` zaokrągla HALF_EVEN przy prezentacji (0–10 miejsc); `toStorageString()` jawnie zaokrągla HALF_EVEN do numeric(28,10), bez paddingu, i odrzuca przepełnienie także powstałe wskutek zaokrąglenia. Nie parsować formatowanej prezentacji z powrotem do obliczeń. FX numeric(28,12) i jego granice pozostają do P03; serializer kwot nie jest serializerem kursu.
+- `floorToScale` to jawna matematyczna podłoga, również dla wartości ujemnych. Walidacja wejścia sama nie zaokrągla. `dividedBy(0)` zgłasza `DIVISION_BY_ZERO`; `percentOf(base)` dla base≤0 zwraca `{value:null,reason:NON_POSITIVE_BASE}`, a dla dodatniej bazy wartość w procentach.
+- Błędy domenowe mają stabilne kody (`DecimalDomainError.code`), bez danych wejściowych w komunikatach. Bez zegara, DB i frameworków.
+
+Źródło zachowania Decimal: https://mikemcl.github.io/decimal.js/ (clone, precision, ROUND_HALF_EVEN, toDecimalPlaces). Golden cases portfela1–7 pozostają do P02–P07; nie są zamknięte przez testy samej arytmetyki.

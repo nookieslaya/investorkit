@@ -40,3 +40,10 @@ Nie wykonano: testów matematyki (silnik niewdrożony), importu XTB (brak próbk
 - E2E lokalnie w tej zmianie nieuruchamiane, aby nie używać bazy i aktywnej sesji użytkownika. Pełny przebieg weryfikuje GitHub Actions.
 
 F12 GitHub Actions dla `079da72`: [przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43750687345) PASS — instalacja, generowane kontrakty, build/typecheck, migracja, 7 unit, 10 integration i1 E2E Chromium. Bez nowych błędów.
+
+## P01 — 15.11.2026
+
+- Node24: build, typecheck, 23 unit i kontrola aktualności OpenAPI PASS; 16 testów dotyczy nowej arytmetyki. decimal.js10.6.0 było już zależnością pakietu, lockfile bez zmian.
+- Sprawdzone: ułamki, kwoty większe niż Number.MAX_SAFE_INTEGER, precision40, brak zaokrągleń do skali zapisu po drodze, HALF_EVEN dodatnie/ujemne, usuwanie ujemnego zera, floor i skala ilości0–10, niedodatnia baza procentu, dzielenie przez zero, overflow po zaokrągleniu oraz izolacja od globalnego Decimal.set.
+- Guardy odrzucają number, bigint, obiekty, NaN/Infinity, exponent, spacje/nowe linie, nadmiarowe cyfry i niedozwolone wartości domenowe.
+- P01 nie dodaje endpointów, migracji ani zmian UI; lokalna baza użytkownika nie jest używana przez testy. BUY/SELL, FX, wyceny i golden cases1–7 pozostają do P02–P07. Integracja i E2E dla tej zmiany będą sprawdzone przez GitHub Actions.

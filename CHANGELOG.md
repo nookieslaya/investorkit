@@ -36,3 +36,8 @@
 - OpenAPI 3.0.3 generowane natywnie z Zod dla wdrożonych endpointów własnych; publiczny endpoint dokumentacji i wersjonowany JSON.
 - Kontrola aktualności w CI i testy rzeczywistych odpowiedzi względem JSON Schema, w tym izolacja właściciela i błędy; bez nowych zależności.
 - Lokalny Compose i migracja potwierdzone, użytkownik sprawdził konto/portfel; F03 DONE. Następny etap: P01.
+
+### P01 — podstawa arytmetyki finansowej, 15.11.2026
+- `FinancialDecimal` z prywatnym kontekstem decimal.js, precision40 i HALF_EVEN; brak obliczeń kwot jako number.
+- Walidacja kwot, ilości, cen i prowizji; jawny floor, granice prezentacji/zapisu, overflow i diagnostyka procentu przy niedodatniej bazie.
+- 16 testów precyzji, granic i izolacji konfiguracji. Brak nowych zależności i zmian API/UI/DB. BUY/SELL pozostaje w P02.

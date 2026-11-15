@@ -18,7 +18,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: 4 unit i8 integration PASS |
 | F11 | Playwright i CI | 2 | F09,F10 | DONE: GitHub Actions PASS, Chromium E2E 1/1 (15.11.2026) |
 | F12 | OpenAPI i contract tests | 2 | F07 | DONE: OpenAPI z Zod, endpoint i artefakt JSON, kontrola aktualności CI oraz testy odpowiedzi |
-| P01 | Decimal i operacje domain | 2 | F01 | TODO: brak number w obliczeniach |
+| P01 | Decimal i operacje domain | 2 | F01 | DONE: FinancialDecimal precision40/HALF_EVEN, guardy i jawne zaokrąglenia; 16 testów arytmetyki |
 | P02 | BUY/SELL koszt i prowizja | 3 | P01 | TODO: golden cases1/2 |
 | P03 | Gotówka, wpłaty, wypłaty, FX | 3 | P02 | TODO: golden case3 + salda |
 | P04 | Wycena, kompletność, P/L | 3 | P03 | TODO: stale/missing/future |
@@ -53,7 +53,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | B06 | Backup + restore drill + audyt dostępności | 3 | B05 | TODO: przed publicznym pilotem |
 | B07 | Decyzja o płatnym pilotażu | 1 | B03 | TODO: dopiero wtedy backlog billing |
 
-Najbliższy punkt kontynuacji: P01, potem P02–P07; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
+Najbliższy punkt kontynuacji: P02, potem P03–P07; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
 
 Aktualizacja środowiska macOS 15.11.2026: build/typecheck/4 unit PASS na Node 24. Docker CLI dostępny, daemon wyłączony; F03/F08/F09 zachowują status PARTIAL; F11 zamknięte po przejściu CI. Utworzono publiczne repozytorium `nookieslaya/investorkit`; pierwszy przebieg CI PASS: build/typecheck, migracja, 4 unit, 8 integration, 1 E2E w Chromium.
 

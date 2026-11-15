@@ -5,7 +5,7 @@
 - Semantyka finansowa: docs/04-calculations.md. Kontrakty: docs/05-api.md. Pełny zakres: docs/INVESTORKIT-MVP.md.
 - Realizuj małe zadanie z backlogu. Nie generuj całego systemu w jednej zmianie.
 - Oddziel specyfikację docelową od istniejącego kodu. Nie opisuj szkicu ani kontraktu jako działającej integracji.
-- Obecny silnik finansowy nie jest zaimplementowany. Pakiety engine są szkieletami.
+- portfolio-engine zawiera fundament arytmetyki P01 (decimal/guardy/zaokrąglenia). BUY/SELL, ledger i wyceny pozostają niewdrożone; report-engine jest szkieletem.
 
 ## Granice architektury
 - apps/web: widoki, routing, query cache, formatowanie; bez dostępu do DB i sekretów.
