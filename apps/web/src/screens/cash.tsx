@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDownLeft, ArrowUpRight, Wallet, History } from 'lucide-react';
 import { cashOperationInputSchema } from '@investorkit/shared';
 import type { Currency } from '@investorkit/shared';
+import { FormSelect } from '../components/ui/form-select';
 import { Button } from '../components/ui/button';
 import { loadCash, loadCashHistory, saveCash } from '../lib/api';
 
@@ -48,8 +49,8 @@ export function CashOverview({ portfolioId }: { portfolioId: string }) {
     <div className="cash-grid" id="cash-operations">
       <section className="panel cash-form" aria-labelledby="cash-title"><span className="eyebrow">ZASILAJ I PORZĄDKUJ</span><h2 id="cash-title">Dodaj operację gotówkową</h2><p>Każda waluta ma osobne saldo. Wpłata zapisuje środki w wybranej walucie.</p>
         <form onSubmit={event => void submit(event)} aria-busy={save.isPending}><fieldset disabled={save.isPending}>
-          <div className="cash-fields"><label>Rodzaj operacji<select value={kind} onChange={e => setKind(e.target.value as 'DEPOSIT' | 'WITHDRAWAL')}><option value="DEPOSIT">Wpłata</option><option value="WITHDRAWAL">Wypłata</option></select></label>
-          <label>Waluta<select value={currency} onChange={e => setCurrency(e.target.value as Currency)}><option>PLN</option><option>EUR</option><option>USD</option></select></label></div>
+          <div className="cash-fields"><FormSelect label="Rodzaj operacji" value={kind} onValueChange={value => setKind(value as 'DEPOSIT' | 'WITHDRAWAL')} options={[{ value: 'DEPOSIT', label: 'Wpłata' }, { value: 'WITHDRAWAL', label: 'Wypłata' }]} />
+          <FormSelect label="Waluta" value={currency} onValueChange={value => setCurrency(value as Currency)} options={['PLN', 'EUR', 'USD'].map(value => ({ value, label: value }))} /></div>
           <label>Kwota<input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="np. 1 000 → wpisz 1000" required maxLength={30} aria-describedby="cash-error" /></label>
           <label>Data i godzina operacji<input type="datetime-local" value={occurredAt} onChange={e => setOccurredAt(e.target.value)} required /></label>
           {currency !== 'PLN' && <><label>Kurs historyczny (PLN za 1 {currency})<input inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="np. 4,20" required maxLength={29} /></label><label>Data i godzina kursu<input type="datetime-local" value={fxDate} onChange={e => setFxDate(e.target.value)} required /></label><p className="cash-help">Wpisz kurs z dnia operacji lub wcześniejszy. Źródło: wpis ręczny. Kurs nie wymienia gotówki między subkontami.</p></>}

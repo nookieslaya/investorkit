@@ -11,7 +11,7 @@ Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Foundation u
 
 ## Zaimplementowane
 - npm workspaces i TypeScript strict; dokładne wersje + package-lock.json.
-- React/Vite, TanStack Router/Query, Tailwind4; lokalny komponent Button w konwencji shadcn/ui (Radix Slot/CVA), aliasy i components.json; pozostałe komponenty dodawać w miarę potrzeb.
+- React/Vite, TanStack Router/Query, Tailwind4; lokalne komponenty Button i Select shadcn/ui (Radix Slot/Select), aliasy i components.json. Wszystkie wybory w formularzach używają wspólnego Select z obsługą klawiatury i jasnego/ciemnego motywu.
 - Responsywny interfejs PL, motywy light/dark (domyślnie ustawienie systemu), formularze konta/portfela, stany loading/error/empty. Puste wartości są oznaczone kreską, bez fikcyjnych wyników.
 - PostgreSQL/Drizzle: auth, portfolios, instruments, manual_quotes, fx_rates i wspólny ledger cash_operations; migracje, composite tenant FK, CHECK i blokada portfela.
 - Better Auth: signup/signin/signout/sesja; origin guard, HttpOnly/SameSite, rate limiting, brak logowania body i sekretów.

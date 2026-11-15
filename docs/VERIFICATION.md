@@ -77,3 +77,8 @@ P03 CI dla `68a1e8e`: [przebieg](https://github.com/nookieslaya/investorkit/acti
 P04 CI: główna zmiana `2071025` PASS (https://github.com/nookieslaya/investorkit/actions/runs/43757680608). Końcowy `d654065` ze stałą kolejnością odczytu metadanych: [przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43757903165) PASS — build/typecheck, OpenAPI, migracje,74 unit,26 integration i1 E2E.
 
 Środowisko hosta: systemowy Node26 miał brakującą bibliotekę dynamiczną; reinstalacja Homebrew przywróciła go w wersji26.13.1. Projekt i testy nadal używają Node24.22.3. Zależności projektu/lockfile bez aktualizacji wersji.
+
+## Select shadcn/ui — 15.11.2026
+- Nowa zależność @radix-ui/react-select2.4.1 uzasadniona żądaną zamianą natywnych kontrolek na shadcn/ui; npm metadata sprawdzone (stabilna wersja, peer React19), zgodność Node24 potwierdzona buildem. Kompozycja Select/Trigger/Content/Item oparta na oficjalnym registry New York: https://ui.shadcn.com/r/styles/new-york/select.json i dokumentacji https://ui.shadcn.com/docs/components/radix/select.
+- Wszystkie7 pól w formularzach podmienione. Typy i build PASS;74 unit PASS. Rozszerzony E2E PASS: rzeczywisty wybór opcji i zachowanie FormData w pełnym scenariuszu, Escape i powrót focusu, ArrowDown/End/Enter, Tab do następnego pola, desktop/mobile/dark i brak poziomego overflow. Baza wyłącznie testowa, brak migracji i zmian danych użytkownika.
+- Zrzuty select-desktop-light.png i select-mobile-dark.png pokazują otwarte listy; animacje zakończone na potrzeby screenshotów. Menus są portallowane do .app-shell, aby zachować motyw i paletę.

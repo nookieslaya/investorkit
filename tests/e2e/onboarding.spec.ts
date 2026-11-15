@@ -1,5 +1,10 @@
 import { localNow } from '../../apps/web/src/lib/format.js';
 import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
+async function choose(page: Page, label: string, option: string) {
+  await page.getByRole('combobox', { name: label, exact: true }).click();
+  await page.getByRole('option', { name: option, exact: true }).click();
+}
 test('registers, persists a private portfolio and signs out', async ({ page }, testInfo) => {
   test.setTimeout(60000);
   await page.goto('/');
@@ -17,15 +22,15 @@ test('registers, persists a private portfolio and signs out', async ({ page }, t
   await page.getByLabel('Notatka (opcjonalnie)').fill('Pierwsza wpłata');
   await page.getByRole('button', { name: 'Zapisz wpłatę', exact: true }).click();
   await expect(pln).toContainText('1 000,00');
-  await page.getByLabel('Rodzaj operacji').selectOption('WITHDRAWAL');
+  await choose(page, 'Rodzaj operacji', 'Wypłata');
   await page.getByLabel('Kwota', { exact: true }).fill('150');
   await page.getByRole('button', { name: 'Zapisz wypłatę', exact: true }).click();
   await expect(pln).toContainText('850,00');
   await page.getByLabel('Kwota', { exact: true }).fill('1000');
   await page.getByRole('button', { name: 'Zapisz wypłatę', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Brak wystarczających środków');
-  await page.getByLabel('Rodzaj operacji').selectOption('DEPOSIT');
-  await page.getByRole('combobox', { name: 'Waluta', exact: true }).selectOption('USD');
+  await choose(page, 'Rodzaj operacji', 'Wpłata');
+  await choose(page, 'Waluta', 'USD');
   await page.getByLabel('Kwota', { exact: true }).fill('10');
   await page.getByLabel('Kurs historyczny (PLN za 1 USD)', { exact: true }).fill('4,20');
   await page.getByRole('button', { name: 'Zapisz wpłatę', exact: true }).click();
@@ -39,7 +44,7 @@ test('registers, persists a private portfolio and signs out', async ({ page }, t
   await page.getByLabel('Nazwa instrumentu', { exact: true }).fill('Instrument testowy USD');
   await page.getByLabel('Symbol (ticker)', { exact: true }).fill('IKTEST');
   await page.getByLabel('Rynek (MIC)', { exact: true }).fill('XNAS');
-  await page.getByRole('combobox', { name: 'Waluta instrumentu', exact: true }).selectOption('USD');
+  await choose(page, 'Waluta instrumentu', 'USD');
   await page.getByLabel('Precyzja ilości (0–10 miejsc)', { exact: true }).fill('3');
   await page.getByRole('button', { name: 'Dodaj instrument', exact: true }).click();
   await expect(page.getByText('Instrument dodany. Możesz zapisać zakup.', { exact: true })).toBeVisible();
@@ -71,7 +76,7 @@ test('registers, persists a private portfolio and signs out', async ({ page }, t
   await expect(page.getByText('Wycena kompletna', { exact: true })).toBeVisible();
   await expect(portfolioValue).toContainText('894,10'); await expect(pnl).toContainText('2,10');
   await editor.getByRole('button', { name: 'Kupno / sprzedaż', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Rodzaj transakcji', exact: true }).selectOption('SELL');
+  await choose(page, 'Rodzaj transakcji', 'Sprzedaż');
   await page.getByLabel('Ilość (do 3 miejsc)', { exact: true }).fill('0,2');
   await page.getByLabel('Cena transakcji (USD)', { exact: true }).fill('100');
   await page.getByLabel('Prowizja (USD)', { exact: true }).fill('0,1');
@@ -85,11 +90,31 @@ test('registers, persists a private portfolio and signs out', async ({ page }, t
   await expect(portfolioValue).toContainText('895,78'); await expect(page.getByText('Pierwszy zakup', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('investments-desktop.png'), fullPage: true });
 
+  const currencySelect = page.getByRole('combobox', { name: 'Waluta', exact: true });
+  await currencySelect.click();
+  await expect(page.getByRole('listbox')).toBeVisible();
+  await expect(page.getByRole('option', { name: 'PLN', exact: true })).toHaveAttribute('data-state', 'checked');
+  await page.screenshot({ path: testInfo.outputPath('select-desktop-light.png'), animations: 'disabled' });
+  await page.keyboard.press('Escape');
+  await expect(currencySelect).toBeFocused();
+  await currencySelect.press('ArrowDown');
+  await expect(page.getByRole('option', { name: 'PLN', exact: true })).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(page.getByRole('option', { name: 'USD', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(currencySelect).toContainText('USD');
   const darkButton = page.getByRole('button', { name: 'Włącz ciemny motyw' });
   if (await darkButton.isVisible()) await darkButton.click();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('article').filter({ hasText: 'Udział z gotówką' })).toContainText('18,90');
   await page.screenshot({ path: testInfo.outputPath('investments-mobile-dark.png'), fullPage: true });
+  await currencySelect.click();
+  await expect(page.getByRole('listbox')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('select-mobile-dark.png'), animations: 'disabled' });
+  await page.getByRole('option', { name: 'EUR', exact: true }).click();
+  await expect(currencySelect).toContainText('EUR');
+  await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Kwota', { exact: true })).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('button', { name: 'Wyloguj' }).click();
   await expect(page.getByRole('heading', { name: 'Zacznij swój portfel' })).toBeVisible();

@@ -18,6 +18,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie74 unit i26 integration PASS |
 | F11 | Playwright i CI | 2 | F09,F10 | DONE: GitHub Actions PASS, Chromium E2E 1/1 (15.11.2026) |
 | F12 | OpenAPI i contract tests | 2 | F07 | DONE: OpenAPI z Zod, endpoint i artefakt JSON, kontrola aktualności CI oraz testy odpowiedzi |
+| F13 | Select shadcn/ui w formularzach | — | F08 | DONE: 7 pól, strzałki z odstępem16px, stylizowana lista, motywy i klawiatura |
 | P01 | Decimal i operacje domain | 2 | F01 | DONE: FinancialDecimal precision40/HALF_EVEN, guardy i jawne zaokrąglenia; 16 testów arytmetyki |
 | P02 | BUY/SELL koszt i prowizja | 3 | P01 | DONE: lokalny koszt BUY/SELL, prowizje, średnia, oversell i pełne zamknięcie; golden cases1/2 kosztu PASS |
 | P03 | Gotówka, wpłaty, wypłaty, FX | 3 | P02 | DONE: replay sald, wpłaty/wypłaty, FX12, historyczny koszt PLN i golden3 kosztu; gotówka API/UI |
@@ -64,3 +65,5 @@ P02 ukończone 15.11.2026: 28 testów pozycji (łącznie51 unit); wynik i koszt 
 P03 (15.11.2026) rozszerzone na prośbę użytkownika o widoczny fragment API/UI: salda3 walut, historyczne wpłaty netto, formularz wpłaty/wypłaty i historia. A01/A03/A04 częściowo przesunięte do przodu wyłącznie dla gotówki. BUY/SELL pozostaje w czystym silniku. Migracja0001 przejrzana i zastosowana w środowisku użytkownika po lokalnej kopii bazy; bez dodawania testowych operacji do jego portfela. E2E i integracja pracują na osobnej bazie i portach.
 
 P04 (15.11.2026): na prośbę użytkownika domknięto też pionowy zakres A01–A05 ręcznego MVP. Tabela cash_operations jest jednym ledgerem4 typów; dotychczasowe ID i klucze ponowień zachowane. Symulator, risk settings, korekty/edycja, paginacja i snapshoty pozostają poza tym etapem. Obecne ceny/kursy są manualne; progi świeżości API=72h, konfigurowalne argumenty w silniku (ustawienia UI później w A07).
+
+Poprawka UI przed P05: wszystkie natywne selecty formularzy zastąpiono shadcn/ui Select na Radix2.4.1. Brak zmian API, obliczeń i danych. Następny etap nadal P05/A06.

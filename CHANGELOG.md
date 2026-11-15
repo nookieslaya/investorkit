@@ -58,3 +58,8 @@
 - Domknięte A01–A05 ręcznego MVP: instrumenty, wspólny ledger BUY/SELL/wpłat/wypłat z blokadą/idempotencją i replay, ręczne ceny/FX, dashboard/pozycje/formularze/historia.
 - Migracja0002 po kopii bazy zachowuje operacje i hashe P03, dodaje composite owner/currency FK i CHECK. Ceny≥0, waluty i daty jawne. Bez danych demonstracyjnych w portfelu użytkownika.
 - Responsywne karty mobilne, tabela desktop, ciemny motyw, ścisłe OpenAPI15 operacji i pełny scenariusz E2E od brakującej/starej ceny do wyceny i częściowej sprzedaży.
+
+### Poprawa selectów — 15.11.2026
+- Wszystkie natywne pola wyboru zamienione na Select shadcn/ui/Radix: spójna lista, strzałka odsunięta16px od krawędzi, zaznaczenie i stany focus/disabled.
+- Motywy zachowane także w portalu, długie etykiety obsługiwane bez rozpychania formularzy; klawiatura i FormData zweryfikowane w E2E.
+- Bez zmian API, silnika i danych. P05 pozostaje następnym etapem.
