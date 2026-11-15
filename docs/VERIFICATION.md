@@ -19,3 +19,10 @@
 Pakiet testowy binariów PostgreSQL pochodził z @embedded-postgres/linux-x6417.11.0-beta.19 i nie jest zależnością aplikacji. To rzeczywisty PostgreSQL, nie emulator. W produkcie pozostaje Compose postgres17-alpine. Numer beta dotyczy wrappera dystrybucji.
 Advisory esbuild: https://github.com/advisories/GHSA-67mh-4wv8-2f99. Dotyczy developerskiego serwera esbuild; nie uruchamiamy go publicznie. Przed kolejną aktualizacją drizzle-kit sprawdzić naprawę upstream. Nie wymuszać automatycznie łamiącego downgrade wskazanego przez npm audit.
 Nie wykonano: testów matematyki (silnik niewdrożony), importu XTB (brak próbki), analizy AI (brak integracji), restore i audytu dostępności. Nie deklarujemy pełnego bezpieczeństwa ani zgodności WCAG.
+
+## Ponowna weryfikacja lokalna — macOS, 15.11.2026
+
+- Odtworzono pełną historię z `investorkit.bundle`; `git bundle verify` i `git fsck --full` PASS. Pliki źródłowe były zgodne z commitem `0f2f662`.
+- Node 24.22.3; `npm ci`, `npm run build`, `npm run typecheck` i `npm test` PASS (4 testy jednostkowe). Lockfile bez zmian.
+- Docker CLI jest dostępny, ale daemon nie działa. W tej sesji nie uruchomiono migracji, testów integracyjnych ani E2E; wcześniejsze wyniki powyżej pozostają historyczne.
+- Po potwierdzeniu braku repozytorium utworzono publiczne https://github.com/nookieslaya/investorkit za zgodą właściciela. Wynik pierwszego CI oczekuje na wysłanie commita.

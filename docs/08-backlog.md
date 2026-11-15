@@ -54,3 +54,5 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | B07 | Decyzja o płatnym pilotażu | 1 | B03 | TODO: dopiero wtedy backlog billing |
 
 Najbliższy punkt kontynuacji: domknąć F03/F08–F09/F11 w lokalnym środowisku, F12, potem P01. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
+
+Aktualizacja środowiska macOS 15.11.2026: build/typecheck/4 unit PASS na Node 24. Docker CLI dostępny, daemon wyłączony; F03/F08/F09/F11 zachowują status PARTIAL. Utworzono publiczne repozytorium `nookieslaya/investorkit`; przed dalszą implementacją zweryfikować pierwszy przebieg CI.
