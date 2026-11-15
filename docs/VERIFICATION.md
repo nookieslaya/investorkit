@@ -47,3 +47,10 @@ F12 GitHub Actions dla `079da72`: [przebieg](https://github.com/nookieslaya/inve
 - Sprawdzone: ułamki, kwoty większe niż Number.MAX_SAFE_INTEGER, precision40, brak zaokrągleń do skali zapisu po drodze, HALF_EVEN dodatnie/ujemne, usuwanie ujemnego zera, floor i skala ilości0–10, niedodatnia baza procentu, dzielenie przez zero, overflow po zaokrągleniu oraz izolacja od globalnego Decimal.set.
 - Guardy odrzucają number, bigint, obiekty, NaN/Infinity, exponent, spacje/nowe linie, nadmiarowe cyfry i niedozwolone wartości domenowe.
 - P01 nie dodaje endpointów, migracji ani zmian UI; lokalna baza użytkownika nie jest używana przez testy. BUY/SELL, FX, wyceny i golden cases1–7 pozostają do P02–P07. GitHub Actions dla `d291a1a`: [przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43751311427) PASS — build/typecheck, OpenAPI, migracja, 23 unit, 10 integration i1 E2E Chromium.
+
+## P02 — 15.11.2026
+
+- Node24: build, typecheck, 51 unit i aktualność OpenAPI PASS. Dodano28 testów pozycji: golden1/2 kosztu, częściowa i całkowita sprzedaż, ponowny BUY, ułamki, niezaokrąglona alokacja kosztu, końcowy remainder, prowizje, straty, immutability, różne waluty/instrumenty, oversell i błędne DTO.
+- Dodatkowa poprawka wspólnego decimalSchema odrzuca końcowe nowe linie, które JavaScript `$` sam dopuszcza. Regresja w testach kontraktów. Brak zmiany dokumentowanych endpointów/OpenAPI.
+- Lockfile zmieniony wyłącznie o wewnętrzne workspace engine→shared; bez nowych bibliotek zewnętrznych.
+- P02 liczy lokalny koszt i wynik sprzedaży, bez sald, historycznego FX/kosztu PLN, wycen i API/UI. Dane lokalnego użytkownika nie były użyte do testów. Integracja i E2E będą sprawdzone w GitHub Actions.

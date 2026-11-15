@@ -41,3 +41,8 @@
 - `FinancialDecimal` z prywatnym kontekstem decimal.js, precision40 i HALF_EVEN; brak obliczeń kwot jako number.
 - Walidacja kwot, ilości, cen i prowizji; jawny floor, granice prezentacji/zapisu, overflow i diagnostyka procentu przy niedodatniej bazie.
 - 16 testów precyzji, granic i izolacji konfiguracji. Brak nowych zależności i zmian API/UI/DB. BUY/SELL pozostaje w P02.
+
+### P02 — BUY/SELL i koszt pozycji, 15.11.2026
+- Niemutowalny stan pozycji: koszt lokalny, średnia i wynik sprzedaży po prowizji, proporcjonalna alokacja i pełne zamknięcie bez resztek.
+- Zod DTO dla instrumentu/transakcji, kontrola jednostki walutowej prowizji, skali i oversell. Wspólny decimalSchema odrzuca końcowe nowe linie.
+- 28 testów pozycji, golden cases1/2 kosztu; brak nowych endpointów i migracji. Salda, historyczny koszt PLN i FX pozostają w P03.

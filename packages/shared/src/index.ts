@@ -1,7 +1,8 @@
 import { z } from 'zod';
 export const currencySchema = z.enum(['PLN', 'EUR', 'USD']);
 // Accept canonical decimal strings only; never coerce JS numbers.
-export const decimalSchema = z.string().regex(/^(0|[1-9]\d{0,17})(\.\d{1,10})?$/);
+// The final lookahead enforces true EOF: JavaScript $ alone permits a final newline.
+export const decimalSchema = z.string().regex(/^(0|[1-9]\d{0,17})(\.\d{1,10})?$(?![\s\S])/);
 export const createPortfolioSchema = z.object({
   name: z.string().trim().min(1).max(80),
   baseCurrency: z.literal('PLN').default('PLN'),
@@ -25,3 +26,15 @@ export interface ImportAdapter {
 export const xtbAdapter: ImportAdapter = {
   id: 'xtb-verified', version: '0', available: false, blockedReason: 'SAMPLE_REQUIRED',
 };
+
+// Pure position-calculation inputs; these do not register ledger API endpoints.
+export const positionInstrumentSchema = z.object({
+  instrumentId: z.uuid(), currency: currencySchema, quantityScale: z.number().int().min(0).max(10),
+}).strict();
+export const positionTradeSchema = z.object({
+  kind: z.enum(['BUY', 'SELL']), instrumentId: z.uuid(), currency: currencySchema,
+  quantity: decimalSchema, unitPrice: decimalSchema, commission: decimalSchema,
+  commissionCurrency: currencySchema,
+}).strict();
+export type PositionInstrument = z.infer<typeof positionInstrumentSchema>;
+export type PositionTrade = z.infer<typeof positionTradeSchema>;

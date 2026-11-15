@@ -17,12 +17,13 @@ Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Foundation u
 - Better Auth: signup/signin/signout/sesja; origin guard, HttpOnly/SameSite, rate limiting, brak logowania body i sekretów.
 - API: GET /health, GET /ready, GET/POST /api/auth/*, GET/POST /api/v1/portfolios, GET /api/v1/portfolios/:id. Autoryzacja sesyjna i owner scope; limit jednego portfela w DB.
 - Kontrakty Zod, decimal-string boundary, jawnie zablokowany adapter XTB.
+- P02: niemutowalne pozycje BUY/SELL, średni koszt i wynik sprzedaży w walucie instrumentu, prowizje i blokada oversell; przypadki kontrolne1/2 kosztu PASS.
 - P01: czysta arytmetyka `FinancialDecimal` (decimal.js, precision40, HALF_EVEN), walidacja kwot/ilości/prowizji i jawne granice zaokrągleń.
 - Vitest unit/integration, Playwright onboarding, workflow CI.
 - OpenAPI 3.0.3 generowane z Zod: [dokument](docs/openapi.json), lokalnie `/api/v1/openapi.json`; testy odpowiedzi i kontrola aktualności w CI.
 
 ## Jeszcze niezaimplementowane
-BUY/SELL i przetwarzanie portfela, ledger/wyceny, dashboard z realnymi wynikami, symulator, dziennik, import, upload/AI, landing z zapisem zainteresowania. portfolio-engine zawiera wyłącznie podstawę arytmetyki P01; report-engine pozostaje szkieletem. Brak integracji silnika z API/UI. Model pozostałych tabel jest specyfikacją, a nie migracją. Brak płatności i automatycznego pobierania raportów.
+Salda gotówki, wpłaty/wypłaty, historyczny koszt bazowy PLN/FX, przetwarzanie ledgeru i wyceny, dashboard z realnymi wynikami, symulator, dziennik, import, upload/AI, landing z zapisem zainteresowania. portfolio-engine zawiera arytmetykę P01 i lokalny koszt pozycji P02; report-engine pozostaje szkieletem. Brak integracji silnika z API/UI. Model pozostałych tabel jest specyfikacją, a nie migracją. Brak płatności i automatycznego pobierania raportów.
 
 ## Uruchomienie lokalne
 Wymagania: Node24 LTS, npm11+, Docker z Compose. Rozpakuj archiwum i wejdź do katalogu investorkit.
@@ -62,7 +63,7 @@ Przejrzyj SQL przed zatwierdzeniem. Nie stosujemy drizzle-kit push w produkcji. 
 Obecny auth jest sprawdzony lokalnie, lecz przed publicznym pilotem wymagane są email verification/reset, proces usunięcia/eksportu danych, polityka prywatności, restore drill oraz test E2E w środowisku obsługującym Chromium. Lista w backlogu B04–B06. Brak połączenia z brokerem i przechowywania jego haseł. Ograniczenia procesu in-memory rate limit są opisane w architekturze.
 
 ## Kontynuacja
-F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01 ukończone; następnie P02–P07; osobno pozostaje wizualna inspekcja UI. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck i 4 testy unit na Node 24; szczegóły w raporcie weryfikacji.
+F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P02 ukończone; następnie P03–P07; osobno pozostaje wizualna inspekcja UI. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck i 4 testy unit na Node 24; szczegóły w raporcie weryfikacji.
 
 CI potwierdza build, typecheck, migrację, 4 testy jednostkowe, 8 integracyjnych i 1 E2E: [pierwszy przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43749258894).
 

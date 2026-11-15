@@ -37,4 +37,18 @@ Szok jednej pozycji: wartość' = wartość − wartość pozycji×spadek; FX st
 - `floorToScale` to jawna matematyczna podłoga, również dla wartości ujemnych. Walidacja wejścia sama nie zaokrągla. `dividedBy(0)` zgłasza `DIVISION_BY_ZERO`; `percentOf(base)` dla base≤0 zwraca `{value:null,reason:NON_POSITIVE_BASE}`, a dla dodatniej bazy wartość w procentach.
 - Błędy domenowe mają stabilne kody (`DecimalDomainError.code`), bez danych wejściowych w komunikatach. Bez zegara, DB i frameworków.
 
-Źródło zachowania Decimal: https://mikemcl.github.io/decimal.js/ (clone, precision, ROUND_HALF_EVEN, toDecimalPlaces). Golden cases portfela1–7 pozostają do P02–P07; nie są zamknięte przez testy samej arytmetyki.
+Źródło zachowania Decimal: https://mikemcl.github.io/decimal.js/ (clone, precision, ROUND_HALF_EVEN, toDecimalPlaces). Golden cases nie są zamknięte przez testy samej arytmetyki P01; zakres ukończonego P02 opisano poniżej.
+
+## Zaimplementowane P02 — koszt pozycji w walucie instrumentu
+
+`Position.empty({instrumentId,currency,quantityScale})` tworzy pustą pozycję. `applyTrade` przyjmuje BUY/SELL z ilością, ceną, prowizją i jej walutą; wejście unknown jest walidowane ścisłymi DTO Zod z shared i guardami domenowymi. Nie jest to endpoint ledgeru. Odtwarzanie odbywa się przez jawne przekazywanie kolejnych nowych stanów; wejścia i poprzednie stany nie są mutowane. Stan można utworzyć od zera, bez przywracania kosztów z zaokrąglonego snapshotu.
+
+- BUY dodaje quantity i quantity×unitPrice+commission do pozostałego kosztu lokalnego; średnia to koszt/ilość.
+- SELL zwalnia remainingCostLocal×soldQuantity/quantityBeforeSale, bez używania zaokrąglonej średniej. RealizedLocal=(quantity×unitPrice−commission)−releasedCostLocal dotyczy tylko tej sprzedaży. Pełne zamknięcie zwalnia cały pozostały koszt i jawnie zeruje koszt/ilość; średnia pustej pozycji=null. Ponowny BUY zaczyna nową bazę kosztu.
+- Zwracany cashDeltaLocal to potencjalna zmiana gotówki: ujemny koszt BUY albo przychód SELL pomniejszony o prowizję. Prowizja większa od przychodu SELL może dać ujemny przepływ; pokrycie go saldem będzie sprawdzać P03.
+- Waluty instrumentu/transakcji muszą być zgodne, waluta prowizji musi być walutą transakcji (również przy fee0). Błędny instrument, waluta, prowizja i oversell są odrzucane; brak shortów. Dwie identyczne legalne transakcje są dwiema transakcjami, bez deduplikacji w silniku.
+- Metadane i snapshot są niemutowalne. Snapshot diagnostyczny to decimal strings bez zaokrąglenia do skali DB; wynik pośredni może przekroczyć publiczną precyzję wejścia. Przy późniejszym zapisie potrzebna jawna granica serializacji.
+
+Golden cases1 i część kosztowa2 PASS: q3/koszt333/średnia111; SELL1 po150−1 → realized38/q2/koszt222. Referencyjne 2×140−222=58 sprawdzone arytmetycznie; aktualna wycena i kompletność danych pozostają w P04. Ułamkowy BUY USD0.125×80+0.5 daje koszt lokalny10.5USD, średnia84USD/szt.; koszt42PLN wymaga historycznego FX4 i należy do P03. Nie wolno przeliczać pozostałego kosztu lokalnego na bazowy według bieżącego FX.
+
+P02 nie prowadzi sald ani wpłat netto, nie pobiera kursów/cen, nie sortuje ledgeru, nie waliduje operacji wstecznych i nie oblicza podatków. Brak zegara/IO. Stabilne błędy `PositionDomainError.code`: INSTRUMENT_MISMATCH, CURRENCY_MISMATCH, COMMISSION_CURRENCY_MISMATCH, INSUFFICIENT_QUANTITY; pozostałe granice sygnalizują ZodError/DecimalDomainError.
