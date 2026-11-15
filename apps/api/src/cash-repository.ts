@@ -41,7 +41,7 @@ export function cashRepository(db: Database) {
         return operationDto(existing);
       }
       if (rows.length >= 1000) throw new CashApiError(422, 'OPERATION_LIMIT', 'Osiągnięto limit 1000 operacji w tej wersji.');
-      const metadata = await tx.select().from(instruments).where(eq(instruments.ownerId, ownerId));
+      const metadata = await tx.select().from(instruments).where(eq(instruments.ownerId, ownerId)).orderBy(asc(instruments.createdAt), asc(instruments.id));
       if (!('amount' in input) && !metadata.some(instrument => instrument.id === input.instrumentId.toLowerCase())) throw missing();
       replayLedger({ instruments: engineInstruments(metadata), operations: [...rows.map(operationInput), normalized], asOf: new Date().toISOString() });
       const fields = 'amount' in normalized ? { amount: normalized.amount } : {
@@ -59,7 +59,7 @@ export function cashRepository(db: Database) {
     async cashSummary(ownerId: string, id: string) {
       return db.transaction(async tx => {
         const rows = await ownedRows(tx, ownerId, id);
-        const metadata = await tx.select().from(instruments).where(eq(instruments.ownerId, ownerId));
+        const metadata = await tx.select().from(instruments).where(eq(instruments.ownerId, ownerId)).orderBy(asc(instruments.createdAt), asc(instruments.id));
         const { positions: _positions, ...cash } = replayLedger({ instruments: engineInstruments(metadata), operations: rows.map(operationInput), asOf: new Date().toISOString() });
         return cash;
       }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
@@ -72,7 +72,7 @@ export function cashRepository(db: Database) {
       if (Date.parse(asOf) > Date.now()) throw new CashApiError(422, 'FUTURE_VALUATION', 'Data wyceny nie może być przyszła.');
       return db.transaction(async tx => {
         const rows = await ownedRows(tx, ownerId, id);
-        const metadata = await tx.select().from(instruments).where(eq(instruments.ownerId, ownerId));
+        const metadata = await tx.select().from(instruments).where(eq(instruments.ownerId, ownerId)).orderBy(asc(instruments.createdAt), asc(instruments.id));
         const quotes = await tx.select().from(manualQuotes).where(eq(manualQuotes.ownerId, ownerId)).orderBy(asc(manualQuotes.sequence));
         const rates = await tx.select().from(fxRates).where(eq(fxRates.ownerId, ownerId)).orderBy(asc(fxRates.sequence));
         const result = valuePortfolio({ instruments: engineInstruments(metadata), operations: rows.map(operationInput), quotes: quotes.map(quoteDto), fxRates: rates.map(fxDto), asOf });
