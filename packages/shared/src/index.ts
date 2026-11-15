@@ -48,7 +48,7 @@ export const cashOperationInputSchema = z.object({
   kind: z.enum(['DEPOSIT', 'WITHDRAWAL']), currency: currencySchema, amount: decimalSchema,
   ...historicalFxShape, note: z.string().max(300).default(''),
 }).strict();
-export const ledgerTradeSchema = positionTradeSchema.extend(historicalFxShape);
+export const ledgerTradeSchema = positionTradeSchema.extend({ ...historicalFxShape, note: z.string().max(300).default('') });
 export const ledgerOperationSchema = z.discriminatedUnion('kind', [cashOperationInputSchema, ledgerTradeSchema]);
 export type CashOperationInput = z.infer<typeof cashOperationInputSchema>;
 export const cashOperationSchema = cashOperationInputSchema.extend({ id: z.uuid(), createdAt: z.iso.datetime() });
@@ -58,3 +58,45 @@ export const cashSummarySchema = z.object({
   balances: z.array(z.object({ currency: currencySchema, amount: decimalSchema })),
   netContributionsBase: signedDecimalSchema, baseCurrency: z.literal('PLN'), operationCount: z.number().int().nonnegative(),
 });
+
+export const createInstrumentSchema = z.object({
+  type: z.enum(['STOCK', 'ETF']), symbol: z.string().trim().min(1).max(24).regex(/^[A-Z0-9._-]+$/),
+  mic: z.string().regex(/^[A-Z0-9]{4}$/), name: z.string().trim().min(1).max(120), currency: currencySchema,
+  quantityScale: z.number().int().min(0).max(10), isin: z.string().regex(/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/).nullable().default(null),
+  issuerCountry: z.string().regex(/^[A-Z]{2}$/).nullable().default(null),
+}).strict();
+export const instrumentSchema = createInstrumentSchema.extend({ id: z.uuid(), createdAt: z.iso.datetime() });
+export const instrumentsSchema = z.object({ items: z.array(instrumentSchema) });
+export type CreateInstrument = z.infer<typeof createInstrumentSchema>;
+export type Instrument = z.infer<typeof instrumentSchema>;
+export const quoteInputSchema = z.object({ price: decimalSchema, currency: currencySchema, asOf: z.iso.datetime(), source: z.literal('manual') }).strict();
+export const quoteSchema = quoteInputSchema.extend({ id: z.uuid(), instrumentId: z.uuid(), createdAt: z.iso.datetime() });
+export const fxInputSchema = z.object({ currency: currencySchema, baseCurrency: z.literal('PLN'), rate: fxRateSchema, asOf: z.iso.datetime(), source: z.literal('manual') }).strict();
+export const fxSchema = fxInputSchema.extend({ id: z.uuid(), createdAt: z.iso.datetime() });
+export const operationSchema = z.discriminatedUnion('kind', [cashOperationSchema, ledgerTradeSchema.extend({ id: z.uuid(), createdAt: z.iso.datetime() })]);
+export const operationHistorySchema = z.object({ items: z.array(operationSchema), limit: z.literal(1000) });
+export type LedgerOperation = z.infer<typeof ledgerOperationSchema>;
+export const valuationQuerySchema = z.object({ asOf: z.iso.datetime().optional() }).strict();
+export const valuationTimeSchema = z.iso.datetime();
+const computedDecimalSchema = z.string().regex(/^-?(0|[1-9]\d*)(\.\d+)?$(?![\s\S])/);
+export const valuationIssueSchema = z.enum(['MISSING_QUOTE', 'STALE_QUOTE', 'FUTURE_QUOTE', 'MISSING_FX', 'STALE_FX', 'FUTURE_FX']);
+const quoteUsedSchema = z.object({ price: decimalSchema, asOf: z.iso.datetime(), source: z.literal('manual') });
+const fxUsedSchema = z.object({ rate: fxRateSchema, asOf: z.iso.datetime().nullable(), source: z.enum(['manual', 'identity']) });
+export const valuationSchema = z.object({
+  asOf: z.iso.datetime(), engineVersion: z.string(), complete: z.boolean(), baseCurrency: z.literal('PLN'),
+  totalValue: signedDecimalSchema.nullable(), pricedSubtotal: signedDecimalSchema, netContributionsBase: signedDecimalSchema,
+  pnl: signedDecimalSchema.nullable(), pnlPct: computedDecimalSchema.nullable(),
+  pnlPctReason: z.enum(['INCOMPLETE_VALUATION', 'NON_POSITIVE_BASE']).nullable(), realizedBase: signedDecimalSchema,
+  quoteMaxAgeHours: z.number(), fxMaxAgeHours: z.number(), valuationRange: z.object({ from: z.iso.datetime(), to: z.iso.datetime() }).nullable(),
+  positions: z.array(z.object({
+    instrumentId: z.uuid(), name: z.string(), symbol: z.string(), currency: currencySchema, quantity: computedDecimalSchema,
+    remainingCostBase: signedDecimalSchema, averageCostLocal: computedDecimalSchema.nullable(),
+    valueBase: signedDecimalSchema.nullable(), unrealizedBase: signedDecimalSchema.nullable(), unrealizedPct: computedDecimalSchema.nullable(),
+    weightPct: computedDecimalSchema.nullable(), quote: quoteUsedSchema.nullable(), fx: fxUsedSchema.nullable(), issues: z.array(valuationIssueSchema),
+  })),
+  cash: z.array(z.object({ currency: currencySchema, amount: decimalSchema, valueBase: signedDecimalSchema.nullable(), fx: fxUsedSchema.nullable(), issues: z.array(valuationIssueSchema) })),
+});
+export type QuoteInput = z.infer<typeof quoteInputSchema>;
+export type FxInput = z.infer<typeof fxInputSchema>;
+export type TradeOperation = z.infer<typeof ledgerTradeSchema>;
+export type Valuation = z.infer<typeof valuationSchema>;

@@ -13,7 +13,7 @@ function timestamp(value: string): number {
   if (!Number.isFinite(result)) throw new LedgerDomainError('INVALID_DATE');
   return result;
 }
-export function replayLedger(input: { instruments?: readonly unknown[]; operations: readonly unknown[]; asOf: string }) {
+export function replayLedgerState(input: { instruments?: readonly unknown[]; operations: readonly unknown[]; asOf: string }) {
   const asOf = timestamp(input.asOf);
   const balances: Record<Currency, FinancialDecimal> = { PLN: zero(), EUR: zero(), USD: zero() };
   const positions = new Map<string, { local: Position; costBase: FinancialDecimal; realizedBase: FinancialDecimal }>();
@@ -40,7 +40,7 @@ export function replayLedger(input: { instruments?: readonly unknown[]; operatio
     } else {
       const prior = positions.get(operation.instrumentId);
       if (!prior) throw new LedgerDomainError('UNKNOWN_INSTRUMENT');
-      const { fxToBase: _fx, fxAsOf: _fxDate, fxSource: _source, occurredAt: _date, ...trade } = operation;
+      const { fxToBase: _fx, fxAsOf: _fxDate, fxSource: _source, occurredAt: _date, note: _note, ...trade } = operation;
       const result = prior.local.applyTrade(trade);
       cashDelta = result.cashDeltaLocal;
       if (operation.kind === 'BUY') {
@@ -58,10 +58,14 @@ export function replayLedger(input: { instruments?: readonly unknown[]; operatio
     if (next.isNegative()) throw new LedgerDomainError('INSUFFICIENT_CASH');
     balances[operation.currency] = next;
   }
+  return { balances, netContributionsBase, positions: [...positions.values()], operationCount: operations.length };
+}
+export function replayLedger(input: Parameters<typeof replayLedgerState>[0]) {
+  const state = replayLedgerState(input);
   return {
-    balances: (['PLN', 'EUR', 'USD'] as const).map(currency => ({ currency, amount: balances[currency].toStorageString() })),
-    netContributionsBase: netContributionsBase.toStorageString(), baseCurrency: 'PLN' as const, operationCount: operations.length,
-    positions: [...positions.values()].map(({ local, costBase, realizedBase }) => ({
+    balances: (['PLN', 'EUR', 'USD'] as const).map(currency => ({ currency, amount: state.balances[currency].toStorageString() })),
+    netContributionsBase: state.netContributionsBase.toStorageString(), baseCurrency: 'PLN' as const, operationCount: state.operationCount,
+    positions: state.positions.map(({ local, costBase, realizedBase }) => ({
       ...local.snapshot(), remainingCostBase: costBase.toStorageString(), realizedBase: realizedBase.toStorageString(),
       averageCostBase: local.quantity.isZero() ? null : costBase.dividedBy(local.quantity).toString(),
     })),

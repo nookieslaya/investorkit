@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
-  portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema,
+  portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema, instrumentsSchema, createInstrumentSchema, instrumentSchema, quoteInputSchema, quoteSchema, fxInputSchema, fxSchema, ledgerOperationSchema, operationSchema, operationHistorySchema, valuationSchema, valuationTimeSchema,
 } from '@investorkit/shared';
 
 type ResponseContract = { description: string; schema: z.ZodType };
@@ -10,6 +10,7 @@ interface OperationContract {
   summary: string;
   authenticated?: boolean;
   idempotency?: boolean;
+  valuationQuery?: boolean;
   body?: z.ZodType;
   params?: typeof portfolioIdParamsSchema;
   responses: Record<number, ResponseContract>;
@@ -20,6 +21,23 @@ const protectedErrors = { ...commonErrors, 401: error('Brak ważnej sesji.') };
 
 // Only implemented first-party operations. Better Auth owns /api/auth/* contracts.
 export const apiContracts: Record<string, Partial<Record<'get' | 'post', OperationContract>>> = {
+  '/api/v1/instruments': {
+    get: { operationId: 'listInstruments', summary: 'Instrumenty właściciela (do 100).', authenticated: true, responses: { 200: { description: 'Własne instrumenty.', schema: instrumentsSchema }, ...protectedErrors } },
+    post: { operationId: 'createInstrument', summary: 'Dodaj własny instrument STOCK/ETF.', authenticated: true, body: createInstrumentSchema,
+      responses: { 201: { description: 'Instrument.', schema: instrumentSchema }, ...protectedErrors, 400: error('Błędne dane.'), 403: error('Origin.'), 409: error('Instrument już istnieje.'), 422: error('Limit instrumentów.'), 413: error('Limit body.'), 415: error('Content-Type.') } },
+  },
+  '/api/v1/instruments/{id}/quotes': { post: { operationId: 'createQuote', summary: 'Ręczna cena w walucie instrumentu; zero jest dozwolone, przyszła data odrzucona.', authenticated: true, params: portfolioIdParamsSchema, body: quoteInputSchema,
+    responses: { 201: { description: 'Cena.', schema: quoteSchema }, ...protectedErrors, 400: error('Błędne dane.'), 403: error('Origin.'), 404: error('Brak/cudzy instrument.'), 422: error('Data, waluta lub limit 500 cen.'), 413: error('Limit body.'), 415: error('Content-Type.') } } },
+  '/api/v1/fx-rates': { post: { operationId: 'createFx', summary: 'Ręczny kurs wyceny PLN za1 jednostkę; niezależny od historycznych kursów operacji.', authenticated: true, body: fxInputSchema,
+    responses: { 201: { description: 'Kurs.', schema: fxSchema }, ...protectedErrors, 400: error('Błędne dane.'), 403: error('Origin.'), 422: error('Data, kurs lub limit 1000 kursów.'), 413: error('Limit body.'), 415: error('Content-Type.') } } },
+  '/api/v1/portfolios/{id}/operations': {
+    get: { operationId: 'operationHistory', summary: 'Wspólna historia wpłat/wypłat/BUY/SELL; najnowsze pierwsze, limit 1000 wpisów.', authenticated: true, params: portfolioIdParamsSchema,
+      responses: { 200: { description: 'Historia.', schema: operationHistorySchema }, ...protectedErrors, 400: error('Błędny UUID.'), 404: error('Brak portfela.') } },
+    post: { operationId: 'createOperation', summary: 'Operacja wspólnego ledgeru z blokadą, idempotencją i pełnym replay.', authenticated: true, params: portfolioIdParamsSchema, idempotency: true, body: ledgerOperationSchema,
+      responses: { 201: { description: 'Operacja lub identyczna powtórka.', schema: operationSchema }, ...protectedErrors, 400: error('Błędne dane lub klucz.'), 403: error('Origin.'), 404: error('Brak portfela/instrumentu.'), 409: error('Konflikt klucza.'), 422: error('Debet, oversell, waluta, daty, overflow lub limit historii.'), 413: error('Limit body.'), 415: error('Content-Type.') } },
+  },
+  '/api/v1/portfolios/{id}/valuation': { get: { operationId: 'valuation', summary: 'Wycena z gotówką i nominalny P/L, świeżość 72h. Niekompletne dane dają totalValue/P&L null i pricedSubtotal.', authenticated: true, params: portfolioIdParamsSchema, valuationQuery: true,
+    responses: { 200: { description: 'Wycena z kompletnością, źródłami i diagnostyką.', schema: valuationSchema }, ...protectedErrors, 400: error('Błędna data/UUID.'), 404: error('Brak portfela.'), 422: error('Przyszła wycena lub błąd domeny.') } } },
   '/api/v1/portfolios/{id}/cash': { get: {
     operationId: 'cashSummary', summary: 'Salda gotówki i wpłaty netto PLN według historycznych kursów.', authenticated: true, params: portfolioIdParamsSchema,
     responses: { 200: { description: 'Saldo każdego subkonta i historyczne wpłaty netto.', schema: cashSummarySchema }, ...protectedErrors, 400: error('Nieprawidłowy UUID.'), 404: error('Brak portfela.'), 422: error('Niedozwolony stan ledgeru.') },
@@ -63,7 +81,13 @@ export const apiContracts: Record<string, Partial<Record<'get' | 'post', Operati
   } },
 };
 
-const jsonSchema = (schema: z.ZodType, io: 'input' | 'output') => z.toJSONSchema(schema, { target: 'openapi-3.0', io });
+const jsonSchema = (schema: z.ZodType, io: 'input' | 'output') => z.toJSONSchema(schema, {
+  target: 'openapi-3.0', io,
+  override: ({ jsonSchema: converted }) => {
+    // In OAS3 nullable widens type, but enum must independently admit null.
+    if (converted.nullable === true && Array.isArray(converted.enum) && !converted.enum.includes(null)) converted.enum = [...converted.enum, null];
+  },
+});
 export function buildOpenApiDocument() {
   return {
     openapi: '3.0.3',
@@ -83,6 +107,7 @@ export function buildOpenApiDocument() {
         parameters: [
           ...(contract.params ? [{ name: 'id', in: 'path', required: true, schema: jsonSchema(contract.params.shape.id, 'input') }] : []),
           ...(contract.body ? [{ name: 'Origin', in: 'header', required: true, description: 'Musi być równy WEB_ORIGIN.', schema: { type: 'string', format: 'uri' } }] : []),
+          ...(contract.valuationQuery ? [{ name: 'asOf', in: 'query', required: false, description: 'UTC; domyślnie zegar serwera, przyszła data niedozwolona.', schema: jsonSchema(valuationTimeSchema, 'input') }] : []),
           ...(contract.idempotency ? [{ name: 'Idempotency-Key', in: 'header', required: true, description: 'UUID; ten sam klucz i body zwracają tę samą operację.', schema: { type: 'string', format: 'uuid' } }] : []),
         ],
         ...(contract.body ? {

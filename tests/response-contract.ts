@@ -18,17 +18,20 @@ export async function createContractValidator() {
     }
   }
   await validator.ready();
+  async function check(path: string, method: string, status: number, body: unknown) {
+    const url = routes.get(`${method.toLowerCase()} ${path} ${status}`);
+    if (!url) throw new Error(`Undocumented response: ${method} ${path} ${status}`);
+    return validator.inject({ method: 'POST', url, payload: JSON.stringify(body), headers: { 'content-type': 'application/json' } });
+  }
   return {
     close: () => validator.close(),
     async accepts(path: string, method: string, status: number, body: unknown) {
-      const url = routes.get(`${method.toLowerCase()} ${path} ${status}`);
-      if (!url) throw new Error(`Undocumented response: ${method} ${path} ${status}`);
-      const result = await validator.inject({ method: 'POST', url, payload: JSON.stringify(body), headers: { 'content-type': 'application/json' } });
-      return result.statusCode === 200;
+      return (await check(path, method, status, body)).statusCode === 200;
     },
     async assert(path: string, method: string, response: { statusCode: number; body: string; headers: Record<string, unknown> }) {
       expect(response.headers['content-type']).toMatch(/application\/json/);
-      expect(await this.accepts(path, method, response.statusCode, JSON.parse(response.body)), `${method} ${path}: ${response.statusCode} violates OpenAPI`).toBe(true);
+      const result = await check(path, method, response.statusCode, JSON.parse(response.body));
+      expect(result.statusCode, `${method} ${path}: ${response.statusCode}: ${result.body}`).toBe(200);
     },
   };
 }

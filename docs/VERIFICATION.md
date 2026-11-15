@@ -64,3 +64,12 @@ F12 GitHub Actions dla `079da72`: [przebieg](https://github.com/nookieslaya/inve
 - OpenAPI odświeżone (8 operacji), bez nowych bibliotek zewnętrznych; API→portfolio-engine jako zależność workspace. Build zgłasza informacyjny próg bundle>500kB (bez błędu); dzielenie kodu można wykonać przy rozbudowie kolejnych widoków.
 
 P03 CI dla `68a1e8e`: [przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43753978922) PASS — build/typecheck, OpenAPI, migracje, 61 unit, 17 integration i rozszerzony1 E2E Chromium.
+
+## P04 + A01–A05 — 15.11.2026
+- Node24: build/typecheck,74 unit,26 integration i rozszerzony1 E2E Chromium PASS. Testy w dedykowanej investorkit_contract_test, E2E osobne porty5174/3002. Konto i dane użytkownika nie były danymi testowymi.
+- Migracja0002 wygenerowana/przejrzana: nowe instrumenty/ceny/FX, ALTER dotychczasowego ledgeru bez UPDATE/DELETE danych, unikalny sequence i composite tenant/currency FK, CHECK rozdziału pól. Unikalny indeks instrument_owner_currency przeniesiony przed zależne FK przed zastosowaniem migracji. Migracja PASS na testowej i lokalnej bazie, po prywatnym pg_dump w ignorowanej .local-backups.
+- Unit: golden3 pełnej wyceny87.15/P&L7.15, golden7 procentnull i niepełność, stale72h/brzeg, future/wybór poprzednich cen, historiaasOf, cena0, PLNidentity, zerowe subkonta, pełne zamknięcie, brak zaokrągleń pośrednich, stabilne timestampy i formatowanie HALF_EVEN bez number.
+- Integracja: legacy hash/klucze P03 (niezależna literalna próbka), jeden ledger i stare API cash po BUY/SELL, owner isolation i bezpośredni cross-tenant/currency FK reject, równoległe retry/BUY/SELL bez podwójnego wydania/oversell, wsteczna wypłata walidowana względem późniejszego BUY, quote/FXdaty/waluty i historyczna wycena.
+- Wykryto i poprawiono nullable enum w wygenerowanym OAS3: enum jawnie dopuszcza null niezależnie od nullable. Testy odpowiedzi pozostały ścisłe i sprawdzają rzeczywiste API. OpenAPI15 operacji aktualne.
+- E2E: dotychczasowy onboarding/gotówka, instrumentUSD, zakup0.1×80+0.5, brak wyceny, stara cena, świeża cena90, FX4.2, wartość894.10/P&L2.10, oversell odrzucony, sprzedaż0.05×100−0.1 → wartość895.78/P&L3.78/cash6.4USD i trwałość po reload. Zrzuty investments-desktop.png i investments-mobile-dark.png obejrzane; na telefonie pozycje jako karty, bez poziomego overflow.
+- Bez nowych zależności projektu. Build zachowuje informacyjne ostrzeżenie bundle>500kB (nie błąd); brak pełnego audytu WCAG, importu/AI, live feeds i publicznego deployu.

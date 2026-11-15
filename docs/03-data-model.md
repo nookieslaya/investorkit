@@ -1,5 +1,5 @@
 # Model danych
-Status: pełny model docelowego MVP; foundation implementuje auth i portfolios, a pionowy etap P03 także cash_operations (poniżej). Pozostałe tabele wymagają osobnych migracji i testów zgodnie z backlogiem.
+Status: pełny model docelowego MVP; wdrożone auth, portfolios, wspólny ledger cash_operations, instruments, manual_quotes i fx_rates. Pozostałe tabele wymagają osobnych migracji i testów zgodnie z backlogiem.
 
 ## Konwencje
 PK UUID dla domeny; auth text IDs zgodne z Better Auth. timestamptz UTC, UI Europe/Warsaw. numeric(28,10): ceny, ilości, opłaty; FX numeric(28,12); koszty AI USD numeric(18,8). API wyłącznie string decimal. CHECK wartości dodatnie/nieujemne; quantity scale instrumentu ≤10. Zdarzenia mają occurred_at i stabilny sequence, created_at, created_by. Obliczenia wewnętrzne precision 40, zaokrąglenie dopiero do precyzji przechowywania/prezentacji.
@@ -37,3 +37,10 @@ Przyszłe typy dywidend/splitów/transferów wymagają jawnego wersjonowania eve
 cash_operations przechowuje owner_id+portfolio_id z composite FK do portfolios(id,owner_id), globalne sequence do stabilnego rozstrzygania remisu dat, rodzaj DEPOSIT/WITHDRAWAL, amount numeric(28,10), currency, fx_to_base numeric(28,12), fx_as_of, fx_source=manual, occurred_at, note≤300, idempotency_key UUID i request_hash. Unikalność portfolio+key. CHECK: dozwolone rodzaje/waluty, dodatnie kwoty/kursy, PLN FX1, data FX≤operacja. Migracja0001 nie modyfikuje auth/portfolios. Salda nie są niezależnie przechowywane: obliczane z ledgeru z walidacją każdego prefiksu.
 
 Każda mutacja blokuje nadrzędny portfel FOR UPDATE przed odczytem historii i deduplikacją; zapis i idempotencja są w jednej transakcji. Stan źródłowy zachowuje precyzję wejściową. Przy integracji BUY/SELL trzeba rozszerzyć/przenieść ten fragment do wspólnego ledgeru z zachowaniem historii i kluczy, zanim udostępni się API transakcji; nie tworzyć drugiej niezależnej historii sald.
+
+## P04 — wspólny ledger i dane do wyceny
+Migracja0002 rozszerza historycznie nazwaną cash_operations o BUY/SELL oraz instrument_id, quantity/unit_price/commission numeric(28,10), commission_currency. CHECK rozdziela obowiązkowe i NULL pola obu grup typów. Cash amount pozostaje dodatnie i wymagane dla DEPOSIT/WITHDRAWAL, NULL dla BUY/SELL. Composite FK portfolio+owner oraz instrument+owner+currency pilnują obu granic; unique(portfolio,sequence) daje stabilną kolejność remisów. Istniejące wiersze, ID, daty i request_hash nie są przepisywane.
+
+instruments ma unique(owner,symbol,mic,currency), dodatkowy unique(id,owner,currency), CHECK typu, skali0–10, nazwy/symbolu/MIC i waluty. manual_quotes: composite instrument+owner+currency FK, price≥0, asOf/source/sequence. fx_rates: owner FK, numeric(28,12), basePLN, rate>0, PLN=1, source=manual, asOf/sequence. Dane są append-only, bez edycji. Najnowszy asOf≤data wyceny wygrywa; równy asOf rozstrzyga sequence. Repozytoria czytają zawsze owner scope; wycena używa spójnego snapshotu transakcji.
+
+Nie ma osobnego salda ani tabeli operacji finansowych dla BUY/SELL. Pełne API operations i alias cash-operations zapisują ten sam ledger i blokują tę samą nadrzędną pozycję portfela. Alias historii cash filtruje tylko wpłaty/wypłaty; cash summary uwzględnia również przepływy zakupów/sprzedaży. Korekty/revision i pełny import pozostają do osobnego etapu.

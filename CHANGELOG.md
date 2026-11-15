@@ -52,3 +52,9 @@
 - Na prośbę użytkownika pionowy zakres gotówki: migracja z composite FK/CHECK, API odczytu/zapisu z blokadą portfela i idempotencją, salda/formularz/historia w UI. BUY/SELL w API/UI nadal niewdrożone.
 - Migracja lokalna po kopii bazy; konto i portfel zachowane, bez wstawiania danych demonstracyjnych do jego historii. Testy na osobnej bazie i portach.
 - Rozszerzone E2E wpłat/wypłat/FX i zrzuty desktop/mobile/dark; OpenAPI obejmuje8 operacji.
+
+### P04 i działające inwestycje — 15.11.2026
+- Wycena papierów i gotówki, nominalny P/L/prosta stopa, kompletność i subtotal, źródła/datowanie, braki/stale/future; obliczenia ze stanu niezaokrąglonego do zapisu.
+- Domknięte A01–A05 ręcznego MVP: instrumenty, wspólny ledger BUY/SELL/wpłat/wypłat z blokadą/idempotencją i replay, ręczne ceny/FX, dashboard/pozycje/formularze/historia.
+- Migracja0002 po kopii bazy zachowuje operacje i hashe P03, dodaje composite owner/currency FK i CHECK. Ceny≥0, waluty i daty jawne. Bez danych demonstracyjnych w portfelu użytkownika.
+- Responsywne karty mobilne, tabela desktop, ciemny motyw, ścisłe OpenAPI15 operacji i pełny scenariusz E2E od brakującej/starej ceny do wyceny i częściowej sprzedaży.

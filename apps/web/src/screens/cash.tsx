@@ -7,16 +7,7 @@ import type { Currency } from '@investorkit/shared';
 import { Button } from '../components/ui/button';
 import { loadCash, loadCashHistory, saveCash } from '../lib/api';
 
-// Format decimal strings directly, preserving precision beyond Number.MAX_SAFE_INTEGER.
-export function formatAmount(value: string): string {
-  const [integer = '0', rawFraction = ''] = value.split('.');
-  const fraction = rawFraction.replace(/0+$/, '');
-  return `${integer.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')},${fraction.padEnd(2, '0')}`;
-}
-function localNow() {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}
+import { formatAmount, localNow } from '../lib/format';
 export function CashOverview({ portfolioId }: { portfolioId: string }) {
   const client = useQueryClient();
   const cash = useQuery({ queryKey: ['cash', portfolioId], queryFn: () => loadCash(portfolioId) });
@@ -30,7 +21,7 @@ export function CashOverview({ portfolioId }: { portfolioId: string }) {
   const pending = useRef<{ body: string; key: string } | null>(null);
   const save = useMutation({ mutationFn: saveCash, onSuccess: async () => {
     pending.current = null; setAmount(''); setNote(''); setSuccess('Operacja zapisana. Saldo zostało zaktualizowane.');
-    await Promise.all([client.invalidateQueries({ queryKey: ['cash', portfolioId] }), client.invalidateQueries({ queryKey: ['cash-history', portfolioId] })]);
+    await Promise.all([client.invalidateQueries({ queryKey: ['cash', portfolioId] }), client.invalidateQueries({ queryKey: ['cash-history', portfolioId] }), client.invalidateQueries({ queryKey: ['valuation', portfolioId] }), client.invalidateQueries({ queryKey: ['operations', portfolioId] })]);
   } });
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(''); setSuccess('');
@@ -73,7 +64,7 @@ export function CashOverview({ portfolioId }: { portfolioId: string }) {
           <div><strong>{item.kind === 'DEPOSIT' ? 'Wpłata' : 'Wypłata'} {item.currency}</strong><small>{new Intl.DateTimeFormat('pl-PL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Warsaw' }).format(new Date(item.occurredAt))}</small>{item.note && <p>{item.note}</p>}<small>Kurs: {formatAmount(item.fxToBase)} PLN · wpis ręczny</small>{item.currency !== 'PLN' && <small>Kurs z {new Intl.DateTimeFormat('pl-PL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Warsaw' }).format(new Date(item.fxAsOf))}</small>}</div>
           <strong className="cash-row-amount">{item.kind === 'DEPOSIT' ? '+' : '−'}{formatAmount(item.amount)} <small>{item.currency}</small></strong>
         </li>)}</ul>}
-        <div className="cash-help cash-disclosure">Wycena inwestycji i wynik portfela będą dostępne po dodaniu instrumentów i cen. Wpłaty netto pokazują przepływy według kursów historycznych.</div>
+        <div className="cash-help cash-disclosure">Wpłaty netto pokazują przepływy według kursów historycznych. Wartość inwestycji i wynik całego portfela znajdziesz w sekcji Inwestycje.</div>
       </section>
     </div>
   </>;

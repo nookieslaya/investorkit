@@ -3,9 +3,9 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { fromNodeHeaders } from 'better-auth/node';
 import { z, ZodError } from 'zod';
-import { createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema } from '@investorkit/shared';
+import { createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema } from '@investorkit/shared';
 import { CashApiError } from './cash-repository.js';
-import { LedgerDomainError, DecimalDomainError } from '@investorkit/portfolio-engine';
+import { LedgerDomainError, DecimalDomainError, PositionDomainError, ValuationDomainError } from '@investorkit/portfolio-engine';
 import { buildOpenApiDocument } from './openapi.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
@@ -30,14 +30,19 @@ export async function buildApp(config: Config, services: Services, logging = tru
   });
   app.setErrorHandler((err, req, reply) => {
     if (err instanceof CashApiError) return reply.code(err.statusCode).send(fail(err.code, err.message, req.id));
-    if (err instanceof LedgerDomainError || err instanceof DecimalDomainError) {
+    if (err instanceof LedgerDomainError || err instanceof DecimalDomainError || err instanceof PositionDomainError || err instanceof ValuationDomainError) {
       const message = err.code === 'INSUFFICIENT_CASH' ? 'Brak wystarczających środków w tej walucie.'
-        : 'Sprawdź kwotę, kurs i daty. Kurs PLN musi wynosić 1, a daty nie mogą być przyszłe.';
+        : err.code === 'STORAGE_OVERFLOW' ? 'Wynik przekracza obsługiwany zakres kwot (18 cyfr przed przecinkiem).'
+        : err.code === 'FUTURE_FX' ? 'Data kursu historycznego nie może być późniejsza niż data operacji.'
+        : err.code === 'COMMISSION_CURRENCY_MISMATCH' ? 'Waluta prowizji musi być walutą transakcji.'
+        : err.code === 'INSUFFICIENT_QUANTITY' ? 'Nie możesz sprzedać większej ilości niż posiadasz.'
+        : 'Sprawdź kwotę, instrument, kurs i daty. Kurs PLN musi wynosić 1, a daty nie mogą być przyszłe.';
       return reply.code(422).send(fail(err.code, message, req.id));
     }
     if (err instanceof ZodError) return reply.code(400).send(fail('VALIDATION_ERROR', 'Sprawdź wprowadzone dane.', req.id));
-    const error = err as { statusCode?: number; code?: string; cause?: { code?: string } };
-    if (error.code === '23505' || error.cause?.code === '23505') return reply.code(409).send(fail('PORTFOLIO_LIMIT', 'Możesz utworzyć jeden portfel.', req.id));
+    const error = err as { statusCode?: number; code?: string; constraint?: string; cause?: { code?: string; constraint?: string } };
+    if ((error.code === '23505' || error.cause?.code === '23505') && (error.constraint ?? error.cause?.constraint) === 'instrument_identity') return reply.code(409).send(fail('INSTRUMENT_EXISTS', 'Instrument o tym symbolu, rynku i walucie już istnieje.', req.id));
+    if (error.code === '23505' || error.cause?.code === '23505') return reply.code(409).send(fail('PORTFOLIO_LIMIT', 'Zasób już istnieje lub przekroczono limit jednego portfela.', req.id));
     const status = error.statusCode && error.statusCode >= 400 && error.statusCode < 500 ? error.statusCode : 500;
     // Avoid logging adapter errors that can include SQL params and private values.
     req.log.error({ requestId: req.id, code: error.code ?? 'INTERNAL_ERROR' }, 'Request failed');
@@ -69,6 +74,27 @@ export async function buildApp(config: Config, services: Services, logging = tru
       const session = await services.auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
       if (!session) return reply.code(401).send(fail('UNAUTHENTICATED', 'Zaloguj się.', req.id));
       req.ownerId = session.user.id;
+    });
+    scoped.get('/instruments', async req => services.portfolios.listInstruments(req.ownerId));
+    scoped.post('/instruments', async (req, reply) => reply.code(201).send(await services.portfolios.createInstrument(req.ownerId, createInstrumentSchema.parse(req.body))));
+    scoped.post('/instruments/:id/quotes', async (req, reply) => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return reply.code(201).send(await services.portfolios.createQuote(req.ownerId, id, quoteInputSchema.parse(req.body)));
+    });
+    scoped.post('/fx-rates', async (req, reply) => reply.code(201).send(await services.portfolios.createFx(req.ownerId, fxInputSchema.parse(req.body))));
+    scoped.get('/portfolios/:id/operations', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return services.portfolios.operationHistory(req.ownerId, id);
+    });
+    scoped.post('/portfolios/:id/operations', async (req, reply) => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      const key = z.uuid().parse(req.headers['idempotency-key']).toLowerCase();
+      return reply.code(201).send(await services.portfolios.createOperation(req.ownerId, id, ledgerOperationSchema.parse(req.body), key));
+    });
+    scoped.get('/portfolios/:id/valuation', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      const query = valuationQuerySchema.parse(req.query);
+      return services.portfolios.valuation(req.ownerId, id, query.asOf ?? new Date().toISOString());
     });
     scoped.get('/portfolios', async req => {
       const rows = await services.portfolios.list(req.ownerId);

@@ -65,3 +65,14 @@ Obliczenia pośrednie zachowują40 cyfr znaczących. Snapshot końcowych sald, w
 Golden3: wpłata20USD FX4, BUY0.125×80+0.5USD FX4 → gotówka9.5USD, koszt pozycji42PLN, wpłaty netto80PLN. Wartość47.25 i unrealized5.25 przy cenie90/FX4.2 sprawdzone jako arytmetyka referencyjna; kompletna wycena i kontrola quote/fx freshness nadal P04.
 
 P03 API/UI zapisuje wyłącznie wpłaty/wypłaty. Pozostałe typy istnieją w czystym silniku, bez domniemanej integracji z tabelą cash_operations.
+
+## P04 — wycena (wdrożone)
+`valuePortfolio` waliduje datę wyceny, odtwarza prefix operacji occurredAt≤asOf i korzysta z niezaokrąglonego stanu decimal40. Ceny i FX wybiera po największym asOf≤data wyceny; równe timestampy rozstrzyga kolejność wejścia (DB sequence). Dane przyszłe są pomijane. Jeśli dostępne są tylko przyszłe rekordy, diagnostyka FUTURE_QUOTE/FUTURE_FX zastępuje pozorną wartość. API nie pozwala zapisywać przyszłych cen/kursów ani pytać o przyszły stan.
+
+Wartość pozycji=quantity×price×FX, wartość gotówki=amount×FX. PLN używa jawnej tożsamości1, bez sztucznego timestampu rynkowego. Zerowa gotówka obca nie wymaga FX. Zamknięte pozycje nie wymagają cen. Cena0 wpisana ręcznie jest ważną ceną, a nie brakiem. Koszt i realizedBase zawsze po historycznych FX transakcji, niezależne od aktualnych kursów.
+
+Domyślne progi quote/fx=72h; age==próg jest ważne, age>próg=stale. Silnik dopuszcza argumenty progów (0<hours≤8760), API na tym etapie używa72h. Nie ma kalendarza sesji giełdowych. Brak/stale uniemożliwia wycenę odpowiedniej pozycji/subkonta: valueBase/unrealized/udział=null. pricedSubtotal sumuje wyłącznie świeżo wycenione części. complete=false → totalValue,pnl,pnlPct=null; nie prezentujemy subtotalu jako pełnej wartości.
+
+Przy kompletności P/L=pełna wartość−historyczne wpłaty netto PLN (w tym FX gotówki i prowizje). Procent=P/L/wpłaty netto×100 tylko dla dodatniej bazy, inaczej null z NON_POSITIVE_BASE. Udział pozycji względem pełnej wartości z gotówką, dla niepełnego/zerowego mianownika null. Snapshot końcowy money HALF_EVEN10 z ochroną overflow; procenty zachowują40 cyfr, UI zaokrągla HALF_EVEN2 bez konwersji kwot do number. Zakres dat obejmuje faktycznie wykorzystane ceny/FX, a wybrane stare rekordy są widoczne osobno z diagnostyką i źródłem.
+
+Golden3 z wpłatą20USD FX4, zakupem0.125×80+0.5 i ceną90/FX4.2: pozycja47.25, koszt42, unrealized5.25, gotówka39.9, łączna wartość87.15 i P/L7.15 względem wpłat80. Nie utożsamiać P/L portfela z samym unrealized akcji (tu różnica1.9 z FX gotówki). Golden7: brak danych → brak pełnego P/L; niepozytywne wpłaty netto → procentnull.
