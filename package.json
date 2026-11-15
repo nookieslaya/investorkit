@@ -1,0 +1,33 @@
+{
+  "name": "investorkit",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "npm run build:packages && concurrently -k -n api,web \"npm run dev -w @investorkit/api\" \"npm run dev -w @investorkit/web\"",
+    "build:packages": "npm run build -w @investorkit/shared && npm run build -w @investorkit/db && npm run build -w @investorkit/portfolio-engine && npm run build -w @investorkit/report-engine",
+    "build": "npm run build:packages && npm run build -w @investorkit/api && npm run build -w @investorkit/web",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.tests.json",
+    "test": "vitest run --config vitest.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "playwright test",
+    "db:generate": "npm run generate -w @investorkit/db",
+    "db:migrate": "npm run migrate -w @investorkit/db",
+    "setup:env": "node scripts/init-env.mjs"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "5.1.0",
+    "@playwright/test": "1.65.1",
+    "tsx": "4.23.15",
+    "@types/node": "26.6.6",
+    "concurrently": "10.0.7"
+  }
+}
