@@ -14,3 +14,5 @@ Weryfikacja F12: Node24, build/typecheck/7 unit i10 integration PASS; osobna mig
 Kluczowe decyzje: baza PLN; instrumenty PLN/EUR/USD; wagi obejmują gotówkę; średni koszt analityczny nie jest rozliczeniem podatkowym. Decimal strings i historyczny FX; brak wyceny oznacza niekompletny wynik; raport prywatny domyślnie. Historia: ../CHANGELOG.md.
 
 P01 15.11.2026: brak nowych zależności (decimal.js10.6.0 już w lockfile). 16 testów podstawy arytmetyki, łącznie23 unit. Opis publicznego API arytmetyki i ograniczeń w docs/04-calculations.md. Kwoty/ilości/ceny do10 miejsc; FX12 i powiązane DTO dopiero w P03. Kod domeny nie ma IO ani zegara. Wyniki lokalne/CI: VERIFICATION.md.
+
+P01 CI PASS (23 unit, 10 integration, 1 E2E Chromium): https://github.com/nookieslaya/investorkit/actions/runs/43751311427. Następne zadanie: P02.
