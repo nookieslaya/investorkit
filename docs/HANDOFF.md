@@ -20,3 +20,5 @@ P01 CI PASS (23 unit, 10 integration, 1 E2E Chromium): https://github.com/nookie
 P02: `Position.empty(instrument)` i `.applyTrade(unknown)` (walidacja Zod z shared) zwracają nowe stany. Metadane: instrumentId UUID, currency, quantityScale0–10. Transakcja: kind BUY/SELL, instrumentId, currency, quantity, unitPrice, commission, commissionCurrency. Snapshot zawiera quantity, remainingCostLocal, averageCostLocal|null; wynik transakcji gross/commission/cashDelta/releasedCost/realizedLocal jest jawnie w walucie instrumentu. Snapshot diagnostyczny zachowuje precision40 i nie jest gotowym rekordem DB. Saldo/stać-na-BUY to P03; odtwarzanie pełnego ledgeru i walidacja operacji wstecznych nadal przed nami.
 
 28 nowych testów pozycji, łącznie51 unit PASS; build/typecheck/OpenAPI PASS. Nowa zależność wewnętrzna engine → shared służy wspólnym DTO Zod; bez nowych pakietów zewnętrznych i zmian ich wersji. Poprawiono odrzucanie końcowych nowych linii przez wspólny decimalSchema.
+
+P02 CI PASS: 51 unit, 10 integration, 1 E2E Chromium; https://github.com/nookieslaya/investorkit/actions/runs/43752114594. Następny etap: P03.
