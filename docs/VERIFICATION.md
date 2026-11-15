@@ -38,3 +38,5 @@ Nie wykonano: testów matematyki (silnik niewdrożony), importu XTB (brak próbk
 - Sprawdzono wygenerowany OpenAPI, jego aktualność oraz odpowiedzi JSON API: 200/201, 400, 401, 403, 404, 409, 413, 415, 429, 500 i503. Testy walidatora wykrywają brak pól, nieprawidłowe UUID/daty/waluty i dodatkowe pola prywatne.
 - `npm run openapi:check` PASS; lokalny `/api/v1/openapi.json` dostępny przez proxy Vite. Brak nowych zależności; lockfile bez zmian. Better Auth pozostaje poza wygenerowanym dokumentem.
 - E2E lokalnie w tej zmianie nieuruchamiane, aby nie używać bazy i aktywnej sesji użytkownika. Pełny przebieg weryfikuje GitHub Actions.
+
+F12 GitHub Actions dla `079da72`: [przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43750687345) PASS — instalacja, generowane kontrakty, build/typecheck, migracja, 7 unit, 10 integration i1 E2E Chromium. Bez nowych błędów.

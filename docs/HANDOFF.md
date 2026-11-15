@@ -9,6 +9,6 @@ Następna sesja:
 2. Potem A01–A09: composite tenant FK, blokady ledgeru i idempotencja przed udostępnieniem operacji.
 3. XTB po otrzymaniu próbki; AI po bezpiecznych uploadach, budżecie i ACL. Bez płatności i automatycznego pobierania raportów.
 
-Weryfikacja F12: Node24, build/typecheck/7 unit i10 integration PASS; osobna migrowana baza `investorkit_contract_test`, bez testów na danych użytkownika. E2E dla F12 sprawdzane w GitHub Actions; wyniki i ograniczenia w VERIFICATION.md. Lokalne `.env`, node_modules i buildy są ignorowane przez Git. Nie zmieniaj bazy użytkownika na testową.
+Weryfikacja F12: Node24, build/typecheck/7 unit i10 integration PASS; osobna migrowana baza `investorkit_contract_test`, bez testów na danych użytkownika. F12 CI PASS (7 unit, 10 integration, 1 Chromium E2E): https://github.com/nookieslaya/investorkit/actions/runs/43750687345; wyniki i ograniczenia w VERIFICATION.md. Lokalne `.env`, node_modules i buildy są ignorowane przez Git. Nie zmieniaj bazy użytkownika na testową.
 
 Kluczowe decyzje: baza PLN; instrumenty PLN/EUR/USD; wagi obejmują gotówkę; średni koszt analityczny nie jest rozliczeniem podatkowym. Decimal strings i historyczny FX; brak wyceny oznacza niekompletny wynik; raport prywatny domyślnie. Historia: ../CHANGELOG.md.
