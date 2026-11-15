@@ -15,3 +15,5 @@ Migracja0001_past_gauntlet.sql (CREATE cash_operations bez usuwania danych) prze
 Testy: TEST_DATABASE_URL wskazuje wyłącznie migrowaną investorkit_contract_test. E2E wymaga tej zmiennej i uruchamia własne serwery; lokalnie E2E_WEB_PORT5174 / E2E_API_PORT3002, bez reuse. E2E tworzy konta i operacje tylko w bazie testowej. Aktualne wyniki i ograniczenia w VERIFICATION.md. Zrzuty cash-desktop.png i cash-mobile-dark.png w test-results zostały obejrzane; bez obcięć i poziomego overflow.
 
 Nie wdrożono: instrumentów/quote API, BUY/SELL API/UI, wyceny, symulatora, importu XTB (brak próbki), raportów AI. Brak płatności i automatycznego pobierania raportów. Średni koszt jest analityczny, nie podatkowy. Sekrety/buildy/test-results/backupy są ignorowane w Git.
+
+P03 CI PASS (61 unit, 17 integration, 1 E2E): https://github.com/nookieslaya/investorkit/actions/runs/43753978922. Interfejs lokalny działa po migracji; kolejny etap P04.

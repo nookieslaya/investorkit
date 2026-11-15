@@ -62,3 +62,5 @@ F12 GitHub Actions dla `079da72`: [przebieg](https://github.com/nookieslaya/inve
 - Unit: golden3 kosztu bazowego, salda, historyczne FX BUY/SELL, wpłaty netto≤0, przyszły/brakujący FX, brak automatycznej wymiany, pokrycie prowizji SELL, chronologia i zamknięcie kosztu. Reguły wyceny i stale pozostają P04.
 - E2E: wpłata1000PLN, wypłata150, odrzucenie wypłaty1000, wpłata10USD FX4.2, netto892PLN, trwałość po reload, logout. Zrzuty cash-desktop.png i cash-mobile-dark.png obejrzane; brak obcięć/poziomego overflow. Nie jest to pełny audyt WCAG.
 - OpenAPI odświeżone (8 operacji), bez nowych bibliotek zewnętrznych; API→portfolio-engine jako zależność workspace. Build zgłasza informacyjny próg bundle>500kB (bez błędu); dzielenie kodu można wykonać przy rozbudowie kolejnych widoków.
+
+P03 CI dla `68a1e8e`: [przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43753978922) PASS — build/typecheck, OpenAPI, migracje, 61 unit, 17 integration i rozszerzony1 E2E Chromium.
