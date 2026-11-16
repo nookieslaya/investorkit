@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
-  portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema, instrumentsSchema, createInstrumentSchema, instrumentSchema, quoteInputSchema, quoteSchema, fxInputSchema, fxSchema, ledgerOperationSchema, operationSchema, operationHistorySchema, valuationSchema, valuationTimeSchema, simulationInputSchema, simulationSchema,
+  portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema, instrumentsSchema, createInstrumentSchema, instrumentSchema, quoteInputSchema, quoteSchema, quotesSchema, fxInputSchema, fxSchema, ledgerOperationSchema, operationSchema, operationHistorySchema, valuationSchema, valuationTimeSchema, simulationInputSchema, simulationSchema,
 } from '@investorkit/shared';
 
 type ResponseContract = { description: string; schema: z.ZodType };
@@ -28,7 +28,8 @@ export const apiContracts: Record<string, Partial<Record<'get' | 'post', Operati
     post: { operationId: 'createInstrument', summary: 'Dodaj własny instrument STOCK/ETF.', authenticated: true, body: createInstrumentSchema,
       responses: { 201: { description: 'Instrument.', schema: instrumentSchema }, ...protectedErrors, 400: error('Błędne dane.'), 403: error('Origin.'), 409: error('Instrument już istnieje.'), 422: error('Limit instrumentów.'), 413: error('Limit body.'), 415: error('Content-Type.') } },
   },
-  '/api/v1/instruments/{id}/quotes': { post: { operationId: 'createQuote', summary: 'Ręczna cena w walucie instrumentu; zero jest dozwolone, przyszła data odrzucona.', authenticated: true, params: portfolioIdParamsSchema, body: quoteInputSchema,
+  '/api/v1/instruments/{id}/quotes': { get: { operationId: 'listQuotes', summary: 'Zapisane ręczne ceny własnego instrumentu (do 500), kolejność sequence.', authenticated: true, params: portfolioIdParamsSchema,
+    responses: { 200: { description: 'Ceny z datami i źródłem; odczyt obejmuje także instrument nieposiadany.', schema: quotesSchema }, ...protectedErrors, 400: error('Błędny UUID.'), 404: error('Brak/cudzy instrument.') } }, post: { operationId: 'createQuote', summary: 'Ręczna cena w walucie instrumentu; zero jest dozwolone, przyszła data odrzucona.', authenticated: true, params: portfolioIdParamsSchema, body: quoteInputSchema,
     responses: { 201: { description: 'Cena.', schema: quoteSchema }, ...protectedErrors, 400: error('Błędne dane.'), 403: error('Origin.'), 404: error('Brak/cudzy instrument.'), 422: error('Data, waluta lub limit 500 cen.'), 413: error('Limit body.'), 415: error('Content-Type.') } } },
   '/api/v1/fx-rates': { post: { operationId: 'createFx', summary: 'Ręczny kurs wyceny PLN za1 jednostkę; niezależny od historycznych kursów operacji.', authenticated: true, body: fxInputSchema,
     responses: { 201: { description: 'Kurs.', schema: fxSchema }, ...protectedErrors, 400: error('Błędne dane.'), 403: error('Origin.'), 422: error('Data, kurs lub limit 1000 kursów.'), 413: error('Limit body.'), 415: error('Content-Type.') } } },

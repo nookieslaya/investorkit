@@ -11,7 +11,7 @@ describe('generated OpenAPI', () => {
     expect(document.openapi).toBe('3.0.3');
     expect(Object.keys(document.paths).sort()).toEqual(['/health', '/ready', '/api/v1/portfolios', '/api/v1/portfolios/{id}', '/api/v1/portfolios/{id}/cash', '/api/v1/portfolios/{id}/cash-operations', '/api/v1/instruments', '/api/v1/instruments/{id}/quotes', '/api/v1/fx-rates', '/api/v1/portfolios/{id}/operations', '/api/v1/portfolios/{id}/valuation', '/api/v1/portfolios/{id}/simulations'].sort());
     const ids = Object.values(document.paths).flatMap(methods => Object.values(methods).map(operation => operation.operationId));
-    expect(new Set(ids).size).toBe(16);
+    expect(new Set(ids).size).toBe(17);
   });
   it('distinguishes input defaults from required output fields and documents session/origin', () => {
     const post = document.paths['/api/v1/portfolios']?.['post'];

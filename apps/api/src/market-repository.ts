@@ -34,6 +34,12 @@ export function marketRepository(db: Database) {
         return instrumentDto(row);
       });
     },
+    async listQuotes(ownerId: string, instrumentId: string) {
+      const [instrument] = await db.select({ id: instruments.id }).from(instruments).where(and(eq(instruments.id, instrumentId), eq(instruments.ownerId, ownerId)));
+      if (!instrument) throw new CashApiError(404, 'NOT_FOUND', 'Nie znaleziono instrumentu.');
+      const rows = await db.select().from(manualQuotes).where(and(eq(manualQuotes.ownerId, ownerId), eq(manualQuotes.instrumentId, instrumentId))).orderBy(asc(manualQuotes.sequence));
+      return { items: rows.map(quoteDto) };
+    },
     async createQuote(ownerId: string, instrumentId: string, input: z.infer<typeof quoteInputSchema>) {
       return db.transaction(async tx => {
         const [instrument] = await tx.select().from(instruments).where(and(eq(instruments.id, instrumentId), eq(instruments.ownerId, ownerId))).for('update');

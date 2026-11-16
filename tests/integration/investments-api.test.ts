@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createHash, randomUUID } from 'node:crypto';
 import { eq, like } from 'drizzle-orm';
 import { createDatabase, user, cashOperations, manualQuotes } from '@investorkit/db';
-import { instrumentSchema, portfolioSchema, valuationSchema, operationSchema, cashSummarySchema, cashHistorySchema, operationHistorySchema } from '@investorkit/shared';
+import { instrumentSchema, portfolioSchema, valuationSchema, operationSchema, cashSummarySchema, cashHistorySchema, operationHistorySchema, quotesSchema } from '@investorkit/shared';
 import { buildApp } from '../../apps/api/src/app.js';
 import { createAuth } from '../../apps/api/src/auth.js';
 import { parseConfig } from '../../apps/api/src/config.js';
@@ -55,6 +55,9 @@ describe('P04 integrated ledger, markets and valuation', () => {
   });
   it('enforces session ownership for instruments, quotes, operations and valuations', async () => {
     expect((await call('GET', '/instruments', undefined, '')).statusCode).toBe(401);
+    expect((await call('GET', `/instruments/${usd}/quotes`, undefined, '')).statusCode).toBe(401);
+    expect((await call('GET', `/instruments/${usd}/quotes`, undefined, b)).statusCode).toBe(404);
+    expect(quotesSchema.parse((await call('GET', `/instruments/${usd}/quotes`)).json()).items).toEqual([]);
     expect((await call('POST', `/instruments/${usd}/quotes`, { currency: 'USD', price: '90', asOf: day2, source: 'manual' }, b)).statusCode).toBe(404);
     expect((await call('GET', `/portfolios/${portfolio}/valuation`, undefined, b)).statusCode).toBe(404);
     expect((await call('POST', `/portfolios/${portfolio}/operations`, trade(), b)).statusCode).toBe(404);
@@ -76,6 +79,9 @@ describe('P04 integrated ledger, markets and valuation', () => {
     await call('POST', `/instruments/${usd}/quotes`, { currency: 'USD', price: '90', asOf: day2, source: 'manual' });
     expect((await value()).positions[0]?.issues).toContain('STALE_QUOTE');
     await call('POST', `/instruments/${usd}/quotes`, { currency: 'USD', price: '90', asOf: new Date().toISOString(), source: 'manual' });
+    const quoteList = quotesSchema.parse((await call('GET', `/instruments/${usd}/quotes`)).json());
+    expect(quoteList.items).toHaveLength(2);
+    expect(quoteList.items.map(item => item.price)).toEqual(['90.0000000000', '90.0000000000']);
     const result = await value();
     expect(result.complete).toBe(true); expect(result.positions[0]).toMatchObject({ valueBase: '47.25', unrealizedBase: '5.25', remainingCostBase: '42' });
     expect(result.totalValue).toBe('1087.15'); expect(result.pnl).toBe('7.15'); expect(result.netContributionsBase).toBe('1080');

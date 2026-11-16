@@ -1,5 +1,5 @@
 import { createAuthClient } from 'better-auth/react';
-import { portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema } from '@investorkit/shared';
+import { portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema } from '@investorkit/shared';
 import type { CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput } from '@investorkit/shared';
 export const auth = createAuthClient();
 async function request(path: string, options?: RequestInit): Promise<unknown> {
@@ -35,3 +35,5 @@ export async function loadOperations(id: string) { return operationHistorySchema
 export async function simulatePurchase(id: string, input: SimulationInput) {
   return simulationSchema.parse(await request(`/portfolios/${id}/simulations`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }));
 }
+
+export async function loadQuotes(id: string) { return quotesSchema.parse(await request(`/instruments/${id}/quotes`)).items; }

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowUpRight, ChartNoAxesCombined, Wallet, LayoutDashboard, ArrowLeftRight, FlaskConical, BookOpen, Files, Moon, Sun, Plus, ShieldCheck, LogOut, ArrowRight } from 'lucide-react';
+import { ChartNoAxesCombined, Wallet, LayoutDashboard, ArrowLeftRight, FlaskConical, BookOpen, Files, Moon, Sun, Plus, ShieldCheck, LogOut, ArrowRight } from 'lucide-react';
 import { createPortfolioSchema } from '@investorkit/shared';
 import { Button } from '../components/ui/button';
 import { auth, listPortfolios, createPortfolio } from '../lib/api';
@@ -9,12 +9,16 @@ import { InvestmentsOverview } from './investments';
 import { CashOverview } from './cash';
 import { PurchaseSimulator } from './simulator';
 import { pl } from '../i18n/pl';
+type Screen = 'overview' | 'simulator' | 'operations';
+const subscribeScreen = (listener: () => void) => { window.addEventListener('hashchange', listener); return () => window.removeEventListener('hashchange', listener); };
+const readScreen = (): Screen => location.hash === '#simulator' ? 'simulator' : ['#operations', '#cash-operations'].includes(location.hash) ? 'operations' : 'overview';
 type Theme = 'light' | 'dark';
 function currentTheme(): Theme {
   try { const stored = localStorage.getItem('investorkit-theme'); if (stored === 'dark' || stored === 'light') return stored; } catch { /* Storage may be unavailable. */ }
   return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 export function App() {
+  const screen = useSyncExternalStore(subscribeScreen, readScreen);
   const [theme, setTheme] = useState<Theme>(currentTheme);
   const session = auth.useSession();
   const queryClient = useQueryClient();
@@ -33,20 +37,19 @@ export function App() {
     <aside className="sidebar">
       <a className="brand" href="/" aria-label="InvestorKit — strona główna"><span className="brand-icon"><ChartNoAxesCombined size={23} /></span>Investor<span>Kit</span></a>
       <div className="workspace"><span className="workspace-dot" /> PRZESTRZEŃ INWESTORA <span className="beta">ALPHA</span></div>
-      <nav aria-label="Nawigacja główna"><a className="nav-item active" href="/" aria-current="page"><LayoutDashboard size={19} />{pl.overview}</a>
-        {session.data && <a className="nav-item" href="#investments"><ChartNoAxesCombined size={19} /><span>Inwestycje</span></a>}
-        {session.data && <a className="nav-item cash-nav" href="#cash-operations"><ArrowLeftRight size={19} /><span>Gotówka</span></a>}
-        {session.data && <a className="nav-item" href="#simulator"><FlaskConical size={19} /><span>{pl.simulator}</span></a>}
+      <nav aria-label="Nawigacja główna"><a className={`nav-item ${screen === 'overview' ? 'active' : ''}`} href="#investments" aria-current={screen === 'overview' ? 'page' : undefined}><LayoutDashboard size={19} />{pl.overview}</a>
+        {session.data && <a className={`nav-item ${screen === 'operations' ? 'active' : ''}`} href="#operations" aria-current={screen === 'operations' ? 'page' : undefined}><ArrowLeftRight size={19} /><span>Operacje</span></a>}
+        {session.data && <a className={`nav-item ${screen === 'simulator' ? 'active' : ''}`} href="#simulator" aria-current={screen === 'simulator' ? 'page' : undefined}><FlaskConical size={19} /><span>{pl.simulator}</span></a>}
         {[{ Icon: BookOpen, label: pl.journal }, { Icon: Files, label: pl.reports }].map(({ Icon, label }) => <div className="nav-item future" key={label}><Icon size={19} /><span>{label}</span><span className="soon">Wkrótce</span></div>)}
       </nav>
       <div className="sidebar-bottom"><ShieldCheck size={22} /><strong>Twoje decyzje. Twoje dane.</strong><p>Bez połączenia z brokerem.<br />Bez wykonywania transakcji.</p><span className="version">Wersja rozwojowa · 0.5</span></div>
     </aside>
     <div className="main-column">
-      <header className="topbar"><div className="breadcrumb">Przestrzeń inwestora <span>/</span> <strong>Przegląd</strong></div><div className="top-actions"><Button variant="ghost" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</Button>{session.data && <Button variant="ghost" onClick={() => void logout()}><LogOut size={17} /><span>Wyloguj</span></Button>}</div></header>
+      <header className="topbar"><div className="breadcrumb">Przestrzeń inwestora <span>/</span> <strong>{screen === 'simulator' ? 'Symulator' : screen === 'operations' ? 'Operacje' : 'Przegląd'}</strong></div><div className="top-actions"><Button variant="ghost" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</Button>{session.data && <Button variant="ghost" onClick={() => void logout()}><LogOut size={17} /><span>Wyloguj</span></Button>}</div></header>
       <main id="main" className="content">
         <div className="page-heading"><div><div className="eyebrow">SPOKOJNIE. ŚWIADOMIE. PO SWOJEMU.</div><h1>Twój portfel, jasno<span>.</span></h1><p>Jedno miejsce, żeby lepiej rozumieć swoje inwestycje.</p></div><span className="status-badge"><span />Wersja rozwojowa</span></div>
         {logoutError && <p role="alert" className="error">{logoutError}</p>}
-        {session.isPending ? <div className="panel p-8" role="status">Sprawdzanie sesji…</div> : session.error ? <div className="panel p-8"><h2>Nie można sprawdzić sesji</h2><p className="error" role="alert">Sprawdź połączenie i dostępność serwera.</p><Button onClick={() => void session.refetch()}>Spróbuj ponownie</Button></div> : session.data ? <PortfolioOverview /> : <Welcome />}
+        {session.isPending ? <div className="panel p-8" role="status">Sprawdzanie sesji…</div> : session.error ? <div className="panel p-8"><h2>Nie można sprawdzić sesji</h2><p className="error" role="alert">Sprawdź połączenie i dostępność serwera.</p><Button onClick={() => void session.refetch()}>Spróbuj ponownie</Button></div> : session.data ? <PortfolioOverview screen={screen} /> : <Welcome />}
         <footer className="footer"><span>InvestorKit · Narzędzie do analizy i własnych decyzji</span><span>Notowania ręczne · Brak danych rynkowych na żywo</span></footer>
       </main>
     </div>
@@ -74,7 +77,7 @@ function AuthForm() {
     <p id="auth-error" role="alert" className="error">{error}</p><Button className="w-full" type="submit" disabled={busy}>{busy ? 'Chwila…' : register ? 'Utwórz konto' : 'Zaloguj się'}<ArrowRight size={17} /></Button>
   </form><div className="auth-switch">{register ? 'Masz już konto?' : 'Pierwszy raz tutaj?'} <button type="button" onClick={() => { setRegister(!register); setError(''); }}>{register ? 'Zaloguj się' : 'Utwórz konto'}</button></div></section>;
 }
-function PortfolioOverview() {
+function PortfolioOverview({ screen }: { screen: Screen }) {
   const query = useQuery({ queryKey: ['portfolios'], queryFn: listPortfolios }); const client = useQueryClient(); const [name, setName] = useState('Mój portfel'); const [validationError, setValidationError] = useState('');
   const create = useMutation({ mutationFn: createPortfolio, onSuccess: () => client.invalidateQueries({ queryKey: ['portfolios'] }) });
   if (query.isPending) return <div className="panel p-8" role="status">Pobieranie portfela…</div>;
@@ -85,5 +88,5 @@ function PortfolioOverview() {
     if (!parsed.success) { setValidationError('Podaj nazwę od 1 do 80 znaków.'); return; }
     setValidationError(''); create.mutate(parsed.data);
   }}><label>Nazwa portfela<input value={name} onChange={e => setName(e.target.value)} required maxLength={80} aria-describedby="create-error" /></label><Button type="submit" disabled={create.isPending}><Plus size={18} />{create.isPending ? 'Tworzenie…' : 'Utwórz portfel'}</Button><p id="create-error" className="error" role="alert">{validationError || create.error?.message}</p></form></section>;
-  return <><div className="portfolio-title"><h2><Wallet size={20} />{portfolio.name}</h2><span className="pill">WALUTA BAZOWA · PLN</span></div><InvestmentsOverview portfolioId={portfolio.id} /><PurchaseSimulator portfolioId={portfolio.id} /><CashOverview portfolioId={portfolio.id} /></>;
+  return <><div className="portfolio-title"><h2><Wallet size={20} />{portfolio.name}</h2><span className="pill">WALUTA BAZOWA · PLN</span></div><nav className="portfolio-tabs" aria-label="Sekcje portfela">{([['overview', '#investments', 'Inwestycje'], ['simulator', '#simulator', 'Symulator'], ['operations', '#operations', 'Operacje']] as const).map(([key, href, label]) => <a key={key} href={href} aria-current={screen === key ? 'page' : undefined}>{label}</a>)}</nav>{screen === 'simulator' ? <PurchaseSimulator portfolioId={portfolio.id} /> : screen === 'operations' ? <section id="operations"><CashOverview portfolioId={portfolio.id} /></section> : <InvestmentsOverview portfolioId={portfolio.id} />}</>;
 }

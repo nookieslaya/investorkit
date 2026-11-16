@@ -71,6 +71,7 @@ export type CreateInstrument = z.infer<typeof createInstrumentSchema>;
 export type Instrument = z.infer<typeof instrumentSchema>;
 export const quoteInputSchema = z.object({ price: decimalSchema, currency: currencySchema, asOf: z.iso.datetime(), source: z.literal('manual') }).strict();
 export const quoteSchema = quoteInputSchema.extend({ id: z.uuid(), instrumentId: z.uuid(), createdAt: z.iso.datetime() });
+export const quotesSchema = z.object({ items: z.array(quoteSchema) });
 export const fxInputSchema = z.object({ currency: currencySchema, baseCurrency: z.literal('PLN'), rate: fxRateSchema, asOf: z.iso.datetime(), source: z.literal('manual') }).strict();
 export const fxSchema = fxInputSchema.extend({ id: z.uuid(), createdAt: z.iso.datetime() });
 export const operationSchema = z.discriminatedUnion('kind', [cashOperationSchema, ledgerTradeSchema.extend({ id: z.uuid(), createdAt: z.iso.datetime() })]);

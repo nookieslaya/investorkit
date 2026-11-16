@@ -79,6 +79,10 @@ export async function buildApp(config: Config, services: Services, logging = tru
     });
     scoped.get('/instruments', async req => services.portfolios.listInstruments(req.ownerId));
     scoped.post('/instruments', async (req, reply) => reply.code(201).send(await services.portfolios.createInstrument(req.ownerId, createInstrumentSchema.parse(req.body))));
+    scoped.get('/instruments/:id/quotes', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return services.portfolios.listQuotes(req.ownerId, id);
+    });
     scoped.post('/instruments/:id/quotes', async (req, reply) => {
       const { id } = portfolioIdParamsSchema.parse(req.params);
       return reply.code(201).send(await services.portfolios.createQuote(req.ownerId, id, quoteInputSchema.parse(req.body)));

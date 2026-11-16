@@ -1,0 +1,70 @@
+import { expect, test } from '@playwright/test';
+import { instrumentSchema, quotesSchema } from '@investorkit/shared';
+test('prefills reference prices, protects edits and keeps missing/stale warnings outside details', async ({ page, baseURL }) => {
+  test.setTimeout(60000);
+  const headers = { origin: new URL(baseURL!).origin };
+  const signup = await page.request.post('/api/auth/sign-up/email', { headers, data: { name: 'Simulator', email: `sim-${Date.now()}@example.com`, password: 'Test-only-passphrase-2026!' } });
+  expect(signup.ok()).toBe(true);
+  const portfolio = await page.request.post('/api/v1/portfolios', { headers, data: { name: 'Test podpowiedzi ceny' } });
+  expect(portfolio.ok()).toBe(true);
+  const ids: string[] = [];
+  for (const symbol of ['FRESH', 'NEW', 'STALE']) {
+    const response = await page.request.post('/api/v1/instruments', { headers, data: { type: 'STOCK', symbol, mic: 'XWAR', name: symbol, currency: 'PLN', quantityScale: 10 } });
+    ids.push(instrumentSchema.parse(await response.json()).id);
+  }
+  const quote = async (id: string, price: string, asOf = new Date().toISOString()) => {
+    expect((await page.request.post(`/api/v1/instruments/${id}/quotes`, { headers, data: { price, currency: 'PLN', source: 'manual', asOf } })).ok()).toBe(true);
+  };
+  await quote(ids[0]!, '70'); await quote(ids[2]!, '70', '2026-01-01T00:00:00Z');
+  await page.clock.install();
+  await page.goto('/#simulator');
+  const price = page.getByLabel('Cena zakupu (PLN)', { exact: true });
+  await expect(price).toHaveValue('70');
+  await price.fill('71');
+  await quote(ids[0]!, '72');
+  await page.clock.runFor(61000);
+  await expect(page.locator('#simulation-price-source')).toContainText('72,00 PLN');
+  await expect(price).toHaveValue('71');
+  await price.fill('');
+  await quote(ids[0]!, '73');
+  await page.clock.runFor(61000);
+  await expect(page.locator('#simulation-price-source')).toContainText('73,00 PLN');
+  await expect(price).toHaveValue('');
+  const select = page.getByRole('combobox', { name: 'Instrument', exact: true });
+  const choose = async (symbol: string) => { await select.click(); await page.getByRole('option', { name: `${symbol} · ${symbol} · PLN`, exact: true }).click(); };
+  await choose('NEW');
+  await expect(price).toHaveValue('');
+  await expect(page.locator('#simulation-price-source')).toContainText('Brak ceny referencyjnej');
+  await price.fill('3');
+  await page.getByLabel('Budżet z prowizją (PLN)', { exact: true }).fill('10');
+  await page.getByRole('button', { name: 'Oblicz symulację', exact: true }).click();
+  const result = page.getByRole('region', { name: 'Wynik symulacji', exact: true });
+  await expect(result.getByLabel('Podsumowanie zakupu')).toContainText('≈3,333333');
+  await expect(result.getByText('Nowa pozycja', { exact: true }).first()).toBeVisible();
+  await expect(result.getByRole('table')).toBeHidden();
+  await expect(result.getByText('Brak notowania:', { exact: false })).toBeVisible();
+  const details = result.getByText('Szczegóły obliczeń', { exact: true });
+  await details.focus(); await details.press('Enter');
+  await expect(result).toContainText('<0,01 PLN');
+  await choose('STALE');
+  await expect(price).toHaveValue('');
+  await expect(page.locator('#simulation-price-source')).toContainText('Cena jest nieaktualna');
+  await price.fill('100');
+  await page.getByLabel('Budżet z prowizją (PLN)', { exact: true }).fill('1000');
+  await page.getByRole('button', { name: 'Oblicz symulację', exact: true }).click();
+  await expect(result.getByText('Wycena niepełna', { exact: true })).toBeVisible();
+  await expect(result.getByText(/STALE: nieaktualna cena/)).toBeVisible();
+  await expect(result.getByRole('table')).toBeHidden();
+  await choose('FRESH');
+  await expect(price).toHaveValue('');
+  // A future-only record must not become a suggested price, even if returned by an adapter.
+  await page.route(`**/api/v1/instruments/${ids[0]}/quotes`, async route => {
+    const response = await route.fetch();
+    const body: unknown = await response.json();
+    const rows = quotesSchema.parse(body);
+    await route.fulfill({ json: { items: rows.items.map(item => ({ ...item, asOf: '2099-01-01T00:00:00Z' })) } });
+  });
+  await page.clock.runFor(61000);
+  await expect(page.locator('#simulation-price-source')).toContainText('z przyszłości');
+  await expect(price).toHaveValue('');
+});
