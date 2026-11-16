@@ -72,13 +72,14 @@ export function valuePortfolioState(input: {
     const issues = amount.isZero() || !fx.issue ? [] : [fx.issue];
     const value = amount.isZero() ? zero() : fx.value ? amount.times(fx.value) : null;
     if (value) { subtotal = subtotal.plus(value); if (!amount.isZero() && fx.data?.asOf) dates.push(fx.data.asOf); }
-    return { currency, amount: amount.toStorageString(), valueBase: value?.toStorageString() ?? null, fx: fx.data, issues };
+    return { currency, amount: amount.toStorageString(), valueBase: value?.toStorageString() ?? null, fx: fx.data, issues, rawValue: value };
   });
   const complete = positions.every(position => !position.issues.length) && cash.every(account => !account.issues.length);
   const pnl = complete ? subtotal.minus(ledger.netContributionsBase) : null;
   const percentage = pnl?.percentOf(ledger.netContributionsBase);
   dates.sort((a, b) => Date.parse(a) - Date.parse(b));
   return { totalValue: complete ? subtotal : null,
+    cashValues: new Map(cash.map(account => [account.currency, account.rawValue])),
     positionValues: new Map(positions.map(position => [position.instrumentId, position.rawValue])),
     snapshot: {
     asOf: input.asOf, engineVersion: PORTFOLIO_ENGINE_VERSION, baseCurrency: 'PLN' as const, complete,
@@ -87,7 +88,7 @@ export function valuePortfolioState(input: {
     pnlPct: percentage?.value?.toString() ?? null, pnlPctReason: !complete ? 'INCOMPLETE_VALUATION' as const : percentage?.reason ?? null,
     realizedBase: realized.toStorageString(), quoteMaxAgeHours, fxMaxAgeHours,
     valuationRange: dates.length ? { from: dates[0]!, to: dates[dates.length - 1]! } : null,
-    positions: positions.map(({ rawValue, ...position }) => ({ ...position, weightPct: complete && rawValue ? rawValue.percentOf(subtotal).value?.toString() ?? null : null })), cash,
+    positions: positions.map(({ rawValue, ...position }) => ({ ...position, weightPct: complete && rawValue ? rawValue.percentOf(subtotal).value?.toString() ?? null : null })), cash: cash.map(({ rawValue: _rawValue, ...account }) => account),
   } };
 }
 export function valuePortfolio(input: Parameters<typeof valuePortfolioState>[0]) { return valuePortfolioState(input).snapshot; }

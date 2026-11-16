@@ -15,7 +15,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F07 | Rate limit, origin guard, errors, log redaction | 2 | F05 | DONE: origin/errors/size/HTTP429 integration |
 | F08 | React/Tailwind/shadcn, Router, Query | 2 | F02 | DONE: build/theme, desktop/mobile/dark i inspekcja zrzutów inwestycji/gotówki |
 | F09 | Rejestracja/logowanie i portfel UI | 2 | F06,F08 | DONE: E2E i użytkownik potwierdzili rejestrację/logowanie/portfel |
-| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie74 unit i26 integration PASS |
+| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie105 unit i40 integration PASS |
 | F11 | Playwright i CI | 2 | F09,F10 | DONE: GitHub Actions PASS, Chromium E2E 1/1 (15.11.2026) |
 | F12 | OpenAPI i contract tests | 2 | F07 | DONE: OpenAPI z Zod, endpoint i artefakt JSON, kontrola aktualności CI oraz testy odpowiedzi |
 | F13 | Select shadcn/ui w formularzach | — | F08 | DONE: 7 pól, strzałki z odstępem16px, stylizowana lista, motywy i klawiatura |
@@ -24,7 +24,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | P03 | Gotówka, wpłaty, wypłaty, FX | 3 | P02 | DONE: replay sald, wpłaty/wypłaty, FX12, historyczny koszt PLN i golden3 kosztu; gotówka API/UI |
 | P04 | Wycena, kompletność, P/L | 3 | P03 | DONE: wycena z gotówką, P/L, percent/null, subtotal, daty/źródła i stale/missing/future |
 | P05 | Symulator oba źródła środków | 3 | P04 | DONE: case4, oba źródła, fee/reszta, FX i brak zapisów |
-| P06 | Koncentracja i stress | 2 | P04 | TODO: case5, unknown buckets |
+| P06 | Koncentracja i stress | 2 | P04 | DONE: case5, Top3/5 z gotówką, UNKNOWN, spadki0–100% i jawna niepełność |
 | P07 | Testy regresji i granic | 3 | P02–06 | TODO: case6/7, ułamki i zero |
 | A01 | Migracje instrument/ledger/FK/check | 2 | P01,F04 | DONE: wspólny ledger4 typów, instrument/quote/FX, composite owner/currency FK i CHECK |
 | A02 | Instrument i ręczne quote/FX API | 2 | A01 | DONE: instrumenty i ręczne quote/FX z owner scope i walidacją dat/walut |
@@ -32,7 +32,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | A04 | Formularze operacji i historia | 3 | A03,F09 | DONE: wpłaty/wypłaty, BUY/SELL, historia i stany walidacji/loading/error/empty |
 | A05 | Dashboard i pozycje | 3 | P04,A04 | DONE: rzeczywiste wartości/P&L, pozycje i niepełna wycena; bez danych demonstracyjnych |
 | A06 | Symulator UI/API | 3 | P05,A05 | DONE: formularz shadcn, assumptions + before/after, read-only API |
-| A07 | Ryzyko UI i ustawienia | 2 | P06,A05 | TODO: progi i scenariusze |
+| A07 | Ryzyko UI i ustawienia | 2 | P06,A05 | DONE: osobny widok Ryzyko, progi/świeżość z revision/If-Match, scenariusze i źródła |
 | A08 | Dziennik CRUD | 3 | A02,F09 | TODO: prywatność, revision |
 | A09 | Snapshot history | 2 | A05 | TODO: luki danych jawne |
 | I01 | Kontrakt parsera i blokada XTB | 1 | S02 | PARTIAL: availability contract i SAMPLE_REQUIRED; parser DTO przed I03 |
@@ -54,7 +54,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | B06 | Backup + restore drill + audyt dostępności | 3 | B05 | TODO: przed publicznym pilotem |
 | B07 | Decyzja o płatnym pilotażu | 1 | B03 | TODO: dopiero wtedy backlog billing |
 
-Najbliższy punkt kontynuacji: P06/A07, potem P07; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
+Najbliższy punkt kontynuacji: P07, następnie A08; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
 
 Aktualizacja środowiska macOS 15.11.2026: build/typecheck/4 unit PASS na Node 24. Docker CLI dostępny, daemon wyłączony; F03/F08/F09 zachowują status PARTIAL; F11 zamknięte po przejściu CI. Utworzono publiczne repozytorium `nookieslaya/investorkit`; pierwszy przebieg CI PASS: build/typecheck, migracja, 4 unit, 8 integration, 1 E2E w Chromium.
 
@@ -73,3 +73,5 @@ P05/A06 ukończone16.11.2026: symulator bez zapisów, budżet z prowizją, iloś
 Doprecyzowanie A06 (16.11.2026) DONE: dopłata oddzielona od wyniku zakupu i P/L całego portfela, komunikat o różnicy cen, rozliczenie wartości przed/po. Regresja przykładu użytkownika80+1000/zakup100/referencja70. Metryki przepływu i wyniku wydzielone zgodnie z rozróżnieniem kosztu, market value i P/L w Portfolio Performance/Sharesight; bez deklaracji identycznych metod zwrotu czy modeli kosztowych.
 
 Uproszczenie A06 (16.11.2026) DONE:4 główne wyniki, szczegóły na żądanie, automatyczna cena referencyjna bez nadpisywania własnego wpisu, formatowanie pieniędzy/ilości/średniej i jawna reszta<grosza. Symulator oddzielony od Operacji, dane i funkcje gotówki zachowane. Silnik i istniejące16 kontraktów bez zmian; konieczny dodatkowy GET cen do podpowiedzi nieposiadanych instrumentów. Bez bibliotek/migracji. Usunięte pozostałości poprzedniego układu. Lokalnie93 unit/32 integration/2 E2E, build/typecheck i4 warianty widoku PASS.
+
+P06/A07 ukończone16.11.2026: czysta koncentracja i stress, widok Ryzyko, ustawienia progów/świeżości stosowane przez wszystkie odczyty finansowe, migracja0003 bez zmian historii. Golden5 i granice0/100%, gotówka stała, UNKNOWN w mianowniku, brak fałszywych udziałów przy niepełności. Zapis ustawień owner-scoped z blokadą i revision/If-Match, konflikt409. Lokalnie105 unit,40 integration i3 E2E PASS. P07 pozostaje osobnym przeglądem regresji; potem dziennik A08.

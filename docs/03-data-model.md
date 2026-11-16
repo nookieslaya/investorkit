@@ -13,7 +13,7 @@ PK UUID dla domeny; auth text IDs zgodne z Better Auth. timestamptz UTC, UI Euro
 | manual_quotes | id, owner_id, instrument_id, price, currency, as_of, created_at, source=manual; index(owner_id,instrument_id,as_of desc) |
 | fx_rates | id, owner_id, quote_currency, base_currency, rate, as_of, source; unique(owner_id,quote_currency,base_currency,as_of) |
 | journal_entries | id, owner_id, portfolio_id, instrument_id, decided_at, reason, horizon, thesis, risks, review_conditions, notes, timestamps, revision |
-| risk_settings | portfolio_id PK, owner_id, max_position_pct, top3_pct, top5_pct, quote_max_age_hours, fx_max_age_hours |
+| risk_settings | portfolio_id PK, owner_id, max_position_pct, top3_pct, top5_pct, quote_max_age_hours, fx_max_age_hours, revision, updated_at |
 | valuation_snapshots | id, owner_id, portfolio_id, as_of, value_base, net_contributions_base, complete, inputs_hash, engine_version; unique(portfolio_id,as_of,inputs_hash); cache, nie źródło prawdy |
 | import_batches | id, owner_id, portfolio_id, file_sha256, adapter_id/version, mapping_json, state PREVIEW/COMMITTED/FAILED, expires_at, counts |
 | import_rows | batch_id, row_number, normalized_json, errors_json, source_id?, fingerprint?, occurrence; unique(batch_id,row_number) |
@@ -44,3 +44,5 @@ Migracja0002 rozszerza historycznie nazwaną cash_operations o BUY/SELL oraz ins
 instruments ma unique(owner,symbol,mic,currency), dodatkowy unique(id,owner,currency), CHECK typu, skali0–10, nazwy/symbolu/MIC i waluty. manual_quotes: composite instrument+owner+currency FK, price≥0, asOf/source/sequence. fx_rates: owner FK, numeric(28,12), basePLN, rate>0, PLN=1, source=manual, asOf/sequence. Dane są append-only, bez edycji. Najnowszy asOf≤data wyceny wygrywa; równy asOf rozstrzyga sequence. Repozytoria czytają zawsze owner scope; wycena używa spójnego snapshotu transakcji.
 
 Nie ma osobnego salda ani tabeli operacji finansowych dla BUY/SELL. Pełne API operations i alias cash-operations zapisują ten sam ledger i blokują tę samą nadrzędną pozycję portfela. Alias historii cash filtruje tylko wpłaty/wypłaty; cash summary uwzględnia również przepływy zakupów/sprzedaży. Korekty/revision i pełny import pozostają do osobnego etapu.
+
+P06/A07: risk_settings wdrożone migracją0003. Composite FK portfolio_id+owner_id → portfolios z CASCADE, progi numeric(13,10) od0 do100 i uporządkowane maxPosition≤top3≤top5; wiek danych integer1–8760, revision≥1. Domyślne ustawienia zwracane bez zapisu jako revision0. Zapis całego zestawu po blokadzie portfela i kontroli If-Match, bez lost update. Brak tabeli scenariuszy i zmian ledgeru.

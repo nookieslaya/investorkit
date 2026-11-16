@@ -1,1 +1,1 @@
-export const PORTFOLIO_ENGINE_VERSION = '0.5.1-simulation-impact';
+export const PORTFOLIO_ENGINE_VERSION = '0.6.0-risk';

@@ -22,7 +22,7 @@ export function CashOverview({ portfolioId }: { portfolioId: string }) {
   const pending = useRef<{ body: string; key: string } | null>(null);
   const save = useMutation({ mutationFn: saveCash, onSuccess: async () => {
     pending.current = null; setAmount(''); setNote(''); setSuccess('Operacja zapisana. Saldo zostało zaktualizowane.');
-    await Promise.all([client.invalidateQueries({ queryKey: ['cash', portfolioId] }), client.invalidateQueries({ queryKey: ['cash-history', portfolioId] }), client.invalidateQueries({ queryKey: ['valuation', portfolioId] }), client.invalidateQueries({ queryKey: ['operations', portfolioId] })]);
+    await Promise.all([client.invalidateQueries({ queryKey: ['cash', portfolioId] }), client.invalidateQueries({ queryKey: ['cash-history', portfolioId] }), client.invalidateQueries({ queryKey: ['valuation', portfolioId] }), client.invalidateQueries({ queryKey: ['risk', portfolioId] }), client.invalidateQueries({ queryKey: ['operations', portfolioId] })]);
   } });
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError(''); setSuccess('');

@@ -1,6 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
-import { portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema } from '@investorkit/shared';
-import type { CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput } from '@investorkit/shared';
+import { portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema, riskSchema, riskSettingsSchema, stressSchema } from '@investorkit/shared';
+import type { CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput, RiskSettingsInput, StressInput } from '@investorkit/shared';
 export const auth = createAuthClient();
 async function request(path: string, options?: RequestInit): Promise<unknown> {
   const response = await fetch(`/api/v1${path}`, { credentials: 'include', ...options });
@@ -37,3 +37,11 @@ export async function simulatePurchase(id: string, input: SimulationInput) {
 }
 
 export async function loadQuotes(id: string) { return quotesSchema.parse(await request(`/instruments/${id}/quotes`)).items; }
+
+export async function loadRisk(id: string) { return riskSchema.parse(await request(`/portfolios/${id}/risk`)); }
+export async function saveRiskSettings(id: string, settings: RiskSettingsInput, revision: number) {
+  return riskSettingsSchema.parse(await request(`/portfolios/${id}/risk-settings`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'If-Match': `"${revision}"` }, body: JSON.stringify(settings) }));
+}
+export async function runStress(id: string, input: StressInput) {
+  return stressSchema.parse(await request(`/portfolios/${id}/stress-tests`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }));
+}

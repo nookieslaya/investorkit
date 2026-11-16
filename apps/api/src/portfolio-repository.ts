@@ -1,4 +1,5 @@
 import { marketRepository } from './market-repository.js';
+import { riskSettingsRepository } from './risk-settings-repository.js';
 import { cashRepository } from './cash-repository.js';
 import { and, eq } from 'drizzle-orm';
 import { portfolios } from '@investorkit/db';
@@ -9,6 +10,7 @@ export function portfolioRepository(db: Database) {
   return {
     ...cashRepository(db),
     ...marketRepository(db),
+    ...riskSettingsRepository(db),
     list: (ownerId: string) => db.select().from(portfolios).where(eq(portfolios.ownerId, ownerId)),
     async find(ownerId: string, id: string) {
       const [row] = await db.select().from(portfolios).where(and(eq(portfolios.ownerId, ownerId), eq(portfolios.id, id)));

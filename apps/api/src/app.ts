@@ -3,9 +3,9 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { fromNodeHeaders } from 'better-auth/node';
 import { z, ZodError } from 'zod';
-import { createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema } from '@investorkit/shared';
+import { createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema, stressInputSchema, riskSettingsInputSchema } from '@investorkit/shared';
 import { CashApiError } from './cash-repository.js';
-import { LedgerDomainError, DecimalDomainError, PositionDomainError, ValuationDomainError, SimulationDomainError } from '@investorkit/portfolio-engine';
+import { LedgerDomainError, DecimalDomainError, PositionDomainError, ValuationDomainError, SimulationDomainError, RiskDomainError } from '@investorkit/portfolio-engine';
 import { buildOpenApiDocument } from './openapi.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
@@ -30,10 +30,12 @@ export async function buildApp(config: Config, services: Services, logging = tru
   });
   app.setErrorHandler((err, req, reply) => {
     if (err instanceof CashApiError) return reply.code(err.statusCode).send(fail(err.code, err.message, req.id));
-    if (err instanceof LedgerDomainError || err instanceof DecimalDomainError || err instanceof PositionDomainError || err instanceof ValuationDomainError || err instanceof SimulationDomainError) {
+    if (err instanceof LedgerDomainError || err instanceof DecimalDomainError || err instanceof PositionDomainError || err instanceof ValuationDomainError || err instanceof SimulationDomainError || err instanceof RiskDomainError) {
       const message = err.code === 'INSUFFICIENT_CASH' ? 'Brak wystarczających środków w tej walucie.'
+        : err.code === 'INVALID_THRESHOLDS' ? 'Próg pozycji musi być nie większy od Top 3, a Top 3 od Top 5.'
+        : err.code === 'TARGET_NOT_HELD' ? 'Wybierz otwartą pozycję portfela.'
         : err.code === 'BUDGET_TOO_SMALL' ? 'Budżet po prowizji nie wystarcza na minimalną ilość instrumentu.'
-        : err.code === 'SCENARIO_FX_REQUIRED' ? 'Uzupełnij aktualny kurs wyceny dla waluty instrumentu (maksymalnie 72h).'
+        : err.code === 'SCENARIO_FX_REQUIRED' ? 'Uzupełnij aktualny kurs wyceny dla waluty instrumentu zgodnie z ustawionym limitem wieku danych.'
         : err.code === 'STORAGE_OVERFLOW' ? 'Wynik przekracza obsługiwany zakres kwot (18 cyfr przed przecinkiem).'
         : err.code === 'FUTURE_FX' ? 'Data kursu historycznego nie może być późniejsza niż data operacji.'
         : err.code === 'COMMISSION_CURRENCY_MISMATCH' ? 'Waluta prowizji musi być walutą transakcji.'
@@ -96,6 +98,29 @@ export async function buildApp(config: Config, services: Services, logging = tru
       const { id } = portfolioIdParamsSchema.parse(req.params);
       const key = z.uuid().parse(req.headers['idempotency-key']).toLowerCase();
       return reply.code(201).send(await services.portfolios.createOperation(req.ownerId, id, ledgerOperationSchema.parse(req.body), key));
+    });
+    scoped.get('/portfolios/:id/risk-settings', async (req, reply) => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      const result = await services.portfolios.getRiskSettings(req.ownerId, id);
+      reply.header('ETag', `"${result.revision}"`);
+      return result;
+    });
+    scoped.patch('/portfolios/:id/risk-settings', async (req, reply) => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      if (req.headers['if-match'] === undefined) throw new CashApiError(428, 'PRECONDITION_REQUIRED', 'Odśwież ustawienia przed zapisem.');
+      const header = z.string().regex(/^"(0|[1-9]\d{0,9})"$/).parse(req.headers['if-match']);
+      const revision = z.number().int().min(0).max(2147483647).parse(Number(header.slice(1, -1)));
+      const result = await services.portfolios.updateRiskSettings(req.ownerId, id, riskSettingsInputSchema.parse(req.body), revision);
+      reply.header('ETag', `"${result.revision}"`);
+      return result;
+    });
+    scoped.get('/portfolios/:id/risk', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return services.portfolios.risk(req.ownerId, id);
+    });
+    scoped.post('/portfolios/:id/stress-tests', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return services.portfolios.stress(req.ownerId, id, stressInputSchema.parse(req.body));
     });
     scoped.post('/portfolios/:id/simulations', async req => {
       const { id } = portfolioIdParamsSchema.parse(req.params);

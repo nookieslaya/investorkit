@@ -8,10 +8,11 @@ import { auth, listPortfolios, createPortfolio } from '../lib/api';
 import { InvestmentsOverview } from './investments';
 import { CashOverview } from './cash';
 import { PurchaseSimulator } from './simulator';
+import { RiskOverview } from './risk';
 import { pl } from '../i18n/pl';
-type Screen = 'overview' | 'simulator' | 'operations';
+type Screen = 'overview' | 'simulator' | 'operations' | 'risk';
 const subscribeScreen = (listener: () => void) => { window.addEventListener('hashchange', listener); return () => window.removeEventListener('hashchange', listener); };
-const readScreen = (): Screen => location.hash === '#simulator' ? 'simulator' : ['#operations', '#cash-operations'].includes(location.hash) ? 'operations' : 'overview';
+const readScreen = (): Screen => location.hash === '#risk' ? 'risk' : location.hash === '#simulator' ? 'simulator' : ['#operations', '#cash-operations'].includes(location.hash) ? 'operations' : 'overview';
 type Theme = 'light' | 'dark';
 function currentTheme(): Theme {
   try { const stored = localStorage.getItem('investorkit-theme'); if (stored === 'dark' || stored === 'light') return stored; } catch { /* Storage may be unavailable. */ }
@@ -40,12 +41,13 @@ export function App() {
       <nav aria-label="Nawigacja główna"><a className={`nav-item ${screen === 'overview' ? 'active' : ''}`} href="#investments" aria-current={screen === 'overview' ? 'page' : undefined}><LayoutDashboard size={19} />{pl.overview}</a>
         {session.data && <a className={`nav-item ${screen === 'operations' ? 'active' : ''}`} href="#operations" aria-current={screen === 'operations' ? 'page' : undefined}><ArrowLeftRight size={19} /><span>Operacje</span></a>}
         {session.data && <a className={`nav-item ${screen === 'simulator' ? 'active' : ''}`} href="#simulator" aria-current={screen === 'simulator' ? 'page' : undefined}><FlaskConical size={19} /><span>{pl.simulator}</span></a>}
+        {session.data && <a className={`nav-item ${screen === 'risk' ? 'active' : ''}`} href="#risk" aria-current={screen === 'risk' ? 'page' : undefined}><ShieldCheck size={19} /><span>Ryzyko</span></a>}
         {[{ Icon: BookOpen, label: pl.journal }, { Icon: Files, label: pl.reports }].map(({ Icon, label }) => <div className="nav-item future" key={label}><Icon size={19} /><span>{label}</span><span className="soon">Wkrótce</span></div>)}
       </nav>
-      <div className="sidebar-bottom"><ShieldCheck size={22} /><strong>Twoje decyzje. Twoje dane.</strong><p>Bez połączenia z brokerem.<br />Bez wykonywania transakcji.</p><span className="version">Wersja rozwojowa · 0.5</span></div>
+      <div className="sidebar-bottom"><ShieldCheck size={22} /><strong>Twoje decyzje. Twoje dane.</strong><p>Bez połączenia z brokerem.<br />Bez wykonywania transakcji.</p><span className="version">Wersja rozwojowa · 0.6</span></div>
     </aside>
     <div className="main-column">
-      <header className="topbar"><div className="breadcrumb">Przestrzeń inwestora <span>/</span> <strong>{screen === 'simulator' ? 'Symulator' : screen === 'operations' ? 'Operacje' : 'Przegląd'}</strong></div><div className="top-actions"><Button variant="ghost" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</Button>{session.data && <Button variant="ghost" onClick={() => void logout()}><LogOut size={17} /><span>Wyloguj</span></Button>}</div></header>
+      <header className="topbar"><div className="breadcrumb">Przestrzeń inwestora <span>/</span> <strong>{screen === 'risk' ? 'Ryzyko' : screen === 'simulator' ? 'Symulator' : screen === 'operations' ? 'Operacje' : 'Przegląd'}</strong></div><div className="top-actions"><Button variant="ghost" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</Button>{session.data && <Button variant="ghost" onClick={() => void logout()}><LogOut size={17} /><span>Wyloguj</span></Button>}</div></header>
       <main id="main" className="content">
         <div className="page-heading"><div><div className="eyebrow">SPOKOJNIE. ŚWIADOMIE. PO SWOJEMU.</div><h1>Twój portfel, jasno<span>.</span></h1><p>Jedno miejsce, żeby lepiej rozumieć swoje inwestycje.</p></div><span className="status-badge"><span />Wersja rozwojowa</span></div>
         {logoutError && <p role="alert" className="error">{logoutError}</p>}
@@ -88,5 +90,5 @@ function PortfolioOverview({ screen }: { screen: Screen }) {
     if (!parsed.success) { setValidationError('Podaj nazwę od 1 do 80 znaków.'); return; }
     setValidationError(''); create.mutate(parsed.data);
   }}><label>Nazwa portfela<input value={name} onChange={e => setName(e.target.value)} required maxLength={80} aria-describedby="create-error" /></label><Button type="submit" disabled={create.isPending}><Plus size={18} />{create.isPending ? 'Tworzenie…' : 'Utwórz portfel'}</Button><p id="create-error" className="error" role="alert">{validationError || create.error?.message}</p></form></section>;
-  return <><div className="portfolio-title"><h2><Wallet size={20} />{portfolio.name}</h2><span className="pill">WALUTA BAZOWA · PLN</span></div><nav className="portfolio-tabs" aria-label="Sekcje portfela">{([['overview', '#investments', 'Inwestycje'], ['simulator', '#simulator', 'Symulator'], ['operations', '#operations', 'Operacje']] as const).map(([key, href, label]) => <a key={key} href={href} aria-current={screen === key ? 'page' : undefined}>{label}</a>)}</nav>{screen === 'simulator' ? <PurchaseSimulator portfolioId={portfolio.id} /> : screen === 'operations' ? <section id="operations"><CashOverview portfolioId={portfolio.id} /></section> : <InvestmentsOverview portfolioId={portfolio.id} />}</>;
+  return <><div className="portfolio-title"><h2><Wallet size={20} />{portfolio.name}</h2><span className="pill">WALUTA BAZOWA · PLN</span></div><nav className="portfolio-tabs" aria-label="Sekcje portfela">{([['overview', '#investments', 'Inwestycje'], ['simulator', '#simulator', 'Symulator'], ['operations', '#operations', 'Operacje'], ['risk', '#risk', 'Ryzyko']] as const).map(([key, href, label]) => <a key={key} href={href} aria-current={screen === key ? 'page' : undefined}>{label}</a>)}</nav>{screen === 'risk' ? <RiskOverview portfolioId={portfolio.id} /> : screen === 'simulator' ? <PurchaseSimulator portfolioId={portfolio.id} /> : screen === 'operations' ? <section id="operations"><CashOverview portfolioId={portfolio.id} /></section> : <InvestmentsOverview portfolioId={portfolio.id} />}</>;
 }

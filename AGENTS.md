@@ -5,7 +5,7 @@
 - Semantyka finansowa: docs/04-calculations.md. Kontrakty: docs/05-api.md. Pełny zakres: docs/INVESTORKIT-MVP.md.
 - Realizuj małe zadanie z backlogu. Nie generuj całego systemu w jednej zmianie.
 - Oddziel specyfikację docelową od istniejącego kodu. Nie opisuj szkicu ani kontraktu jako działającej integracji.
-- portfolio-engine zawiera P01–P05: decimal, wspólny replay BUY/SELL/wpłat/wypłat, historyczny koszt PLN i wycenę z diagnostyką oraz symulator bez zapisów. API/UI obsługują instrumenty, transakcje, ręczne ceny/FX i dashboard. Ryzyko/import/AI pozostają niewdrożone; report-engine jest szkieletem.
+- portfolio-engine zawiera P01–P06: decimal, wspólny replay BUY/SELL/wpłat/wypłat, historyczny koszt PLN i wycenę z diagnostyką oraz symulator i testy spadków bez zapisów, koncentrację i grupy z UNKNOWN. API/UI obsługują instrumenty, transakcje, ręczne ceny/FX i dashboard. Import/AI pozostają niewdrożone; report-engine jest szkieletem.
 - Historyczna nazwa tabeli cash_operations obejmuje już wszystkie cztery typy operacji. Nie twórz drugiego niezależnego ledgeru ani salda.
 
 ## Granice architektury
@@ -51,4 +51,5 @@
 - Adapter XTB zablokowany do zweryfikowania próbki eksportu. Nie zgaduj nagłówków/formatu.
 - Nie dodawaj rekomendacji kup/sprzedaj, prognoz, live feeds, PIT ani look-through ETF do MVP.
 - UI po polsku, etykiety gotowe do późniejszego i18n; dostępna klawiatura, widoczny focus, błędy i empty states.
+- Ustawienia progów/świeżości są wspólne dla wyceny, symulatora i ryzyka. Nie przywracaj sztywnego72h po zapisaniu ustawień. PATCH wymaga revision/If-Match i blokady portfela; testy spadków i analiza pozostają READ ONLY.
 - Brak nowych zależności bez uzasadnienia; przed aktualizacją sprawdź aktualną dokumentację, stabilne wersje i zgodność Node24.

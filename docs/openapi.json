@@ -28,6 +28,2585 @@
     }
   },
   "paths": {
+    "/api/v1/portfolios/{id}/risk-settings": {
+      "get": {
+        "operationId": "getRiskSettings",
+        "summary": "Ustawienia progów i świeżości, domyślne bez zapisu (revision0); ETag zawiera revision.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "localSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Progi produktu i wersja ustawień.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "maxPositionPct": {
+                      "type": "string",
+                      "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                    },
+                    "top3Pct": {
+                      "type": "string",
+                      "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                    },
+                    "top5Pct": {
+                      "type": "string",
+                      "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                    },
+                    "quoteMaxAgeHours": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 8760
+                    },
+                    "fxMaxAgeHours": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 8760
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 2147483647
+                    }
+                  },
+                  "required": [
+                    "maxPositionPct",
+                    "top3Pct",
+                    "top5Pct",
+                    "quoteMaxAgeHours",
+                    "fxMaxAgeHours",
+                    "revision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "UUID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak ważnej sesji.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Brak portfela.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limit żądań.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Błąd serwera bez szczegółów wewnętrznych.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateRiskSettings",
+        "summary": "Zapisz komplet ustawień z kontrolą If-Match; kolejność pozycja≤Top3≤Top5.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "localSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Musi być równy WEB_ORIGIN.",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "description": "Aktualna revision w cudzysłowie, np. \"0\"; GET zwraca ETag i revision.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\"(0|[1-9][0-9]{0,9})\"$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "maxPositionPct": {
+                    "type": "string",
+                    "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                  },
+                  "top3Pct": {
+                    "type": "string",
+                    "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                  },
+                  "top5Pct": {
+                    "type": "string",
+                    "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                  },
+                  "quoteMaxAgeHours": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 8760
+                  },
+                  "fxMaxAgeHours": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 8760
+                  }
+                },
+                "required": [
+                  "maxPositionPct",
+                  "top3Pct",
+                  "top5Pct",
+                  "quoteMaxAgeHours",
+                  "fxMaxAgeHours"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Zapisane ustawienia i nowa revision/ETag.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "maxPositionPct": {
+                      "type": "string",
+                      "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                    },
+                    "top3Pct": {
+                      "type": "string",
+                      "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                    },
+                    "top5Pct": {
+                      "type": "string",
+                      "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                    },
+                    "quoteMaxAgeHours": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 8760
+                    },
+                    "fxMaxAgeHours": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 8760
+                    },
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 2147483647
+                    }
+                  },
+                  "required": [
+                    "maxPositionPct",
+                    "top3Pct",
+                    "top5Pct",
+                    "quoteMaxAgeHours",
+                    "fxMaxAgeHours",
+                    "revision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body, UUID lub If-Match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak ważnej sesji.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Brak portfela.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt wersji.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Limit body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Nieprawidłowa kolejność progów/limit wersji.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Brak If-Match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limit żądań.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Błąd serwera bez szczegółów wewnętrznych.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portfolios/{id}/risk": {
+      "get": {
+        "operationId": "risk",
+        "summary": "Koncentracja Top3/5 i struktura z gotówką oraz kategorią UNKNOWN; niepełność daje udziały null.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "localSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Koncentracja, struktura i bazowa wycena.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "valuation": {
+                      "type": "object",
+                      "properties": {
+                        "asOf": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                        },
+                        "engineVersion": {
+                          "type": "string"
+                        },
+                        "complete": {
+                          "type": "boolean"
+                        },
+                        "baseCurrency": {
+                          "type": "string",
+                          "enum": [
+                            "PLN"
+                          ]
+                        },
+                        "totalValue": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "pricedSubtotal": {
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "netContributionsBase": {
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "pnl": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "pnlPct": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                        },
+                        "pnlPctReason": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "INCOMPLETE_VALUATION",
+                            "NON_POSITIVE_BASE",
+                            null
+                          ]
+                        },
+                        "realizedBase": {
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "quoteMaxAgeHours": {
+                          "type": "number"
+                        },
+                        "fxMaxAgeHours": {
+                          "type": "number"
+                        },
+                        "valuationRange": {
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "from": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            "to": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            }
+                          },
+                          "required": [
+                            "from",
+                            "to"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "positions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "instrumentId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "symbol": {
+                                "type": "string"
+                              },
+                              "currency": {
+                                "type": "string",
+                                "enum": [
+                                  "PLN",
+                                  "EUR",
+                                  "USD"
+                                ]
+                              },
+                              "quantity": {
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "remainingCostBase": {
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "averageCostLocal": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "valueBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "unrealizedBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "unrealizedPct": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "weightPct": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "quote": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "price": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                                  },
+                                  "asOf": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "manual",
+                                      "scenario"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "price",
+                                  "asOf",
+                                  "source"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "fx": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "rate": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d{0,15})(\\.\\d{1,12})?$(?![\\s\\S])"
+                                  },
+                                  "asOf": {
+                                    "nullable": true,
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "manual",
+                                      "identity"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "rate",
+                                  "asOf",
+                                  "source"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "issues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "MISSING_QUOTE",
+                                    "STALE_QUOTE",
+                                    "FUTURE_QUOTE",
+                                    "MISSING_FX",
+                                    "STALE_FX",
+                                    "FUTURE_FX"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "instrumentId",
+                              "name",
+                              "symbol",
+                              "currency",
+                              "quantity",
+                              "remainingCostBase",
+                              "averageCostLocal",
+                              "valueBase",
+                              "unrealizedBase",
+                              "unrealizedPct",
+                              "weightPct",
+                              "quote",
+                              "fx",
+                              "issues"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "cash": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "currency": {
+                                "type": "string",
+                                "enum": [
+                                  "PLN",
+                                  "EUR",
+                                  "USD"
+                                ]
+                              },
+                              "amount": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "valueBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "fx": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "rate": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d{0,15})(\\.\\d{1,12})?$(?![\\s\\S])"
+                                  },
+                                  "asOf": {
+                                    "nullable": true,
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "manual",
+                                      "identity"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "rate",
+                                  "asOf",
+                                  "source"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "issues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "MISSING_QUOTE",
+                                    "STALE_QUOTE",
+                                    "FUTURE_QUOTE",
+                                    "MISSING_FX",
+                                    "STALE_FX",
+                                    "FUTURE_FX"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "currency",
+                              "amount",
+                              "valueBase",
+                              "fx",
+                              "issues"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "asOf",
+                        "engineVersion",
+                        "complete",
+                        "baseCurrency",
+                        "totalValue",
+                        "pricedSubtotal",
+                        "netContributionsBase",
+                        "pnl",
+                        "pnlPct",
+                        "pnlPctReason",
+                        "realizedBase",
+                        "quoteMaxAgeHours",
+                        "fxMaxAgeHours",
+                        "valuationRange",
+                        "positions",
+                        "cash"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "settings": {
+                      "type": "object",
+                      "properties": {
+                        "maxPositionPct": {
+                          "type": "string",
+                          "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                        },
+                        "top3Pct": {
+                          "type": "string",
+                          "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                        },
+                        "top5Pct": {
+                          "type": "string",
+                          "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                        },
+                        "quoteMaxAgeHours": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 8760
+                        },
+                        "fxMaxAgeHours": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 8760
+                        },
+                        "revision": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2147483647
+                        }
+                      },
+                      "required": [
+                        "maxPositionPct",
+                        "top3Pct",
+                        "top5Pct",
+                        "quoteMaxAgeHours",
+                        "fxMaxAgeHours",
+                        "revision"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "concentration": {
+                      "type": "object",
+                      "properties": {
+                        "largestPositionPct": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                        },
+                        "top3Pct": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                        },
+                        "top5Pct": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                        },
+                        "maxPositionExceeded": {
+                          "nullable": true,
+                          "type": "boolean"
+                        },
+                        "top3Exceeded": {
+                          "nullable": true,
+                          "type": "boolean"
+                        },
+                        "top5Exceeded": {
+                          "nullable": true,
+                          "type": "boolean"
+                        },
+                        "positions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "instrumentId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "weightPct": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "exceedsLimit": {
+                                "nullable": true,
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "instrumentId",
+                              "weightPct",
+                              "exceedsLimit"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "reason": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "INCOMPLETE_VALUATION",
+                            "NON_POSITIVE_BASE",
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "largestPositionPct",
+                        "top3Pct",
+                        "top5Pct",
+                        "maxPositionExceeded",
+                        "top3Exceeded",
+                        "top5Exceeded",
+                        "positions",
+                        "reason"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "allocations": {
+                      "type": "object",
+                      "properties": {
+                        "assetType": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "valueBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "weightPct": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "valueBase",
+                              "weightPct"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "currency": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "valueBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "weightPct": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "valueBase",
+                              "weightPct"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "issuerCountry": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "valueBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "weightPct": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "valueBase",
+                              "weightPct"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "assetType",
+                        "currency",
+                        "issuerCountry"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "valuation",
+                    "settings",
+                    "concentration",
+                    "allocations"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "UUID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak ważnej sesji.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Brak portfela.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Nieprawidłowy stan lub zakres kwot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limit żądań.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Błąd serwera bez szczegółów wewnętrznych.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portfolios/{id}/stress-tests": {
+      "post": {
+        "operationId": "stress",
+        "summary": "Scenariusz spadku0–100% jednej pozycji lub wszystkich papierów; FX i gotówka stałe, bez zapisów.",
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "localSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Musi być równy WEB_ORIGIN.",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "scope": {
+                        "type": "string",
+                        "enum": [
+                          "SECURITIES"
+                        ]
+                      },
+                      "dropPct": {
+                        "type": "string",
+                        "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                      }
+                    },
+                    "required": [
+                      "scope",
+                      "dropPct"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "scope": {
+                        "type": "string",
+                        "enum": [
+                          "INSTRUMENT"
+                        ]
+                      },
+                      "instrumentId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "dropPct": {
+                        "type": "string",
+                        "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                      }
+                    },
+                    "required": [
+                      "scope",
+                      "instrumentId",
+                      "dropPct"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Wycena przed, wartości po, ubytek i założenia.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "before": {
+                      "type": "object",
+                      "properties": {
+                        "asOf": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                        },
+                        "engineVersion": {
+                          "type": "string"
+                        },
+                        "complete": {
+                          "type": "boolean"
+                        },
+                        "baseCurrency": {
+                          "type": "string",
+                          "enum": [
+                            "PLN"
+                          ]
+                        },
+                        "totalValue": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "pricedSubtotal": {
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "netContributionsBase": {
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "pnl": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "pnlPct": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                        },
+                        "pnlPctReason": {
+                          "nullable": true,
+                          "type": "string",
+                          "enum": [
+                            "INCOMPLETE_VALUATION",
+                            "NON_POSITIVE_BASE",
+                            null
+                          ]
+                        },
+                        "realizedBase": {
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "quoteMaxAgeHours": {
+                          "type": "number"
+                        },
+                        "fxMaxAgeHours": {
+                          "type": "number"
+                        },
+                        "valuationRange": {
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "from": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            "to": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            }
+                          },
+                          "required": [
+                            "from",
+                            "to"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "positions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "instrumentId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "symbol": {
+                                "type": "string"
+                              },
+                              "currency": {
+                                "type": "string",
+                                "enum": [
+                                  "PLN",
+                                  "EUR",
+                                  "USD"
+                                ]
+                              },
+                              "quantity": {
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "remainingCostBase": {
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "averageCostLocal": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "valueBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "unrealizedBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "unrealizedPct": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "weightPct": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "quote": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "price": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                                  },
+                                  "asOf": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "manual",
+                                      "scenario"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "price",
+                                  "asOf",
+                                  "source"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "fx": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "rate": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d{0,15})(\\.\\d{1,12})?$(?![\\s\\S])"
+                                  },
+                                  "asOf": {
+                                    "nullable": true,
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "manual",
+                                      "identity"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "rate",
+                                  "asOf",
+                                  "source"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "issues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "MISSING_QUOTE",
+                                    "STALE_QUOTE",
+                                    "FUTURE_QUOTE",
+                                    "MISSING_FX",
+                                    "STALE_FX",
+                                    "FUTURE_FX"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "instrumentId",
+                              "name",
+                              "symbol",
+                              "currency",
+                              "quantity",
+                              "remainingCostBase",
+                              "averageCostLocal",
+                              "valueBase",
+                              "unrealizedBase",
+                              "unrealizedPct",
+                              "weightPct",
+                              "quote",
+                              "fx",
+                              "issues"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "cash": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "currency": {
+                                "type": "string",
+                                "enum": [
+                                  "PLN",
+                                  "EUR",
+                                  "USD"
+                                ]
+                              },
+                              "amount": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "valueBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "fx": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "rate": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d{0,15})(\\.\\d{1,12})?$(?![\\s\\S])"
+                                  },
+                                  "asOf": {
+                                    "nullable": true,
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "manual",
+                                      "identity"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "rate",
+                                  "asOf",
+                                  "source"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "issues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "MISSING_QUOTE",
+                                    "STALE_QUOTE",
+                                    "FUTURE_QUOTE",
+                                    "MISSING_FX",
+                                    "STALE_FX",
+                                    "FUTURE_FX"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "currency",
+                              "amount",
+                              "valueBase",
+                              "fx",
+                              "issues"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "asOf",
+                        "engineVersion",
+                        "complete",
+                        "baseCurrency",
+                        "totalValue",
+                        "pricedSubtotal",
+                        "netContributionsBase",
+                        "pnl",
+                        "pnlPct",
+                        "pnlPctReason",
+                        "realizedBase",
+                        "quoteMaxAgeHours",
+                        "fxMaxAgeHours",
+                        "valuationRange",
+                        "positions",
+                        "cash"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "after": {
+                      "type": "object",
+                      "properties": {
+                        "totalValue": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "cash": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "currency": {
+                                "type": "string",
+                                "enum": [
+                                  "PLN",
+                                  "EUR",
+                                  "USD"
+                                ]
+                              },
+                              "amount": {
+                                "type": "string",
+                                "pattern": "^(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "valueBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "fx": {
+                                "nullable": true,
+                                "type": "object",
+                                "properties": {
+                                  "rate": {
+                                    "type": "string",
+                                    "pattern": "^(0|[1-9]\\d{0,15})(\\.\\d{1,12})?$(?![\\s\\S])"
+                                  },
+                                  "asOf": {
+                                    "nullable": true,
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  },
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "manual",
+                                      "identity"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "rate",
+                                  "asOf",
+                                  "source"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "issues": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "MISSING_QUOTE",
+                                    "STALE_QUOTE",
+                                    "FUTURE_QUOTE",
+                                    "MISSING_FX",
+                                    "STALE_FX",
+                                    "FUTURE_FX"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "currency",
+                              "amount",
+                              "valueBase",
+                              "fx",
+                              "issues"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "positions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "instrumentId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "symbol": {
+                                "type": "string"
+                              },
+                              "currency": {
+                                "type": "string",
+                                "enum": [
+                                  "PLN",
+                                  "EUR",
+                                  "USD"
+                                ]
+                              },
+                              "valueBase": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                              },
+                              "weightPct": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "referencePrice": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              },
+                              "scenarioPrice": {
+                                "nullable": true,
+                                "type": "string",
+                                "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                              }
+                            },
+                            "required": [
+                              "instrumentId",
+                              "name",
+                              "symbol",
+                              "currency",
+                              "valueBase",
+                              "weightPct",
+                              "referencePrice",
+                              "scenarioPrice"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "totalValue",
+                        "cash",
+                        "positions"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "lossBase": {
+                      "nullable": true,
+                      "type": "string",
+                      "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                    },
+                    "lossPct": {
+                      "nullable": true,
+                      "type": "string",
+                      "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                    },
+                    "reason": {
+                      "nullable": true,
+                      "type": "string",
+                      "enum": [
+                        "INCOMPLETE_VALUATION",
+                        "NON_POSITIVE_BASE",
+                        null
+                      ]
+                    },
+                    "assumptions": {
+                      "type": "object",
+                      "properties": {
+                        "scope": {
+                          "type": "string",
+                          "enum": [
+                            "INSTRUMENT",
+                            "SECURITIES"
+                          ]
+                        },
+                        "instrumentId": {
+                          "nullable": true,
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "dropPct": {
+                          "type": "string",
+                          "pattern": "^(?:(?:0|[1-9]\\d?)(?:\\.\\d{1,10})?|100(?:\\.0{1,10})?)$(?![\\s\\S])"
+                        },
+                        "fxConstant": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "cashUnaffected": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "quoteMaxAgeHours": {
+                          "type": "number"
+                        },
+                        "fxMaxAgeHours": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "scope",
+                        "instrumentId",
+                        "dropPct",
+                        "fxConstant",
+                        "cashUnaffected",
+                        "quoteMaxAgeHours",
+                        "fxMaxAgeHours"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "before",
+                    "after",
+                    "lossBase",
+                    "lossPct",
+                    "reason",
+                    "assumptions"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body/UUID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak ważnej sesji.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Brak własnego portfela lub instrumentu.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Limit body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Brak otwartej pozycji lub błąd domenowy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limit żądań.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Błąd serwera bez szczegółów wewnętrznych.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "requestId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "requestId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/portfolios/{id}/simulations": {
       "post": {
         "operationId": "simulatePurchase",
@@ -4333,7 +6912,7 @@
     "/api/v1/portfolios/{id}/valuation": {
       "get": {
         "operationId": "valuation",
-        "summary": "Wycena z gotówką i nominalny P/L, świeżość 72h. Niekompletne dane dają totalValue/P&L null i pricedSubtotal.",
+        "summary": "Wycena z gotówką i nominalny P/L, świeżość według ustawień (domyślnie72h). Niekompletne dane dają totalValue/P&L null i pricedSubtotal.",
         "security": [
           {
             "session": []

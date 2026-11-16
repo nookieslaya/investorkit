@@ -91,3 +91,17 @@ export const cashOperations = pgTable('cash_operations', {
   check('cash_fx_date', sql`${t.fxAsOf} <= ${t.occurredAt}`),
   check('cash_fx_source', sql`${t.fxSource} = 'manual'`), check('cash_note_length', sql`char_length(${t.note}) <= 300`),
 ]);
+
+export const riskSettings = pgTable('risk_settings', {
+  portfolioId: uuid('portfolio_id').primaryKey(), ownerId: text('owner_id').notNull(),
+  maxPositionPct: numeric('max_position_pct', { precision: 13, scale: 10 }).notNull(),
+  top3Pct: numeric('top3_pct', { precision: 13, scale: 10 }).notNull(),
+  top5Pct: numeric('top5_pct', { precision: 13, scale: 10 }).notNull(),
+  quoteMaxAgeHours: integer('quote_max_age_hours').notNull(), fxMaxAgeHours: integer('fx_max_age_hours').notNull(),
+  revision: integer('revision').notNull(), updatedAt: updated(),
+}, t => [
+  foreignKey({ columns: [t.portfolioId, t.ownerId], foreignColumns: [portfolios.id, portfolios.ownerId] }).onDelete('cascade'),
+  check('risk_thresholds', sql`${t.maxPositionPct} BETWEEN 0 AND 100 AND ${t.top3Pct} BETWEEN ${t.maxPositionPct} AND 100 AND ${t.top5Pct} BETWEEN ${t.top3Pct} AND 100`),
+  check('risk_freshness', sql`${t.quoteMaxAgeHours} BETWEEN 1 AND 8760 AND ${t.fxMaxAgeHours} BETWEEN 1 AND 8760`),
+  check('risk_revision', sql`${t.revision} >= 1`),
+]);

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
-  portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema, instrumentsSchema, createInstrumentSchema, instrumentSchema, quoteInputSchema, quoteSchema, quotesSchema, fxInputSchema, fxSchema, ledgerOperationSchema, operationSchema, operationHistorySchema, valuationSchema, valuationTimeSchema, simulationInputSchema, simulationSchema,
+  portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema, instrumentsSchema, createInstrumentSchema, instrumentSchema, quoteInputSchema, quoteSchema, quotesSchema, fxInputSchema, fxSchema, ledgerOperationSchema, operationSchema, operationHistorySchema, valuationSchema, valuationTimeSchema, simulationInputSchema, simulationSchema, riskSettingsInputSchema, riskSettingsSchema, riskSchema, stressInputSchema, stressSchema,
 } from '@investorkit/shared';
 
 type ResponseContract = { description: string; schema: z.ZodType };
@@ -11,6 +11,7 @@ interface OperationContract {
   authenticated?: boolean;
   idempotency?: boolean;
   valuationQuery?: boolean;
+  ifMatch?: boolean;
   body?: z.ZodType;
   params?: typeof portfolioIdParamsSchema;
   responses: Record<number, ResponseContract>;
@@ -20,7 +21,17 @@ const commonErrors = { 429: error('Limit żądań.'), 500: error('Błąd serwera
 const protectedErrors = { ...commonErrors, 401: error('Brak ważnej sesji.') };
 
 // Only implemented first-party operations. Better Auth owns /api/auth/* contracts.
-export const apiContracts: Record<string, Partial<Record<'get' | 'post', OperationContract>>> = {
+export const apiContracts: Record<string, Partial<Record<'get' | 'post' | 'patch', OperationContract>>> = {
+  '/api/v1/portfolios/{id}/risk-settings': {
+    get: { operationId: 'getRiskSettings', summary: 'Ustawienia progów i świeżości, domyślne bez zapisu (revision0); ETag zawiera revision.', authenticated: true, params: portfolioIdParamsSchema,
+      responses: { 200: { description: 'Progi produktu i wersja ustawień.', schema: riskSettingsSchema }, ...protectedErrors, 400: error('UUID.'), 404: error('Brak portfela.') } },
+    patch: { operationId: 'updateRiskSettings', summary: 'Zapisz komplet ustawień z kontrolą If-Match; kolejność pozycja≤Top3≤Top5.', authenticated: true, params: portfolioIdParamsSchema, body: riskSettingsInputSchema, ifMatch: true,
+      responses: { 200: { description: 'Zapisane ustawienia i nowa revision/ETag.', schema: riskSettingsSchema }, ...protectedErrors, 400: error('Body, UUID lub If-Match.'), 403: error('Origin.'), 404: error('Brak portfela.'), 409: error('Konflikt wersji.'), 422: error('Nieprawidłowa kolejność progów/limit wersji.'), 428: error('Brak If-Match.'), 413: error('Limit body.'), 415: error('Content-Type.') } },
+  },
+  '/api/v1/portfolios/{id}/risk': { get: { operationId: 'risk', summary: 'Koncentracja Top3/5 i struktura z gotówką oraz kategorią UNKNOWN; niepełność daje udziały null.', authenticated: true, params: portfolioIdParamsSchema,
+    responses: { 200: { description: 'Koncentracja, struktura i bazowa wycena.', schema: riskSchema }, ...protectedErrors, 400: error('UUID.'), 404: error('Brak portfela.'), 422: error('Nieprawidłowy stan lub zakres kwot.') } } },
+  '/api/v1/portfolios/{id}/stress-tests': { post: { operationId: 'stress', summary: 'Scenariusz spadku0–100% jednej pozycji lub wszystkich papierów; FX i gotówka stałe, bez zapisów.', authenticated: true, params: portfolioIdParamsSchema, body: stressInputSchema,
+    responses: { 200: { description: 'Wycena przed, wartości po, ubytek i założenia.', schema: stressSchema }, ...protectedErrors, 400: error('Body/UUID.'), 403: error('Origin.'), 404: error('Brak własnego portfela lub instrumentu.'), 422: error('Brak otwartej pozycji lub błąd domenowy.'), 413: error('Limit body.'), 415: error('Content-Type.') } } },
   '/api/v1/portfolios/{id}/simulations': { post: { operationId: 'simulatePurchase', summary: 'Symuluj zakup bez zapisu; budżet z prowizją, bieżący FX i jawna cena referencyjna.', authenticated: true, params: portfolioIdParamsSchema, body: simulationInputSchema,
     responses: { 200: { description: 'Założenia i porównanie przed/po.', schema: simulationSchema }, ...protectedErrors, 400: error('Błędne dane.'), 403: error('Origin.'), 404: error('Brak własnego portfela lub instrumentu.'), 422: error('Za mały budżet, brak gotówki, aktualnego FX lub przekroczony zakres.'), 413: error('Limit body.'), 415: error('Content-Type.') } } },
   '/api/v1/instruments': {
@@ -39,7 +50,7 @@ export const apiContracts: Record<string, Partial<Record<'get' | 'post', Operati
     post: { operationId: 'createOperation', summary: 'Operacja wspólnego ledgeru z blokadą, idempotencją i pełnym replay.', authenticated: true, params: portfolioIdParamsSchema, idempotency: true, body: ledgerOperationSchema,
       responses: { 201: { description: 'Operacja lub identyczna powtórka.', schema: operationSchema }, ...protectedErrors, 400: error('Błędne dane lub klucz.'), 403: error('Origin.'), 404: error('Brak portfela/instrumentu.'), 409: error('Konflikt klucza.'), 422: error('Debet, oversell, waluta, daty, overflow lub limit historii.'), 413: error('Limit body.'), 415: error('Content-Type.') } },
   },
-  '/api/v1/portfolios/{id}/valuation': { get: { operationId: 'valuation', summary: 'Wycena z gotówką i nominalny P/L, świeżość 72h. Niekompletne dane dają totalValue/P&L null i pricedSubtotal.', authenticated: true, params: portfolioIdParamsSchema, valuationQuery: true,
+  '/api/v1/portfolios/{id}/valuation': { get: { operationId: 'valuation', summary: 'Wycena z gotówką i nominalny P/L, świeżość według ustawień (domyślnie72h). Niekompletne dane dają totalValue/P&L null i pricedSubtotal.', authenticated: true, params: portfolioIdParamsSchema, valuationQuery: true,
     responses: { 200: { description: 'Wycena z kompletnością, źródłami i diagnostyką.', schema: valuationSchema }, ...protectedErrors, 400: error('Błędna data/UUID.'), 404: error('Brak portfela.'), 422: error('Przyszła wycena lub błąd domeny.') } } },
   '/api/v1/portfolios/{id}/cash': { get: {
     operationId: 'cashSummary', summary: 'Salda gotówki i wpłaty netto PLN według historycznych kursów.', authenticated: true, params: portfolioIdParamsSchema,
@@ -111,6 +122,7 @@ export function buildOpenApiDocument() {
           ...(contract.params ? [{ name: 'id', in: 'path', required: true, schema: jsonSchema(contract.params.shape.id, 'input') }] : []),
           ...(contract.body ? [{ name: 'Origin', in: 'header', required: true, description: 'Musi być równy WEB_ORIGIN.', schema: { type: 'string', format: 'uri' } }] : []),
           ...(contract.valuationQuery ? [{ name: 'asOf', in: 'query', required: false, description: 'UTC; domyślnie zegar serwera, przyszła data niedozwolona.', schema: jsonSchema(valuationTimeSchema, 'input') }] : []),
+          ...(contract.ifMatch ? [{ name: 'If-Match', in: 'header', required: true, description: 'Aktualna revision w cudzysłowie, np. "0"; GET zwraca ETag i revision.', schema: { type: 'string', pattern: '^"(0|[1-9][0-9]{0,9})"$' } }] : []),
           ...(contract.idempotency ? [{ name: 'Idempotency-Key', in: 'header', required: true, description: 'UUID; ten sam klucz i body zwracają tę samą operację.', schema: { type: 'string', format: 'uuid' } }] : []),
         ],
         ...(contract.body ? {

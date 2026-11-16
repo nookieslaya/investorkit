@@ -119,3 +119,46 @@ export const simulationSchema = z.object({
 });
 export type SimulationInput = z.infer<typeof simulationInputSchema>;
 export type Simulation = z.infer<typeof simulationSchema>;
+
+export const percentageSchema = z.string().regex(/^(?:(?:0|[1-9]\d?)(?:\.\d{1,10})?|100(?:\.0{1,10})?)$(?![\s\S])/);
+export const riskSettingsInputSchema = z.object({
+  maxPositionPct: percentageSchema, top3Pct: percentageSchema, top5Pct: percentageSchema,
+  quoteMaxAgeHours: z.number().int().min(1).max(8760), fxMaxAgeHours: z.number().int().min(1).max(8760),
+}).strict();
+export const riskSettingsSchema = riskSettingsInputSchema.extend({ revision: z.number().int().min(0).max(2147483647) });
+export const DEFAULT_RISK_SETTINGS = Object.freeze({ maxPositionPct: '25', top3Pct: '60', top5Pct: '80', quoteMaxAgeHours: 72, fxMaxAgeHours: 72 });
+export const riskInstrumentSchema = z.object({ instrumentId: z.uuid(), type: z.enum(['STOCK', 'ETF']), issuerCountry: z.string().regex(/^[A-Z]{2}$/).nullable() }).strict();
+const allocationSchema = z.object({ key: z.string(), valueBase: signedDecimalSchema.nullable(), weightPct: computedDecimalSchema.nullable() });
+export const riskSchema = z.object({
+  valuation: valuationSchema, settings: riskSettingsSchema,
+  concentration: z.object({
+    largestPositionPct: computedDecimalSchema.nullable(), top3Pct: computedDecimalSchema.nullable(), top5Pct: computedDecimalSchema.nullable(),
+    maxPositionExceeded: z.boolean().nullable(), top3Exceeded: z.boolean().nullable(), top5Exceeded: z.boolean().nullable(),
+    positions: z.array(z.object({ instrumentId: z.uuid(), weightPct: computedDecimalSchema.nullable(), exceedsLimit: z.boolean().nullable() })),
+    reason: z.enum(['INCOMPLETE_VALUATION', 'NON_POSITIVE_BASE']).nullable(),
+  }),
+  allocations: z.object({ assetType: z.array(allocationSchema), currency: z.array(allocationSchema), issuerCountry: z.array(allocationSchema) }),
+});
+export const stressInputSchema = z.discriminatedUnion('scope', [
+  z.object({ scope: z.literal('SECURITIES'), dropPct: percentageSchema }).strict(),
+  z.object({ scope: z.literal('INSTRUMENT'), instrumentId: z.uuid(), dropPct: percentageSchema }).strict(),
+]);
+export const stressSchema = z.object({
+  before: valuationSchema,
+  after: z.object({ totalValue: signedDecimalSchema.nullable(), cash: valuationSchema.shape.cash,
+    positions: z.array(z.object({ instrumentId: z.uuid(), name: z.string(), symbol: z.string(), currency: currencySchema,
+      valueBase: signedDecimalSchema.nullable(), weightPct: computedDecimalSchema.nullable(),
+      referencePrice: computedDecimalSchema.nullable(), scenarioPrice: computedDecimalSchema.nullable(),
+    })),
+  }),
+  lossBase: signedDecimalSchema.nullable(), lossPct: computedDecimalSchema.nullable(),
+  reason: z.enum(['INCOMPLETE_VALUATION', 'NON_POSITIVE_BASE']).nullable(),
+  assumptions: z.object({ scope: z.enum(['INSTRUMENT', 'SECURITIES']), instrumentId: z.uuid().nullable(), dropPct: percentageSchema,
+    fxConstant: z.literal(true), cashUnaffected: z.literal(true), quoteMaxAgeHours: z.number(), fxMaxAgeHours: z.number(),
+  }),
+});
+export type RiskSettingsInput = z.infer<typeof riskSettingsInputSchema>;
+export type RiskSettings = z.infer<typeof riskSettingsSchema>;
+export type Risk = z.infer<typeof riskSchema>;
+export type StressInput = z.infer<typeof stressInputSchema>;
+export type Stress = z.infer<typeof stressSchema>;

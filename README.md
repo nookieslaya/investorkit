@@ -26,7 +26,7 @@ Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Foundation u
 - OpenAPI 3.0.3 generowane z Zod: [dokument](docs/openapi.json), lokalnie `/api/v1/openapi.json`; testy odpowiedzi i kontrola aktualności w CI.
 
 ## Jeszcze niezaimplementowane
-Koncentracja i stress, dziennik, import XTB, upload/AI, snapshoty historyczne i landing z zapisem zainteresowania. portfolio-engine zawiera P01–P05; API/UI używają wspólnego ledgeru oraz ręcznych cen/FX. report-engine pozostaje szkieletem. Pozostałe tabele raportów/importu/dziennika są specyfikacją. Brak płatności, danych rynkowych na żywo i automatycznego pobierania raportów.
+Dziennik, import XTB, upload/AI, snapshoty historyczne i landing z zapisem zainteresowania. portfolio-engine zawiera P01–P06; API/UI używają wspólnego ledgeru oraz ręcznych cen/FX. report-engine pozostaje szkieletem. Pozostałe tabele raportów/importu/dziennika są specyfikacją. Brak płatności, danych rynkowych na żywo i automatycznego pobierania raportów.
 
 ## Uruchomienie lokalne
 Wymagania: Node24 LTS, npm11+, Docker z Compose. Rozpakuj archiwum i wejdź do katalogu investorkit.
@@ -67,7 +67,7 @@ Przejrzyj SQL przed zatwierdzeniem. Nie stosujemy drizzle-kit push w produkcji. 
 Obecny auth jest sprawdzony lokalnie, lecz przed publicznym pilotem wymagane są email verification/reset, proces usunięcia/eksportu danych, polityka prywatności, restore drill oraz test E2E w środowisku obsługującym Chromium. Lista w backlogu B04–B06. Brak połączenia z brokerem i przechowywania jego haseł. Ograniczenia procesu in-memory rate limit są opisane w architekturze.
 
 ## Kontynuacja
-F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P05 i A01–A06 ukończone dla ręcznego MVP; następnie P06–P07. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck i 4 testy unit na Node 24; szczegóły w raporcie weryfikacji.
+F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P06 i A01–A07 ukończone dla ręcznego MVP; następnie P07 i dziennik. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck i 4 testy unit na Node 24; szczegóły w raporcie weryfikacji.
 
 CI potwierdza build, typecheck, migrację, 4 testy jednostkowe, 8 integracyjnych i 1 E2E: [pierwszy przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43749258894).
 
@@ -84,9 +84,9 @@ API: `GET /api/v1/portfolios/:id/cash`, `GET/POST /api/v1/portfolios/:id/cash-op
 3. Wpisz oddzielnie ręczną cenę wyceny z datą oraz bieżący kurs wyceny dla EUR/USD. Cena zakupu nie jest automatycznie ceną wyceny, a historyczny FX nie zastępuje bieżącego kursu.
 4. Zobacz wartość pozycji, niezrealizowany wynik, udział z gotówką oraz nominalny P/L portfela. Możesz zapisać częściową lub pełną sprzedaż; saldo i koszt przeliczą się z całej historii.
 
-Dane starsze niż72h są nieaktualne. Przy brakujących/starych danych pełna wartość i P/L są kreską, a osobno pokazana jest tylko wyceniona część. Przyszłe ceny/kursy nie są dopuszczane do zapisu ani używane do historycznej wyceny. Wpłaty netto≤0 dają brak procentu. Prosta stopa nie uwzględnia czasu przepływów; koszt średni jest analityczny, nie podatkowy. Kursy i ceny są wpisami użytkownika, bez notowań live.
+Dane starsze niż ustawiony próg (domyślnie72h) są nieaktualne. Przy brakujących/starych danych pełna wartość i P/L są kreską, a osobno pokazana jest tylko wyceniona część. Przyszłe ceny/kursy nie są dopuszczane do zapisu ani używane do historycznej wyceny. Wpłaty netto≤0 dają brak procentu. Prosta stopa nie uwzględnia czasu przepływów; koszt średni jest analityczny, nie podatkowy. Kursy i ceny są wpisami użytkownika, bez notowań live.
 
-API: GET/POST `/api/v1/instruments`, POST `/api/v1/instruments/:id/quotes`, POST `/api/v1/fx-rates`, GET/POST `/api/v1/portfolios/:id/operations`, GET `/api/v1/portfolios/:id/valuation?asOf=...`. OpenAPI obejmuje17 operacji. Limity tej wersji:100 instrumentów/użytkownika, 500 cen/instrument i1000 kursów wyceny/użytkownika. Dane są append-only, bez edycji/korekt i stronicowania w tym etapie.
+API: GET/POST `/api/v1/instruments`, POST `/api/v1/instruments/:id/quotes`, POST `/api/v1/fx-rates`, GET/POST `/api/v1/portfolios/:id/operations`, GET `/api/v1/portfolios/:id/valuation?asOf=...`. OpenAPI obejmuje21 operacji. Limity tej wersji:100 instrumentów/użytkownika, 500 cen/instrument i1000 kursów wyceny/użytkownika. Dane są append-only, bez edycji/korekt i stronicowania w tym etapie.
 
 ## Symulator zakupu (P05/A06)
 Wybierz **Symulator** w nawigacji portfela: http://localhost:5173/#simulator. To osobny widok; formularz wpłat/wypłat, salda i historia są w **Operacjach** (`#operations`, także poprzedni link `#cash-operations`). Inwestycje pozostają w `#investments`. Wszystkie sekcje są dostępne również na telefonie.
@@ -97,6 +97,15 @@ Główne wyniki to kupowana ilość, średni koszt przed→po z prowizją, udzia
 
 Wyświetlanie: pieniądze2 miejsca, procenty2, ilości maksymalnie6 bez końcowych zer i z „≈” przy przybliżeniu; dokładna ilość jest też w szczegółach. Średni koszt2 miejsca, więcej jeśli ukryłyby różnicę lub dodatnią wartość. Dodatnia reszta poniżej grosza to „<0,01” z walutą. Formatowanie HALF_EVEN działa na decimal strings/BigInt; nie liczymy scenariusza z zaokrąglonego UI.
 
-Kurs hipotetycznej wpłaty/zakupu to aktualny ręczny FX (maks.72h), PLN=1. Nie ma automatycznej wymiany walut. Cena zakupu nie nadpisuje ceny wyceny. Istniejąca pozycja bez ceny oraz stare/przyszłe notowania zachowują diagnostykę i brak pełnej wyceny. Po zmianie danych ponów obliczenie. Symulacja nie zapisuje transakcji i nie zmienia portfela.
+Kurs hipotetycznej wpłaty/zakupu to aktualny ręczny FX (według ustawionego wieku, domyślnie72h), PLN=1. Nie ma automatycznej wymiany walut. Cena zakupu nie nadpisuje ceny wyceny. Istniejąca pozycja bez ceny oraz stare/przyszłe notowania zachowują diagnostykę i brak pełnej wyceny. Po zmianie danych ponów obliczenie. Symulacja nie zapisuje transakcji i nie zmienia portfela.
 
-Silnik i istniejące16 kontraktów API zachowane. Jedyny dodatkowy odczyt to `GET /api/v1/instruments/:id/quotes`, potrzebny do podpowiadania cen także dla nieposiadanych instrumentów, z sesją i owner scope. `POST /api/v1/portfolios/:id/simulations` nadal używa spójnej transakcji READ ONLY. Bez nowych zależności, migracji i zapisu scenariuszy. Weryfikacja:93 unit,32 integration,2 E2E Chromium; szczegóły w VERIFICATION.md.
+Silnik i istniejące16 kontraktów API zachowane. Jedyny dodatkowy odczyt to `GET /api/v1/instruments/:id/quotes`, potrzebny do podpowiadania cen także dla nieposiadanych instrumentów, z sesją i owner scope. `POST /api/v1/portfolios/:id/simulations` nadal używa spójnej transakcji READ ONLY. Bez nowych zależności, migracji i zapisu scenariuszy. Weryfikacja:105 unit,40 integration,3 E2E Chromium; szczegóły w VERIFICATION.md.
+
+## Koncentracja i testy spadków (P06/A07)
+Wybierz **Ryzyko**: http://localhost:5173/#risk. Zobaczysz największą pozycję, Top3/5 oraz podział według typu aktywów, waluty notowania/gotówki i kraju emitenta. Mianownikiem jest cały portfel z gotówką; Top3/5 obejmuje same papiery. Nieznane kategorie pozostają widoczne i w mianowniku. Kraj emitenta/funduszu ETF nie oznacza ekspozycji geograficznej aktywów; waluta notowania nie opisuje całego ryzyka walutowego.
+
+Test spadku od0 do100% obejmuje jedną otwartą pozycję albo wszystkie papiery. Gotówka i FX pozostają stałe. Wynik pokazuje wartość przed/po i ubytek; szczegóły zawierają ceny, daty i źródła FX. To scenariusz, nie prognoza, bez zapisu transakcji lub zmiany portfela. Brak/stare dane dają niedostępne pełne wartości i udziały, a nie pozornie kompletny wynik. Dla pustego/zerowego portfela procenty są niedostępne; dla samej gotówki Top3/5=0 i spadek papierów jej nie zmienia.
+
+W rozwijanych ustawieniach zapiszesz własne progi (domyślnie25%/60%/80%, pozycja≤Top3≤Top5) i maksymalny wiek cen/FX (domyślnie72h, pełne godziny1–8760). Progi są ustawieniami produktu, nie uniwersalną oceną bezpieczeństwa. Świeżość działa spójnie także w Inwestycjach i Symulatorze. Dwa okna nie nadpiszą sobie ustawień: zapis wymaga aktualnej wersji. Sama analiza i testy niczego nie zapisują.
+
+API: GET `/api/v1/portfolios/:id/risk`, GET/PATCH `.../risk-settings` (If-Match/revision), POST `.../stress-tests`. Migracja0003 dodaje wyłącznie tabelę ustawień i ograniczenia; zastosowana lokalnie po prywatnej kopii bazy. Dotychczasowe formaty wejścia/wyjścia17 operacji zachowane. Brak nowych zależności i zmian ledgeru.

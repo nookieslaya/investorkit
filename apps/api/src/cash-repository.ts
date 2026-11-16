@@ -2,10 +2,11 @@ import { createHash } from 'node:crypto';
 import { and, asc, eq } from 'drizzle-orm';
 import { cashOperations, portfolios, instruments, manualQuotes, fxRates } from '@investorkit/db';
 import type { Database } from '@investorkit/db';
-import { cashOperationSchema, ledgerOperationSchema, operationSchema, valuationSchema, simulationSchema } from '@investorkit/shared';
-import type { CashOperationInput, LedgerOperation, SimulationInput } from '@investorkit/shared';
-import { FinancialDecimal, replayLedger, valuePortfolio, simulatePurchase } from '@investorkit/portfolio-engine';
+import { cashOperationSchema, ledgerOperationSchema, operationSchema, valuationSchema, simulationSchema, riskSchema, stressSchema } from '@investorkit/shared';
+import type { CashOperationInput, LedgerOperation, SimulationInput, StressInput } from '@investorkit/shared';
+import { FinancialDecimal, replayLedger, valuePortfolio, simulatePurchase, analyzeRisk, stressPortfolio } from '@investorkit/portfolio-engine';
 import { quoteDto, fxDto } from './market-repository.js';
+import { readRiskSettings } from './risk-settings-repository.js';
 import { CashApiError } from './domain-error.js';
 export { CashApiError } from './domain-error.js';
 type Row = typeof cashOperations.$inferSelect;
@@ -30,12 +31,13 @@ export function cashRepository(db: Database) {
     const metadata = await executor.select().from(instruments).where(eq(instruments.ownerId, ownerId)).orderBy(asc(instruments.createdAt), asc(instruments.id));
     const quotes = await executor.select().from(manualQuotes).where(eq(manualQuotes.ownerId, ownerId)).orderBy(asc(manualQuotes.sequence));
     const rates = await executor.select().from(fxRates).where(eq(fxRates.ownerId, ownerId)).orderBy(asc(fxRates.sequence));
+    const settings = await readRiskSettings(executor, ownerId, id);
     const hydrate = (result: ReturnType<typeof valuePortfolio>) => valuationSchema.parse({ ...result, positions: result.positions.map(position => {
       const instrument = metadata.find(row => row.id === position.instrumentId);
       if (!instrument) throw new Error('Missing position metadata');
       return { ...position, name: instrument.name, symbol: instrument.symbol };
     }) });
-    return { metadata, hydrate, context: { instruments: engineInstruments(metadata), operations: rows.map(operationInput), quotes: quotes.map(quoteDto), fxRates: rates.map(fxDto), asOf } };
+    return { metadata, hydrate, settings, context: { quoteMaxAgeHours: settings.quoteMaxAgeHours, fxMaxAgeHours: settings.fxMaxAgeHours, instruments: engineInstruments(metadata), operations: rows.map(operationInput), quotes: quotes.map(quoteDto), fxRates: rates.map(fxDto), asOf } };
   }
   async function createOperation(ownerId: string, portfolioId: string, input: LedgerOperation, key: string) {
     const common = { ...input, fxToBase: FinancialDecimal.parseFxRate(input.fxToBase).toString(), occurredAt: new Date(input.occurredAt).toISOString(), fxAsOf: new Date(input.fxAsOf).toISOString() };
@@ -87,6 +89,26 @@ export function cashRepository(db: Database) {
         if (!snapshot.metadata.some(row => row.id === instrumentId)) throw missing();
         const result = simulatePurchase(snapshot.context, { ...input, instrumentId });
         return simulationSchema.parse({ ...result, before: snapshot.hydrate(result.before), after: snapshot.hydrate(result.after) });
+      }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
+    },
+    async risk(ownerId: string, id: string) {
+      return db.transaction(async tx => {
+        const snapshot = await marketSnapshot(tx, ownerId, id, new Date().toISOString());
+        const { revision: _revision, ...settings } = snapshot.settings;
+        const result = analyzeRisk(snapshot.context, snapshot.metadata.map(row => ({ instrumentId: row.id, type: row.type, issuerCountry: row.issuerCountry })), settings);
+        return riskSchema.parse({ ...result, settings: snapshot.settings, valuation: snapshot.hydrate(result.valuation) });
+      }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
+    },
+    async stress(ownerId: string, id: string, input: StressInput) {
+      return db.transaction(async tx => {
+        const snapshot = await marketSnapshot(tx, ownerId, id, new Date().toISOString());
+        const normalized = input.scope === 'INSTRUMENT' ? { ...input, instrumentId: input.instrumentId.toLowerCase() } : input;
+        if (normalized.scope === 'INSTRUMENT' && !snapshot.metadata.some(row => row.id === normalized.instrumentId)) throw missing();
+        const result = stressPortfolio(snapshot.context, normalized);
+        return stressSchema.parse({ ...result, before: snapshot.hydrate(result.before), after: { ...result.after, positions: result.after.positions.map(position => {
+          const instrument = snapshot.metadata.find(row => row.id === position.instrumentId)!;
+          return { ...position, name: instrument.name, symbol: instrument.symbol };
+        }) } });
       }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
     },
     async valuation(ownerId: string, id: string, asOf: string) {

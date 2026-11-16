@@ -1,4 +1,4 @@
-/** P01–P05: deterministic ledger replay, historical cost and valuation with completeness diagnostics. */
+/** P01–P06: deterministic ledger replay, historical cost and valuation with completeness diagnostics. */
 export { PORTFOLIO_ENGINE_VERSION } from './version.js';
 export {
   DECIMAL_POLICY, DecimalDomainError, FinancialDecimal,
@@ -13,3 +13,5 @@ export type { LedgerErrorCode } from './ledger.js';
 export { valuePortfolio, ValuationDomainError } from './valuation.js';
 
 export { simulatePurchase, SimulationDomainError } from './simulation.js';
+
+export { analyzeRisk, stressPortfolio, validateRiskSettings, RiskDomainError } from './risk.js';
