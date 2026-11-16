@@ -8,6 +8,9 @@ async function choose(page: Page, label: string, option: string) {
 test('registers, persists a private portfolio and signs out', async ({ page }, testInfo) => {
   test.setTimeout(60000);
   await page.goto('/');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Przejdź do treści', exact: true })).toBeFocused();
+  await page.keyboard.press('Tab');
   await page.getByLabel('Imię', { exact: true }).fill('Tester');
   await page.getByLabel('Adres email').fill(`e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`);
   await page.getByLabel('Hasło', { exact: true }).fill('Test-only-passphrase-2026!');
@@ -88,6 +91,25 @@ test('registers, persists a private portfolio and signs out', async ({ page }, t
   await expect(usdCash).toContainText('6,40'); await expect(portfolioValue).toContainText('895,78'); await expect(pnl).toContainText('3,78');
   await page.reload();
   await expect(portfolioValue).toContainText('895,78'); await expect(page.getByText('Pierwszy zakup', { exact: true })).toBeVisible();
+  const simulator = page.getByRole('region', { name: 'Symulator zakupu', exact: true });
+  const result = page.getByRole('region', { name: 'Wynik symulacji', exact: true });
+  await page.getByLabel('Budżet symulacji (USD)', { exact: true }).fill('10');
+  await page.getByLabel('Cena zakupu w symulacji (USD)', { exact: true }).fill('100');
+  await page.getByLabel('Prowizja symulacji (USD)', { exact: true }).fill('0,1');
+  await page.getByRole('button', { name: 'Oblicz symulację', exact: true }).click();
+  await expect(result.getByRole('heading', { name: 'Porównanie przed i po' })).toBeVisible();
+  await expect(result).toContainText('0,099 szt.');
+  await expect(result.getByRole('row', { name: /Wartość całego portfela/ })).toContainText('933,202');
+  await expect(result).toContainText('wpis ręczny');
+  await expect(usdCash).toContainText('6,40'); await expect(portfolioValue).toContainText('895,78');
+  await page.getByLabel('Budżet symulacji (USD)', { exact: true }).fill('5');
+  await expect(result.getByRole('heading', { name: 'Porównanie przed i po' })).toHaveCount(0);
+  await choose(page, 'Źródło środków', 'Istniejąca gotówka');
+  await page.getByRole('button', { name: 'Oblicz symulację', exact: true }).click();
+  await expect(result).toContainText('0,049 szt.');
+  await expect(result.getByRole('row', { name: /Wartość całego portfela/ })).toContainText('893,302');
+  await expect(usdCash).toContainText('6,40');
+  await simulator.screenshot({ path: testInfo.outputPath('simulator-desktop.png'), animations: 'disabled' });
   await page.screenshot({ path: testInfo.outputPath('investments-desktop.png'), fullPage: true });
 
   const currencySelect = page.getByRole('combobox', { name: 'Waluta', exact: true });
@@ -107,6 +129,7 @@ test('registers, persists a private portfolio and signs out', async ({ page }, t
   if (await darkButton.isVisible()) await darkButton.click();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('article').filter({ hasText: 'Udział z gotówką' })).toContainText('18,90');
+  await simulator.screenshot({ path: testInfo.outputPath('simulator-mobile-dark.png'), animations: 'disabled' });
   await page.screenshot({ path: testInfo.outputPath('investments-mobile-dark.png'), fullPage: true });
   await currencySelect.click();
   await expect(page.getByRole('listbox')).toBeVisible();

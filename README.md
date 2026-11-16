@@ -26,7 +26,7 @@ Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Foundation u
 - OpenAPI 3.0.3 generowane z Zod: [dokument](docs/openapi.json), lokalnie `/api/v1/openapi.json`; testy odpowiedzi i kontrola aktualności w CI.
 
 ## Jeszcze niezaimplementowane
-Symulator, koncentracja i stress, dziennik, import XTB, upload/AI, snapshoty historyczne i landing z zapisem zainteresowania. portfolio-engine zawiera P01–P04; API/UI używają wspólnego ledgeru oraz ręcznych cen/FX. report-engine pozostaje szkieletem. Pozostałe tabele raportów/importu/dziennika są specyfikacją. Brak płatności, danych rynkowych na żywo i automatycznego pobierania raportów.
+Koncentracja i stress, dziennik, import XTB, upload/AI, snapshoty historyczne i landing z zapisem zainteresowania. portfolio-engine zawiera P01–P05; API/UI używają wspólnego ledgeru oraz ręcznych cen/FX. report-engine pozostaje szkieletem. Pozostałe tabele raportów/importu/dziennika są specyfikacją. Brak płatności, danych rynkowych na żywo i automatycznego pobierania raportów.
 
 ## Uruchomienie lokalne
 Wymagania: Node24 LTS, npm11+, Docker z Compose. Rozpakuj archiwum i wejdź do katalogu investorkit.
@@ -67,7 +67,7 @@ Przejrzyj SQL przed zatwierdzeniem. Nie stosujemy drizzle-kit push w produkcji. 
 Obecny auth jest sprawdzony lokalnie, lecz przed publicznym pilotem wymagane są email verification/reset, proces usunięcia/eksportu danych, polityka prywatności, restore drill oraz test E2E w środowisku obsługującym Chromium. Lista w backlogu B04–B06. Brak połączenia z brokerem i przechowywania jego haseł. Ograniczenia procesu in-memory rate limit są opisane w architekturze.
 
 ## Kontynuacja
-F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P04 i A01–A05 ukończone dla ręcznego MVP; następnie P05–P07. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck i 4 testy unit na Node 24; szczegóły w raporcie weryfikacji.
+F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P05 i A01–A06 ukończone dla ręcznego MVP; następnie P06–P07. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck i 4 testy unit na Node 24; szczegóły w raporcie weryfikacji.
 
 CI potwierdza build, typecheck, migrację, 4 testy jednostkowe, 8 integracyjnych i 1 E2E: [pierwszy przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43749258894).
 
@@ -86,4 +86,11 @@ API: `GET /api/v1/portfolios/:id/cash`, `GET/POST /api/v1/portfolios/:id/cash-op
 
 Dane starsze niż72h są nieaktualne. Przy brakujących/starych danych pełna wartość i P/L są kreską, a osobno pokazana jest tylko wyceniona część. Przyszłe ceny/kursy nie są dopuszczane do zapisu ani używane do historycznej wyceny. Wpłaty netto≤0 dają brak procentu. Prosta stopa nie uwzględnia czasu przepływów; koszt średni jest analityczny, nie podatkowy. Kursy i ceny są wpisami użytkownika, bez notowań live.
 
-API: GET/POST `/api/v1/instruments`, POST `/api/v1/instruments/:id/quotes`, POST `/api/v1/fx-rates`, GET/POST `/api/v1/portfolios/:id/operations`, GET `/api/v1/portfolios/:id/valuation?asOf=...`. OpenAPI obejmuje15 operacji. Limity tej wersji:100 instrumentów/użytkownika, 500 cen/instrument i1000 kursów wyceny/użytkownika. Dane są append-only, bez edycji/korekt i stronicowania w tym etapie.
+API: GET/POST `/api/v1/instruments`, POST `/api/v1/instruments/:id/quotes`, POST `/api/v1/fx-rates`, GET/POST `/api/v1/portfolios/:id/operations`, GET `/api/v1/portfolios/:id/valuation?asOf=...`. OpenAPI obejmuje16 operacji. Limity tej wersji:100 instrumentów/użytkownika, 500 cen/instrument i1000 kursów wyceny/użytkownika. Dane są append-only, bez edycji/korekt i stronicowania w tym etapie.
+
+## Symulator zakupu (P05/A06)
+W menu wybierz **Symulator** lub przewiń pod inwestycje. Wybierz instrument, nowe środki albo istniejącą gotówkę, budżet całkowity, cenę zakupu i prowizję. Wynik porównuje ilość, koszt średni, wartość i udział pozycji oraz wartość portfela i gotówkę. Reszta budżetu pozostaje na subkoncie. Nie ma automatycznej wymiany walut.
+
+Kurs do hipotetycznej wpłaty/zakupu pochodzi z aktualnego ręcznego FX (maks.72h), PLN=1. Cena referencyjna jest niezależna od zakupu. Nowa pozycja bez zapisanych notowań przyjmuje cenę scenariusza, wyraźnie oznaczoną; istniejąca pozycja bez ceny oraz stare/przyszłe notowania zachowują diagnostykę i brak pełnej wyceny. Wynik ma datę stanu; po zmianie portfela ponów obliczenie. Edycja formularza usuwa poprzedni wynik.
+
+`POST /api/v1/portfolios/:id/simulations` działa w transakcji tylko do odczytu. Symulacja nie zapisuje transakcji, cen ani kursów i nie zmienia sald. Brak zapisywania scenariuszy i wykonywania zleceń. Testy:87 unit,31 integration i1 E2E Chromium, w tym oba źródła środków i brak skutków ubocznych.

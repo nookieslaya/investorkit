@@ -80,7 +80,8 @@ export const valuationQuerySchema = z.object({ asOf: z.iso.datetime().optional()
 export const valuationTimeSchema = z.iso.datetime();
 const computedDecimalSchema = z.string().regex(/^-?(0|[1-9]\d*)(\.\d+)?$(?![\s\S])/);
 export const valuationIssueSchema = z.enum(['MISSING_QUOTE', 'STALE_QUOTE', 'FUTURE_QUOTE', 'MISSING_FX', 'STALE_FX', 'FUTURE_FX']);
-const quoteUsedSchema = z.object({ price: decimalSchema, asOf: z.iso.datetime(), source: z.literal('manual') });
+export const valuationQuoteSchema = quoteInputSchema.extend({ source: z.enum(['manual', 'scenario']) });
+const quoteUsedSchema = valuationQuoteSchema.omit({ currency: true });
 const fxUsedSchema = z.object({ rate: fxRateSchema, asOf: z.iso.datetime().nullable(), source: z.enum(['manual', 'identity']) });
 export const valuationSchema = z.object({
   asOf: z.iso.datetime(), engineVersion: z.string(), complete: z.boolean(), baseCurrency: z.literal('PLN'),
@@ -100,3 +101,19 @@ export type QuoteInput = z.infer<typeof quoteInputSchema>;
 export type FxInput = z.infer<typeof fxInputSchema>;
 export type TradeOperation = z.infer<typeof ledgerTradeSchema>;
 export type Valuation = z.infer<typeof valuationSchema>;
+
+export const simulationInputSchema = z.object({
+  instrumentId: z.uuid(), budget: decimalSchema, unitPrice: decimalSchema, commission: decimalSchema,
+  funding: z.enum(['NEW_MONEY', 'EXISTING_CASH']),
+}).strict();
+export const simulationSchema = z.object({
+  assumptions: simulationInputSchema.extend({
+    currency: currencySchema, quantityScale: z.number().int().min(0).max(10),
+    reference: quoteUsedSchema.nullable(), fx: fxUsedSchema,
+  }),
+  quantity: decimalSchema, actualCost: computedDecimalSchema, budgetRemaining: computedDecimalSchema,
+  remainingCash: computedDecimalSchema, before: valuationSchema, after: valuationSchema,
+  delta: z.object({ totalValue: signedDecimalSchema.nullable(), positionValue: signedDecimalSchema.nullable() }),
+});
+export type SimulationInput = z.infer<typeof simulationInputSchema>;
+export type Simulation = z.infer<typeof simulationSchema>;

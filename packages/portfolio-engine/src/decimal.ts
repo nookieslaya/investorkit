@@ -60,6 +60,19 @@ export class FinancialDecimal {
     if (other.isZero()) throw new DecimalDomainError('DIVISION_BY_ZERO');
     return new FinancialDecimal(this.#value.dividedBy(other.#value));
   }
+  /** Nonnegative budget division, floored before reducing to the normal 40-digit context.
+   * 100 digits cover two 40-digit operands plus quantity scale (<=10), so an
+   * almost-integer quotient cannot first round up across the purchase boundary.
+   */
+  dividedByFloor(other: FinancialDecimal, scale: number): FinancialDecimal {
+    checkScale(scale);
+    if (other.isZero()) throw new DecimalDomainError('DIVISION_BY_ZERO');
+    if (this.isNegative() || other.isNegative()) throw new DecimalDomainError('NEGATIVE_VALUE');
+    const Exact = Calculation.clone({ precision: 100, rounding: Calculation.ROUND_FLOOR });
+    const factor = new Exact('10').pow(scale);
+    const units = new Exact(this.#value).times(factor).dividedToIntegerBy(other.#value);
+    return new FinancialDecimal(new Calculation(units.dividedBy(factor).toFixed()));
+  }
   compare(other: FinancialDecimal): number { return this.#value.comparedTo(other.#value); }
   isZero(): boolean { return this.#value.isZero(); }
   isNegative(): boolean { return !this.isZero() && this.#value.isNegative(); }

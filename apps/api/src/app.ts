@@ -3,9 +3,9 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { fromNodeHeaders } from 'better-auth/node';
 import { z, ZodError } from 'zod';
-import { createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema } from '@investorkit/shared';
+import { createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema } from '@investorkit/shared';
 import { CashApiError } from './cash-repository.js';
-import { LedgerDomainError, DecimalDomainError, PositionDomainError, ValuationDomainError } from '@investorkit/portfolio-engine';
+import { LedgerDomainError, DecimalDomainError, PositionDomainError, ValuationDomainError, SimulationDomainError } from '@investorkit/portfolio-engine';
 import { buildOpenApiDocument } from './openapi.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
@@ -30,8 +30,10 @@ export async function buildApp(config: Config, services: Services, logging = tru
   });
   app.setErrorHandler((err, req, reply) => {
     if (err instanceof CashApiError) return reply.code(err.statusCode).send(fail(err.code, err.message, req.id));
-    if (err instanceof LedgerDomainError || err instanceof DecimalDomainError || err instanceof PositionDomainError || err instanceof ValuationDomainError) {
+    if (err instanceof LedgerDomainError || err instanceof DecimalDomainError || err instanceof PositionDomainError || err instanceof ValuationDomainError || err instanceof SimulationDomainError) {
       const message = err.code === 'INSUFFICIENT_CASH' ? 'Brak wystarczających środków w tej walucie.'
+        : err.code === 'BUDGET_TOO_SMALL' ? 'Budżet po prowizji nie wystarcza na minimalną ilość instrumentu.'
+        : err.code === 'SCENARIO_FX_REQUIRED' ? 'Uzupełnij aktualny kurs wyceny dla waluty instrumentu (maksymalnie 72h).'
         : err.code === 'STORAGE_OVERFLOW' ? 'Wynik przekracza obsługiwany zakres kwot (18 cyfr przed przecinkiem).'
         : err.code === 'FUTURE_FX' ? 'Data kursu historycznego nie może być późniejsza niż data operacji.'
         : err.code === 'COMMISSION_CURRENCY_MISMATCH' ? 'Waluta prowizji musi być walutą transakcji.'
@@ -90,6 +92,10 @@ export async function buildApp(config: Config, services: Services, logging = tru
       const { id } = portfolioIdParamsSchema.parse(req.params);
       const key = z.uuid().parse(req.headers['idempotency-key']).toLowerCase();
       return reply.code(201).send(await services.portfolios.createOperation(req.ownerId, id, ledgerOperationSchema.parse(req.body), key));
+    });
+    scoped.post('/portfolios/:id/simulations', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return services.portfolios.simulate(req.ownerId, id, simulationInputSchema.parse(req.body));
     });
     scoped.get('/portfolios/:id/valuation', async req => {
       const { id } = portfolioIdParamsSchema.parse(req.params);

@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button';
 import { auth, listPortfolios, createPortfolio } from '../lib/api';
 import { InvestmentsOverview } from './investments';
 import { CashOverview } from './cash';
+import { PurchaseSimulator } from './simulator';
 import { pl } from '../i18n/pl';
 type Theme = 'light' | 'dark';
 function currentTheme(): Theme {
@@ -35,9 +36,10 @@ export function App() {
       <nav aria-label="Nawigacja główna"><a className="nav-item active" href="/" aria-current="page"><LayoutDashboard size={19} />{pl.overview}</a>
         {session.data && <a className="nav-item" href="#investments"><ChartNoAxesCombined size={19} /><span>Inwestycje</span></a>}
         {session.data && <a className="nav-item cash-nav" href="#cash-operations"><ArrowLeftRight size={19} /><span>Gotówka</span></a>}
-        {[{ Icon: FlaskConical, label: pl.simulator }, { Icon: BookOpen, label: pl.journal }, { Icon: Files, label: pl.reports }].map(({ Icon, label }) => <div className="nav-item future" key={label}><Icon size={19} /><span>{label}</span><span className="soon">Wkrótce</span></div>)}
+        {session.data && <a className="nav-item" href="#simulator"><FlaskConical size={19} /><span>{pl.simulator}</span></a>}
+        {[{ Icon: BookOpen, label: pl.journal }, { Icon: Files, label: pl.reports }].map(({ Icon, label }) => <div className="nav-item future" key={label}><Icon size={19} /><span>{label}</span><span className="soon">Wkrótce</span></div>)}
       </nav>
-      <div className="sidebar-bottom"><ShieldCheck size={22} /><strong>Twoje decyzje. Twoje dane.</strong><p>Bez połączenia z brokerem.<br />Bez wykonywania transakcji.</p><span className="version">Wersja rozwojowa · 0.4</span></div>
+      <div className="sidebar-bottom"><ShieldCheck size={22} /><strong>Twoje decyzje. Twoje dane.</strong><p>Bez połączenia z brokerem.<br />Bez wykonywania transakcji.</p><span className="version">Wersja rozwojowa · 0.5</span></div>
     </aside>
     <div className="main-column">
       <header className="topbar"><div className="breadcrumb">Przestrzeń inwestora <span>/</span> <strong>Przegląd</strong></div><div className="top-actions"><Button variant="ghost" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</Button>{session.data && <Button variant="ghost" onClick={() => void logout()}><LogOut size={17} /><span>Wyloguj</span></Button>}</div></header>
@@ -51,7 +53,7 @@ export function App() {
   </div>;
 }
 function Welcome() {
-  return <div className="welcome-grid"><section className="welcome-story"><span className="pill">ZACZNIJ OD DOBRYCH PODSTAW</span><h2>Więcej zrozumienia.<br /><span>Mniej zgadywania.</span></h2><p>Budujemy prostą przestrzeń do analizy portfela. Utwórz konto i przygotuj swój pierwszy portfel.</p><div className="steps"><div><span>01</span><div><strong>Twój własny portfel</strong><p>Jedno konto, prywatne dane, przejrzysty start.</p></div></div><div><span>02</span><div><strong>Wynik z jasnymi założeniami</strong><p>Gotówka i kursy historyczne już działają. Ręczne ceny i przejrzysta wycena pokazują daty danych.</p></div></div><div><span>03</span><div><strong>Decyzja przed zakupem</strong><p>Symulator i dziennik powstaną po silniku obliczeń.</p></div></div></div><div className="development-note"><ShieldCheck size={20} /><p>To wersja rozwojowa. Działają konto, portfel oraz wpłaty i wypłaty w trzech walutach. Działają ręczne ceny i wycena inwestycji. Import XTB jest w przygotowaniu.</p></div></section><AuthForm /></div>;
+  return <div className="welcome-grid"><section className="welcome-story"><span className="pill">ZACZNIJ OD DOBRYCH PODSTAW</span><h2>Więcej zrozumienia.<br /><span>Mniej zgadywania.</span></h2><p>Budujemy prostą przestrzeń do analizy portfela. Utwórz konto i przygotuj swój pierwszy portfel.</p><div className="steps"><div><span>01</span><div><strong>Twój własny portfel</strong><p>Jedno konto, prywatne dane, przejrzysty start.</p></div></div><div><span>02</span><div><strong>Wynik z jasnymi założeniami</strong><p>Gotówka i kursy historyczne już działają. Ręczne ceny i przejrzysta wycena pokazują daty danych.</p></div></div><div><span>03</span><div><strong>Decyzja przed zakupem</strong><p>Symulator porównuje zakup z nowych środków lub istniejącej gotówki.</p></div></div></div><div className="development-note"><ShieldCheck size={20} /><p>To wersja rozwojowa. Działają konto, portfel oraz wpłaty i wypłaty w trzech walutach. Działają ręczne ceny i wycena inwestycji. Import XTB jest w przygotowaniu.</p></div></section><AuthForm /></div>;
 }
 function AuthForm() {
   const [register, setRegister] = useState(true); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
@@ -83,5 +85,5 @@ function PortfolioOverview() {
     if (!parsed.success) { setValidationError('Podaj nazwę od 1 do 80 znaków.'); return; }
     setValidationError(''); create.mutate(parsed.data);
   }}><label>Nazwa portfela<input value={name} onChange={e => setName(e.target.value)} required maxLength={80} aria-describedby="create-error" /></label><Button type="submit" disabled={create.isPending}><Plus size={18} />{create.isPending ? 'Tworzenie…' : 'Utwórz portfel'}</Button><p id="create-error" className="error" role="alert">{validationError || create.error?.message}</p></form></section>;
-  return <><div className="portfolio-title"><h2><Wallet size={20} />{portfolio.name}</h2><span className="pill">WALUTA BAZOWA · PLN</span></div><InvestmentsOverview portfolioId={portfolio.id} /><CashOverview portfolioId={portfolio.id} /></>;
+  return <><div className="portfolio-title"><h2><Wallet size={20} />{portfolio.name}</h2><span className="pill">WALUTA BAZOWA · PLN</span></div><InvestmentsOverview portfolioId={portfolio.id} /><PurchaseSimulator portfolioId={portfolio.id} /><CashOverview portfolioId={portfolio.id} /></>;
 }

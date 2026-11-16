@@ -1,10 +1,10 @@
-import { ledgerOperationSchema, quoteInputSchema, fxInputSchema, valuationTimeSchema } from '@investorkit/shared';
+import { ledgerOperationSchema, valuationQuoteSchema, fxInputSchema, valuationTimeSchema } from '@investorkit/shared';
 import type { Currency } from '@investorkit/shared';
 import { FinancialDecimal, parseAmount } from './decimal.js';
 import { PORTFOLIO_ENGINE_VERSION } from './version.js';
 import { replayLedgerState } from './ledger.js';
 
-type Quote = { instrumentId: string; price: string; currency: Currency; asOf: string; source: 'manual' };
+type Quote = { instrumentId: string; price: string; currency: Currency; asOf: string; source: 'manual' | 'scenario' };
 type Rate = { currency: Currency; baseCurrency: 'PLN'; rate: string; asOf: string; source: 'manual' };
 type Issue = 'MISSING_QUOTE' | 'STALE_QUOTE' | 'FUTURE_QUOTE' | 'MISSING_FX' | 'STALE_FX' | 'FUTURE_FX';
 type UsedFx = { rate: string; asOf: string | null; source: 'manual' | 'identity' };
@@ -16,7 +16,7 @@ function select<T extends { asOf: string }>(rows: readonly T[], asOf: number): T
   // Last input wins equal timestamps. Repositories supply stable sequence ordering.
   return rows.reduce<T | undefined>((best, row) => Date.parse(row.asOf) <= asOf && (!best || Date.parse(row.asOf) >= Date.parse(best.asOf)) ? row : best, undefined);
 }
-export function valuePortfolio(input: {
+export function valuePortfolioState(input: {
   instruments: readonly unknown[]; operations: readonly unknown[]; quotes: readonly Quote[]; fxRates: readonly Rate[];
   asOf: string; quoteMaxAgeHours?: number; fxMaxAgeHours?: number;
 }) {
@@ -24,7 +24,7 @@ export function valuePortfolio(input: {
   const quoteMaxAgeHours = input.quoteMaxAgeHours ?? 72;
   const fxMaxAgeHours = input.fxMaxAgeHours ?? 72;
   for (const hours of [quoteMaxAgeHours, fxMaxAgeHours]) if (!Number.isFinite(hours) || hours <= 0 || hours > 8760) throw new ValuationDomainError('INVALID_MAX_AGE');
-  const quotes = input.quotes.map(raw => ({ ...quoteInputSchema.parse({ price: raw.price, currency: raw.currency, asOf: raw.asOf, source: raw.source }), instrumentId: raw.instrumentId }));
+  const quotes = input.quotes.map(raw => ({ ...valuationQuoteSchema.parse({ price: raw.price, currency: raw.currency, asOf: raw.asOf, source: raw.source }), instrumentId: raw.instrumentId }));
   const rates = input.fxRates.map(raw => fxInputSchema.parse({ currency: raw.currency, baseCurrency: raw.baseCurrency, rate: raw.rate, asOf: raw.asOf, source: raw.source }));
   for (const rate of rates) {
     const parsed = FinancialDecimal.parseFxRate(rate.rate);
@@ -78,7 +78,9 @@ export function valuePortfolio(input: {
   const pnl = complete ? subtotal.minus(ledger.netContributionsBase) : null;
   const percentage = pnl?.percentOf(ledger.netContributionsBase);
   dates.sort((a, b) => Date.parse(a) - Date.parse(b));
-  return {
+  return { totalValue: complete ? subtotal : null,
+    positionValues: new Map(positions.map(position => [position.instrumentId, position.rawValue])),
+    snapshot: {
     asOf: input.asOf, engineVersion: PORTFOLIO_ENGINE_VERSION, baseCurrency: 'PLN' as const, complete,
     totalValue: complete ? subtotal.toStorageString() : null, pricedSubtotal: subtotal.toStorageString(),
     netContributionsBase: ledger.netContributionsBase.toStorageString(), pnl: pnl?.toStorageString() ?? null,
@@ -86,5 +88,6 @@ export function valuePortfolio(input: {
     realizedBase: realized.toStorageString(), quoteMaxAgeHours, fxMaxAgeHours,
     valuationRange: dates.length ? { from: dates[0]!, to: dates[dates.length - 1]! } : null,
     positions: positions.map(({ rawValue, ...position }) => ({ ...position, weightPct: complete && rawValue ? rawValue.percentOf(subtotal).value?.toString() ?? null : null })), cash,
-  };
+  } };
 }
+export function valuePortfolio(input: Parameters<typeof valuePortfolioState>[0]) { return valuePortfolioState(input).snapshot; }

@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto';
 import { and, asc, eq } from 'drizzle-orm';
 import { cashOperations, portfolios, instruments, manualQuotes, fxRates } from '@investorkit/db';
 import type { Database } from '@investorkit/db';
-import { cashOperationSchema, ledgerOperationSchema, operationSchema, valuationSchema } from '@investorkit/shared';
-import type { CashOperationInput, LedgerOperation } from '@investorkit/shared';
-import { FinancialDecimal, replayLedger, valuePortfolio } from '@investorkit/portfolio-engine';
+import { cashOperationSchema, ledgerOperationSchema, operationSchema, valuationSchema, simulationSchema } from '@investorkit/shared';
+import type { CashOperationInput, LedgerOperation, SimulationInput } from '@investorkit/shared';
+import { FinancialDecimal, replayLedger, valuePortfolio, simulatePurchase } from '@investorkit/portfolio-engine';
 import { quoteDto, fxDto } from './market-repository.js';
 import { CashApiError } from './domain-error.js';
 export { CashApiError } from './domain-error.js';
@@ -24,6 +24,18 @@ export function cashRepository(db: Database) {
     const [portfolio] = await executor.select({ id: portfolios.id }).from(portfolios).where(and(eq(portfolios.id, id), eq(portfolios.ownerId, ownerId)));
     if (!portfolio) throw missing();
     return executor.select().from(cashOperations).where(scope(ownerId, id)).orderBy(asc(cashOperations.occurredAt), asc(cashOperations.sequence));
+  }
+  async function marketSnapshot(executor: ReadDb, ownerId: string, id: string, asOf: string) {
+    const rows = await ownedRows(executor, ownerId, id);
+    const metadata = await executor.select().from(instruments).where(eq(instruments.ownerId, ownerId)).orderBy(asc(instruments.createdAt), asc(instruments.id));
+    const quotes = await executor.select().from(manualQuotes).where(eq(manualQuotes.ownerId, ownerId)).orderBy(asc(manualQuotes.sequence));
+    const rates = await executor.select().from(fxRates).where(eq(fxRates.ownerId, ownerId)).orderBy(asc(fxRates.sequence));
+    const hydrate = (result: ReturnType<typeof valuePortfolio>) => valuationSchema.parse({ ...result, positions: result.positions.map(position => {
+      const instrument = metadata.find(row => row.id === position.instrumentId);
+      if (!instrument) throw new Error('Missing position metadata');
+      return { ...position, name: instrument.name, symbol: instrument.symbol };
+    }) });
+    return { metadata, hydrate, context: { instruments: engineInstruments(metadata), operations: rows.map(operationInput), quotes: quotes.map(quoteDto), fxRates: rates.map(fxDto), asOf } };
   }
   async function createOperation(ownerId: string, portfolioId: string, input: LedgerOperation, key: string) {
     const common = { ...input, fxToBase: FinancialDecimal.parseFxRate(input.fxToBase).toString(), occurredAt: new Date(input.occurredAt).toISOString(), fxAsOf: new Date(input.fxAsOf).toISOString() };
@@ -68,19 +80,20 @@ export function cashRepository(db: Database) {
       return { items: (await ownedRows(db, ownerId, id)).filter(row => row.kind === 'DEPOSIT' || row.kind === 'WITHDRAWAL').reverse().map(row => cashOperationSchema.parse(operationDto(row))), limit: 1000 as const };
     },
     async operationHistory(ownerId: string, id: string) { return { items: (await ownedRows(db, ownerId, id)).reverse().map(operationDto), limit: 1000 as const }; },
+    async simulate(ownerId: string, id: string, input: SimulationInput) {
+      return db.transaction(async tx => {
+        const snapshot = await marketSnapshot(tx, ownerId, id, new Date().toISOString());
+        const instrumentId = input.instrumentId.toLowerCase();
+        if (!snapshot.metadata.some(row => row.id === instrumentId)) throw missing();
+        const result = simulatePurchase(snapshot.context, { ...input, instrumentId });
+        return simulationSchema.parse({ ...result, before: snapshot.hydrate(result.before), after: snapshot.hydrate(result.after) });
+      }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
+    },
     async valuation(ownerId: string, id: string, asOf: string) {
       if (Date.parse(asOf) > Date.now()) throw new CashApiError(422, 'FUTURE_VALUATION', 'Data wyceny nie może być przyszła.');
       return db.transaction(async tx => {
-        const rows = await ownedRows(tx, ownerId, id);
-        const metadata = await tx.select().from(instruments).where(eq(instruments.ownerId, ownerId)).orderBy(asc(instruments.createdAt), asc(instruments.id));
-        const quotes = await tx.select().from(manualQuotes).where(eq(manualQuotes.ownerId, ownerId)).orderBy(asc(manualQuotes.sequence));
-        const rates = await tx.select().from(fxRates).where(eq(fxRates.ownerId, ownerId)).orderBy(asc(fxRates.sequence));
-        const result = valuePortfolio({ instruments: engineInstruments(metadata), operations: rows.map(operationInput), quotes: quotes.map(quoteDto), fxRates: rates.map(fxDto), asOf });
-        return valuationSchema.parse({ ...result, positions: result.positions.map(position => {
-          const instrument = metadata.find(row => row.id === position.instrumentId);
-          if (!instrument) throw new Error('Missing position metadata');
-          return { ...position, name: instrument.name, symbol: instrument.symbol };
-        }) });
+        const snapshot = await marketSnapshot(tx, ownerId, id, asOf);
+        return snapshot.hydrate(valuePortfolio(snapshot.context));
       }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
     },
   };

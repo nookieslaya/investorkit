@@ -23,7 +23,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | P02 | BUY/SELL koszt i prowizja | 3 | P01 | DONE: lokalny koszt BUY/SELL, prowizje, średnia, oversell i pełne zamknięcie; golden cases1/2 kosztu PASS |
 | P03 | Gotówka, wpłaty, wypłaty, FX | 3 | P02 | DONE: replay sald, wpłaty/wypłaty, FX12, historyczny koszt PLN i golden3 kosztu; gotówka API/UI |
 | P04 | Wycena, kompletność, P/L | 3 | P03 | DONE: wycena z gotówką, P/L, percent/null, subtotal, daty/źródła i stale/missing/future |
-| P05 | Symulator oba źródła środków | 3 | P04 | TODO: case4, brak skutków ubocznych |
+| P05 | Symulator oba źródła środków | 3 | P04 | DONE: case4, oba źródła, fee/reszta, FX i brak zapisów |
 | P06 | Koncentracja i stress | 2 | P04 | TODO: case5, unknown buckets |
 | P07 | Testy regresji i granic | 3 | P02–06 | TODO: case6/7, ułamki i zero |
 | A01 | Migracje instrument/ledger/FK/check | 2 | P01,F04 | DONE: wspólny ledger4 typów, instrument/quote/FX, composite owner/currency FK i CHECK |
@@ -31,7 +31,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | A03 | Operacje API i blokada salda | 3 | P03,A01 | DONE: wspólny replay, blokada/idempotencja, concurrent BUY/SELL/withdrawal i operacje wsteczne PASS |
 | A04 | Formularze operacji i historia | 3 | A03,F09 | DONE: wpłaty/wypłaty, BUY/SELL, historia i stany walidacji/loading/error/empty |
 | A05 | Dashboard i pozycje | 3 | P04,A04 | DONE: rzeczywiste wartości/P&L, pozycje i niepełna wycena; bez danych demonstracyjnych |
-| A06 | Symulator UI/API | 3 | P05,A05 | TODO: assumptions + before/after |
+| A06 | Symulator UI/API | 3 | P05,A05 | DONE: formularz shadcn, assumptions + before/after, read-only API |
 | A07 | Ryzyko UI i ustawienia | 2 | P06,A05 | TODO: progi i scenariusze |
 | A08 | Dziennik CRUD | 3 | A02,F09 | TODO: prywatność, revision |
 | A09 | Snapshot history | 2 | A05 | TODO: luki danych jawne |
@@ -54,7 +54,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | B06 | Backup + restore drill + audyt dostępności | 3 | B05 | TODO: przed publicznym pilotem |
 | B07 | Decyzja o płatnym pilotażu | 1 | B03 | TODO: dopiero wtedy backlog billing |
 
-Najbliższy punkt kontynuacji: P05, potem P06–P07; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
+Najbliższy punkt kontynuacji: P06/A07, potem P07; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
 
 Aktualizacja środowiska macOS 15.11.2026: build/typecheck/4 unit PASS na Node 24. Docker CLI dostępny, daemon wyłączony; F03/F08/F09 zachowują status PARTIAL; F11 zamknięte po przejściu CI. Utworzono publiczne repozytorium `nookieslaya/investorkit`; pierwszy przebieg CI PASS: build/typecheck, migracja, 4 unit, 8 integration, 1 E2E w Chromium.
 
@@ -67,3 +67,5 @@ P03 (15.11.2026) rozszerzone na prośbę użytkownika o widoczny fragment API/UI
 P04 (15.11.2026): na prośbę użytkownika domknięto też pionowy zakres A01–A05 ręcznego MVP. Tabela cash_operations jest jednym ledgerem4 typów; dotychczasowe ID i klucze ponowień zachowane. Symulator, risk settings, korekty/edycja, paginacja i snapshoty pozostają poza tym etapem. Obecne ceny/kursy są manualne; progi świeżości API=72h, konfigurowalne argumenty w silniku (ustawienia UI później w A07).
 
 Poprawka UI przed P05: wszystkie natywne selecty formularzy zastąpiono shadcn/ui Select na Radix2.4.1. Brak zmian API, obliczeń i danych. Następny etap nadal P05/A06.
+
+P05/A06 ukończone16.11.2026: symulator bez zapisów, budżet z prowizją, ilość zaokrąglana w dół, reszta gotówkowa, oba źródła środków i porównanie z pełnym portfelem. Aktualny FX z ręcznych danych; cena scenariusza jako jawna referencja wyłącznie nowej pozycji bez notowań. Braki/stare dane nie są maskowane. Bez migracji i nowych zależności. Następny etap P06/A07: koncentracja/stress i ustawienia progów.

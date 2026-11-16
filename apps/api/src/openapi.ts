@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
-  portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema, instrumentsSchema, createInstrumentSchema, instrumentSchema, quoteInputSchema, quoteSchema, fxInputSchema, fxSchema, ledgerOperationSchema, operationSchema, operationHistorySchema, valuationSchema, valuationTimeSchema,
+  portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema, instrumentsSchema, createInstrumentSchema, instrumentSchema, quoteInputSchema, quoteSchema, fxInputSchema, fxSchema, ledgerOperationSchema, operationSchema, operationHistorySchema, valuationSchema, valuationTimeSchema, simulationInputSchema, simulationSchema,
 } from '@investorkit/shared';
 
 type ResponseContract = { description: string; schema: z.ZodType };
@@ -21,6 +21,8 @@ const protectedErrors = { ...commonErrors, 401: error('Brak ważnej sesji.') };
 
 // Only implemented first-party operations. Better Auth owns /api/auth/* contracts.
 export const apiContracts: Record<string, Partial<Record<'get' | 'post', OperationContract>>> = {
+  '/api/v1/portfolios/{id}/simulations': { post: { operationId: 'simulatePurchase', summary: 'Symuluj zakup bez zapisu; budżet z prowizją, bieżący FX i jawna cena referencyjna.', authenticated: true, params: portfolioIdParamsSchema, body: simulationInputSchema,
+    responses: { 200: { description: 'Założenia i porównanie przed/po.', schema: simulationSchema }, ...protectedErrors, 400: error('Błędne dane.'), 403: error('Origin.'), 404: error('Brak własnego portfela lub instrumentu.'), 422: error('Za mały budżet, brak gotówki, aktualnego FX lub przekroczony zakres.'), 413: error('Limit body.'), 415: error('Content-Type.') } } },
   '/api/v1/instruments': {
     get: { operationId: 'listInstruments', summary: 'Instrumenty właściciela (do 100).', authenticated: true, responses: { 200: { description: 'Własne instrumenty.', schema: instrumentsSchema }, ...protectedErrors } },
     post: { operationId: 'createInstrument', summary: 'Dodaj własny instrument STOCK/ETF.', authenticated: true, body: createInstrumentSchema,
