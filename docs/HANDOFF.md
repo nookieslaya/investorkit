@@ -16,8 +16,10 @@ Aktualny zakres:
 
 P05 nie wymaga migracji ani nowych zależności. Ostatnia migracja0002 już zastosowana na testowej i lokalnej bazie po prywatnym pg_dump w ignorowanej `.local-backups/`. Nie używamy danych użytkownika do testów. `.env` zachowane i ignorowane. Testy integracyjne/E2E wymagają investorkit_contract_test; E2E lokalnie porty5174/3002, nie zatrzymywać5173/3001. Projekt używa Node24: `export PATH=/opt/homebrew/opt/node@24/bin:$PATH`.
 
-Weryfikacja P05: build/typecheck/OpenAPI,87 unit,31 integration i1 rozszerzony E2E Chromium. Golden4, oba źródła, prowizje/ułamki/resta, cena referencyjna≠zakup, FX i granica72h, niepełność, zakres ilości, brak mutacji oraz brak zapisów także przy równoległych żądaniach. UI desktop/mobile/dark. Wyniki i CI: VERIFICATION.md.
+Weryfikacja P05: build/typecheck/OpenAPI,87 unit,31 integration i1 rozszerzony E2E Chromium. Golden4, oba źródła, prowizje/ułamki/reszta, cena referencyjna≠zakup, FX i granica72h, niepełność, zakres ilości, brak mutacji oraz brak zapisów także przy równoległych żądaniach. UI desktop/mobile/dark. Wyniki i CI: VERIFICATION.md.
 
 Następny etap P06/A07: koncentracja (udziały z gotówką, top3/5, unknown buckets), stress pozycji/całych papierów z niezmienną gotówką, progi produktu i ustawienia świeżości. Potem P07 regresje. Semantyka docs/04-calculations.md, golden5. Nie mylić waluty notowania z pełnym ryzykiem walutowym ani kraju emitenta ETF z ekspozycją aktywów.
 
 Niewdrożone: koncentracja/stress/ustawienia progów, dziennik, import XTB (brak próbki), PDF/AI, historyczne snapshoty, zapis scenariuszy, zlecenia, live feeds, publiczny deployment/płatności. Nie dodawać rekomendacji inwestycyjnych, PIT, mikroserwisów ani integracji AI w kolejnym etapie. Prosta stopa od wpłat netto nie jest TWR/XIRR; koszt średni jest analityczny, nie podatkowy.
+
+P05/A06 opublikowane jako f2209f3, CI PASS: https://github.com/nookieslaya/investorkit/actions/runs/43909008505. Następny etap P06/A07. Aplikacja lokalna uruchomiona i readiness/frontend HTTP200.
