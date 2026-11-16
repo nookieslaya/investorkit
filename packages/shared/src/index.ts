@@ -114,6 +114,7 @@ export const simulationSchema = z.object({
   quantity: decimalSchema, actualCost: computedDecimalSchema, budgetRemaining: computedDecimalSchema,
   remainingCash: computedDecimalSchema, before: valuationSchema, after: valuationSchema,
   delta: z.object({ totalValue: signedDecimalSchema.nullable(), positionValue: signedDecimalSchema.nullable() }),
+  impact: z.object({ newMoneyBase: decimalSchema, commissionBase: decimalSchema, priceDifferenceBase: signedDecimalSchema.nullable(), netEffectBase: signedDecimalSchema.nullable(), netEffectPct: computedDecimalSchema.nullable() }),
 });
 export type SimulationInput = z.infer<typeof simulationInputSchema>;
 export type Simulation = z.infer<typeof simulationSchema>;

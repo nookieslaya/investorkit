@@ -9,6 +9,7 @@ import { FormSelect } from '../components/ui/form-select';
 import { listInstruments, simulatePurchase } from '../lib/api';
 import { formatAmount, formatRounded, formatPercent, formatDate } from '../lib/format';
 const money = (value: string | null | undefined) => value == null ? '—' : formatAmount(value);
+const signedMoney = (value: string | null) => value === null ? '—' : `${value !== '0' && !value.startsWith('-') ? '+' : ''}${formatAmount(value)}`;
 export function PurchaseSimulator({ portfolioId }: { portfolioId: string }) {
   const instruments = useQuery({ queryKey: ['instruments'], queryFn: listInstruments });
   const [selected, setSelected] = useState('');
@@ -34,7 +35,7 @@ export function PurchaseSimulator({ portfolioId }: { portfolioId: string }) {
         <p className="cash-help">{funding === 'NEW_MONEY' ? `Scenariusz dodaje cały budżet do subkonta ${instrument.currency}, a następnie opłaca zakup.` : `Cały budżet musi mieścić się w saldzie ${instrument.currency}. Bez automatycznej wymiany walut.`}</p>
         <label>Budżet symulacji ({instrument.currency})<input name="budget" inputMode="decimal" required maxLength={29} placeholder="np. 1000" /></label>
         <div className="cash-fields"><label>Cena zakupu w symulacji ({instrument.currency})<input name="unitPrice" inputMode="decimal" required maxLength={29} placeholder="Za 1 sztukę" /></label><label>Prowizja symulacji ({instrument.currency})<input name="commission" inputMode="decimal" required maxLength={29} defaultValue="0" /></label></div>
-        <p className="cash-help">Ilość zaokrąglamy w dół do {instrument.quantityScale} miejsc. Wycena korzysta z oddzielnej ceny referencyjnej i aktualnego kursu ręcznego (maks. 72h). Nowa pozycja bez notowań przyjmuje cenę zakupu jako jawne założenie.</p>
+        <p className="cash-help">Ilość zaokrąglamy w dół do {instrument.quantityScale} miejsc. Cena zakupu nie aktualizuje ceny wyceny. Wycena korzysta z oddzielnej ceny referencyjnej i aktualnego kursu ręcznego (maks. 72h). Nowa pozycja bez notowań przyjmuje cenę zakupu jako jawne założenie.</p>
         <Button type="submit" disabled={simulation.isPending}>{simulation.isPending ? 'Obliczanie…' : 'Oblicz symulację'}<ArrowRight size={17} /></Button>
       </fieldset></form>}
       {(validation || simulation.error) && <p role="alert" className="error">{validation || simulation.error?.message}</p>}
@@ -44,7 +45,8 @@ export function PurchaseSimulator({ portfolioId }: { portfolioId: string }) {
   </section>;
 }
 function SimulationResult({ data }: { data: Simulation }) {
-  const { assumptions: a, before, after } = data;
+  const { assumptions: a, before, after, impact } = data;
+  const effectClass = impact.netEffectBase === null || impact.netEffectBase === '0' ? '' : impact.netEffectBase.startsWith('-') ? 'negative-result' : 'positive-result';
   const previous = before.positions.find(item => item.instrumentId === a.instrumentId);
   const position = after.positions.find(item => item.instrumentId === a.instrumentId)!;
   const rows = [
@@ -55,11 +57,25 @@ function SimulationResult({ data }: { data: Simulation }) {
     ['Udział pozycji z gotówką', previous ? previous.weightPct === null ? '—' : formatPercent(previous.weightPct) : before.complete && before.totalValue !== '0' ? '0,00%' : '—', position.weightPct === null ? '—' : formatPercent(position.weightPct)],
     [`Gotówka na subkoncie (${a.currency})`, money(before.cash.find(item => item.currency === a.currency)?.amount), money(data.remainingCash)],
     ['Wpłaty netto (PLN)', money(before.netContributionsBase), money(after.netContributionsBase)],
+    ['Wynik całego portfela (PLN)', money(before.pnl), money(after.pnl)],
   ];
   return <><h3>Porównanie przed i po</h3><p className="cash-help">{position.symbol} · {a.funding === 'NEW_MONEY' ? 'nowe środki' : 'istniejąca gotówka'} · stan na {formatDate(after.asOf)}. Ponów obliczenie, aby uwzględnić późniejsze zmiany portfela.</p>
+    <div className="simulation-outcome" aria-label="Podsumowanie scenariusza">
+      <div><small>Wartość portfela po symulacji</small><strong>{money(after.totalValue)} PLN</strong><span>Pozycje i pozostała gotówka</span></div>
+      <div><small>Wynik dokupowanej części</small><strong className={effectClass}>{signedMoney(impact.netEffectBase)} PLN</strong><span>{impact.netEffectPct === null ? 'Brak aktualnej ceny wyceny' : `${formatPercent(impact.netEffectPct)} względem kosztu z prowizją`}</span></div>
+    </div>
+    <p className="cash-help">Wynik dokupowanej części jest niezrealizowany i liczony według ceny referencyjnej. Dopłata kapitału jest pokazana osobno.</p>
+    {impact.priceDifferenceBase !== null && impact.priceDifferenceBase !== '0' && a.reference && <div className="simulation-price-notice" role="status"><strong>Cena zakupu różni się od ceny wyceny</strong><p>Kupujesz po {money(a.unitPrice)} {a.currency}/szt., a wycena używa {money(a.reference.price)} {a.currency}/szt. z {formatDate(a.reference.asOf)}. Sama różnica cen daje {signedMoney(impact.priceDifferenceBase)} PLN dla dokupowanej ilości, przed prowizją.</p></div>}
     <div className="simulation-totals"><div><small>Dokupowana ilość</small><strong>{money(data.quantity)} szt.</strong></div><div><small>Koszt z prowizją</small><strong>{money(data.actualCost)} {a.currency}</strong></div><div><small>Reszta budżetu</small><strong>{money(data.budgetRemaining)} {a.currency}</strong></div></div>
     <table className="simulation-comparison"><caption className="sr-only">Portfel przed zakupem i po symulacji</caption><thead><tr><th scope="col">Miara</th><th scope="col">Przed</th><th scope="col">Po</th></tr></thead><tbody>{rows.map(([label, left, right]) => <tr key={label}><th scope="row">{label}</th><td>{left}</td><td>{right}</td></tr>)}</tbody></table>
-    <p className="cash-help">Zmiana wartości całego portfela: <strong>{money(data.delta.totalValue)} PLN</strong>. Obejmuje dopłatę nowych środków, prowizję i różnicę ceny zakupu względem wyceny.</p>
+    <section className="simulation-breakdown" aria-label="Rozliczenie zmiany wartości"><h4>Skąd bierze się wartość po symulacji?</h4><dl>
+      <div><dt>Wartość portfela przed</dt><dd>{money(before.totalValue)} PLN</dd></div>
+      <div><dt>Dopłata nowych środków</dt><dd>{signedMoney(impact.newMoneyBase)} PLN</dd></div>
+      <div><dt>Różnica ceny wyceny i zakupu</dt><dd>{signedMoney(impact.priceDifferenceBase)} PLN</dd></div>
+      <div><dt>Koszt prowizji</dt><dd>{impact.commissionBase === '0' ? '0,00' : `−${money(impact.commissionBase)}`} PLN</dd></div>
+      <div className="simulation-breakdown-total"><dt>Wartość portfela po</dt><dd>{money(after.totalValue)} PLN</dd></div>
+    </dl></section>
+    <p className="cash-help">Zmiana wartości z dopłatą: <strong>{signedMoney(data.delta.totalValue)} PLN</strong>. Dopłata nie jest zyskiem. Wszystkie salda poza symulatorem pokazują rzeczywisty portfel.</p>
     {(!before.complete || !after.complete) && <p className="data-issue" role="status">Niepełna wycena: brakuje aktualnych cen lub kursów. Pełna wartość i udziały pozostają niedostępne. Uzupełnij dane w sekcji Inwestycje.</p>}
     <details className="simulation-assumptions" open><summary>Ceny, kurs i założenia</summary><p>Budżet: {money(a.budget)} {a.currency} · zakup: {money(a.unitPrice)} {a.currency}/szt. · prowizja: {money(a.commission)} {a.currency}.</p><p>Cena referencyjna: {a.reference ? `${money(a.reference.price)} ${a.currency} · ${a.reference.source === 'scenario' ? 'założona cena scenariusza, brak notowań' : 'wpis ręczny'} · ${formatDate(a.reference.asOf)}` : 'brak; pozycja pozostaje bez pełnej wyceny'}.</p><p>FX: {money(a.fx.rate)} PLN za 1 {a.currency} · {a.fx.asOf ? `wpis ręczny z ${formatDate(a.fx.asOf)}` : 'kurs tożsamościowy PLN = 1'}.</p><small>Próg cen i FX: {after.quoteMaxAgeHours}h/{after.fxMaxAgeHours}h. Stare dane nie służą wycenie. Średni koszt w tabeli jest zaokrąglony do 4 miejsc. Służy analizie, bez rozliczenia podatkowego.</small></details>
   </>;

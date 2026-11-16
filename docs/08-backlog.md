@@ -69,3 +69,5 @@ P04 (15.11.2026): na prośbę użytkownika domknięto też pionowy zakres A01–
 Poprawka UI przed P05: wszystkie natywne selecty formularzy zastąpiono shadcn/ui Select na Radix2.4.1. Brak zmian API, obliczeń i danych. Następny etap nadal P05/A06.
 
 P05/A06 ukończone16.11.2026: symulator bez zapisów, budżet z prowizją, ilość zaokrąglana w dół, reszta gotówkowa, oba źródła środków i porównanie z pełnym portfelem. Aktualny FX z ręcznych danych; cena scenariusza jako jawna referencja wyłącznie nowej pozycji bez notowań. Braki/stare dane nie są maskowane. Bez migracji i nowych zależności. Następny etap P06/A07: koncentracja/stress i ustawienia progów.
+
+Doprecyzowanie A06 (16.11.2026) DONE: dopłata oddzielona od wyniku zakupu i P/L całego portfela, komunikat o różnicy cen, rozliczenie wartości przed/po. Regresja przykładu użytkownika80+1000/zakup100/referencja70. Metryki przepływu i wyniku wydzielone zgodnie z rozróżnieniem kosztu, market value i P/L w Portfolio Performance/Sharesight; bez deklaracji identycznych metod zwrotu czy modeli kosztowych.

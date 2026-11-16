@@ -24,6 +24,25 @@ describe('P05 deterministic purchase simulator', () => {
     const result = simulatePurchase(context, { ...scenario, funding: 'NEW_MONEY' });
     expect(result).toMatchObject({ remainingCash: '1095', after: { totalValue: '1995', netContributionsBase: '2000', pnl: '-5' }, delta: { totalValue: '995' } });
   });
+  it('explains the user example without treating a new deposit as profit', () => {
+    const result = simulatePurchase({ ...context, operations: [{ ...deposit, amount: '80' }], quotes: [{ ...quote, price: '70' }] }, { ...scenario, funding: 'NEW_MONEY', unitPrice: '100', commission: '0' });
+    expect(result.after).toMatchObject({ totalValue: '780', netContributionsBase: '1080', pnl: '-300' });
+    expect(result.delta.totalValue).toBe('700');
+    expect(result.impact).toEqual({ newMoneyBase: '1000', commissionBase: '0', priceDifferenceBase: '-300', netEffectBase: '-300', netEffectPct: '-30' });
+    expect(result.assumptions.reference).toEqual({ price: '70', asOf, source: 'manual' });
+    expect(result.before.cash[0]?.amount).toBe('80');
+  });
+  it('keeps deposits separate from the purchase result for either funding source and includes fees', () => {
+    for (const funding of ['NEW_MONEY', 'EXISTING_CASH']) {
+      const result = simulatePurchase({ ...context, quotes: [quote] }, { ...scenario, funding });
+      expect(result.impact).toMatchObject({ newMoneyBase: funding === 'NEW_MONEY' ? '1000' : '0', commissionBase: '5', priceDifferenceBase: '0', netEffectBase: '-5' });
+      expect(FinancialDecimal.parse(result.delta.totalValue!).minus(FinancialDecimal.parse(result.impact.newMoneyBase)).toString()).toBe('-5');
+      const noFee = simulatePurchase({ ...context, quotes: [quote] }, { ...scenario, funding, commission: '0' });
+      expect(noFee.impact.netEffectBase).toBe('0'); expect(noFee.impact.netEffectPct).toBe('0');
+    }
+    const gain = simulatePurchase({ ...context, quotes: [{ ...quote, price: '125' }] }, { ...scenario, funding: 'NEW_MONEY', unitPrice: '100', commission: '0' });
+    expect(gain.impact).toMatchObject({ newMoneyBase: '1000', priceDifferenceBase: '250', netEffectBase: '250', netEffectPct: '25' });
+  });
   it('floors fractional quantity and keeps sub-cent remainder without rounding money early', () => {
     const result = simulatePurchase({ ...context, instruments: [{ ...instrument, quantityScale: 3 }] }, { ...scenario, budget: '10', unitPrice: '3', commission: '0.1' });
     expect(result).toMatchObject({ quantity: '3.3', actualCost: '10', budgetRemaining: '0', remainingCash: '990' });
@@ -46,10 +65,11 @@ describe('P05 deterministic purchase simulator', () => {
   });
   it('never invents a reference quote for an existing holding, or overwrites stale/future/zero quotes', () => {
     const held = simulatePurchase({ ...context, operations: [deposit, buy] }, { ...scenario, budget: '300', commission: '0' });
-    expect(held.after.complete).toBe(false); expect(held.after.positions[0]?.issues).toContain('MISSING_QUOTE');
+    expect(held.impact.netEffectBase).toBeNull(); expect(held.after.complete).toBe(false); expect(held.after.positions[0]?.issues).toContain('MISSING_QUOTE');
     for (const [date, issue] of [['2026-01-01T12:00:00Z', 'STALE_QUOTE'], ['2027-01-01T12:00:00Z', 'FUTURE_QUOTE']]) {
       const result = simulatePurchase({ ...context, quotes: [{ ...quote, asOf: date! }] }, scenario);
       expect(result.after.totalValue).toBeNull(); expect(result.after.positions[0]?.issues).toContain(issue);
+      expect(result.impact.netEffectBase).toBeNull(); expect(result.impact.priceDifferenceBase).toBeNull(); expect(result.impact.netEffectPct).toBeNull();
     }
     const zero = simulatePurchase({ ...context, quotes: [{ ...quote, price: '0' }] }, scenario);
     expect(zero.after.totalValue).toBe('95'); expect(zero.assumptions.reference?.source).toBe('manual');
@@ -58,12 +78,14 @@ describe('P05 deterministic purchase simulator', () => {
     const result = simulatePurchase({ ...context, instruments: [instrument, { ...instrument, instrumentId: other }], operations: [deposit, { ...buy, instrumentId: other }] }, { ...scenario, budget: '300', commission: '0' });
     expect(result.before.totalValue).toBeNull(); expect(result.after.totalValue).toBeNull(); expect(result.delta.totalValue).toBeNull();
     expect(result.after.positions.find(item => item.instrumentId === id)?.weightPct).toBeNull();
+    expect(result.impact.netEffectBase).toBe('0');
   });
   it('uses fresh current FX for the hypothetical deposit/BUY, keeping historic costs intact', () => {
     const usdContext = { ...context, instruments: [{ ...instrument, currency: 'USD', quantityScale: 3 }], operations: [{ ...deposit, currency: 'USD', amount: '20', fxToBase: '4' }], fxRates: [{ currency: 'USD' as const, baseCurrency: 'PLN' as const, rate: '4.2', asOf, source: 'manual' as const }] };
     const result = simulatePurchase(usdContext, { ...scenario, funding: 'NEW_MONEY', budget: '10.5', unitPrice: '80', commission: '0.5' });
     expect(result).toMatchObject({ quantity: '0.125', actualCost: '10.5', after: { totalValue: '126', netContributionsBase: '124.1', pnl: '1.9' }, assumptions: { fx: { rate: '4.2', asOf, source: 'manual' } } });
     expect(result.after.positions[0]?.remainingCostBase).toBe('44.1');
+    expect(result.impact).toEqual({ newMoneyBase: '44.1', commissionBase: '2.1', priceDifferenceBase: '0', netEffectBase: '-2.1', netEffectPct: '-4.761904761904761904761904761904761904762' });
     for (const rates of [[], [{ ...usdContext.fxRates[0]!, asOf: '2026-01-01T12:00:00Z' }], [{ ...usdContext.fxRates[0]!, asOf: '2027-01-01T12:00:00Z' }]]) {
       code(() => simulatePurchase({ ...usdContext, operations: [], fxRates: rates }, { ...scenario, funding: 'NEW_MONEY' }), 'SCENARIO_FX_REQUIRED');
     }

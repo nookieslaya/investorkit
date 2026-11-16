@@ -73,6 +73,15 @@ describe('A06 private read-only simulation API', () => {
     expect((await call('GET', `/portfolios/${portfolio}/cash`)).json()).toEqual(cash);
     expect((await call('GET', `/portfolios/${portfolio}/operations`)).json().items).toHaveLength(1);
   });
+  it('returns a loss separately from deposits when buying above the reference price', async () => {
+    const date = new Date().toISOString();
+    expect((await call('POST', `/instruments/${pln}/quotes`, { currency: 'PLN', price: '70', asOf: date, source: 'manual' })).statusCode).toBe(201);
+    const original = await storedState();
+    const response = await simulate(input({ funding: 'NEW_MONEY', unitPrice: '100', commission: '0' }));
+    expect(response.statusCode, response.body).toBe(200);
+    expect(simulationSchema.parse(response.json())).toMatchObject({ delta: { totalValue: '700' }, impact: { newMoneyBase: '1000', commissionBase: '0', priceDifferenceBase: '-300', netEffectBase: '-300', netEffectPct: '-30' }, after: { totalValue: '1700', pnl: '-300' } });
+    expect(await storedState()).toEqual(original);
+  });
   it('reads current own FX and reference quote separately from the hypothetical buy price', async () => {
     const date = new Date().toISOString();
     expect((await call('POST', '/fx-rates', { currency: 'USD', baseCurrency: 'PLN', rate: '4.2', asOf: date, source: 'manual' })).statusCode).toBe(201);
@@ -80,7 +89,7 @@ describe('A06 private read-only simulation API', () => {
     const original = await storedState();
     const response = await simulate(input({ instrumentId: usd, funding: 'NEW_MONEY' })); expect(response.statusCode, response.body).toBe(200);
     const result = simulationSchema.parse(response.json());
-    expect(result).toMatchObject({ assumptions: { reference: { price: '350.0000000000', source: 'manual' }, fx: { rate: '4.200000000000' } }, after: { totalValue: '5809', netContributionsBase: '5200', pnl: '609' } });
+    expect(result).toMatchObject({ assumptions: { reference: { price: '350.0000000000', source: 'manual' }, fx: { rate: '4.200000000000' } }, after: { totalValue: '5809', netContributionsBase: '5200', pnl: '609' }, impact: { newMoneyBase: '4200', priceDifferenceBase: '630', commissionBase: '21', netEffectBase: '609' } });
     expect(await storedState()).toEqual(original);
   });
 });

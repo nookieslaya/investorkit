@@ -101,12 +101,22 @@ test('registers, persists a private portfolio and signs out', async ({ page }, t
   await expect(result).toContainText('0,099 szt.');
   await expect(result.getByRole('row', { name: /Wartość całego portfela/ })).toContainText('933,202');
   await expect(result).toContainText('wpis ręczny');
+  await expect(result.getByLabel('Podsumowanie scenariusza')).toContainText('-4,578 PLN');
+  await expect(result.getByText('Cena zakupu różni się od ceny wyceny', { exact: true })).toBeVisible();
+  const breakdown = result.getByRole('region', { name: 'Rozliczenie zmiany wartości', exact: true });
+  await expect(breakdown.locator('div').filter({ has: page.getByText('Dopłata nowych środków', { exact: true }) })).toContainText('+42,00 PLN');
+  await expect(breakdown.locator('div').filter({ has: page.getByText('Różnica ceny wyceny i zakupu', { exact: true }) })).toContainText('-4,158 PLN');
+  await expect(breakdown).toContainText('−0,42 PLN');
+
   await expect(usdCash).toContainText('6,40'); await expect(portfolioValue).toContainText('895,78');
   await page.getByLabel('Budżet symulacji (USD)', { exact: true }).fill('5');
   await expect(result.getByRole('heading', { name: 'Porównanie przed i po' })).toHaveCount(0);
   await choose(page, 'Źródło środków', 'Istniejąca gotówka');
   await page.getByRole('button', { name: 'Oblicz symulację', exact: true }).click();
   await expect(result).toContainText('0,049 szt.');
+  await expect(result.getByLabel('Podsumowanie scenariusza')).toContainText('-2,478 PLN');
+  await expect(breakdown.locator('div').filter({ has: page.getByText('Dopłata nowych środków', { exact: true }) })).toContainText('0,00 PLN');
+
   await expect(result.getByRole('row', { name: /Wartość całego portfela/ })).toContainText('893,302');
   await expect(usdCash).toContainText('6,40');
   await simulator.screenshot({ path: testInfo.outputPath('simulator-desktop.png'), animations: 'disabled' });

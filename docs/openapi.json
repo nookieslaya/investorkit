@@ -915,6 +915,42 @@
                         "positionValue"
                       ],
                       "additionalProperties": false
+                    },
+                    "impact": {
+                      "type": "object",
+                      "properties": {
+                        "newMoneyBase": {
+                          "type": "string",
+                          "pattern": "^(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "commissionBase": {
+                          "type": "string",
+                          "pattern": "^(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "priceDifferenceBase": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "netEffectBase": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d{0,17})(\\.\\d{1,10})?$(?![\\s\\S])"
+                        },
+                        "netEffectPct": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?(0|[1-9]\\d*)(\\.\\d+)?$(?![\\s\\S])"
+                        }
+                      },
+                      "required": [
+                        "newMoneyBase",
+                        "commissionBase",
+                        "priceDifferenceBase",
+                        "netEffectBase",
+                        "netEffectPct"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -925,7 +961,8 @@
                     "remainingCash",
                     "before",
                     "after",
-                    "delta"
+                    "delta",
+                    "impact"
                   ],
                   "additionalProperties": false
                 }

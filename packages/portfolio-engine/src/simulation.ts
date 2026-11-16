@@ -39,7 +39,18 @@ export function simulatePurchase(context: Context, raw: unknown) {
   const after = afterState.snapshot;
   const position = after.positions.find(item => item.instrumentId === instrument.instrumentId)!;
   const difference = (a: FinancialDecimal | null, b: FinancialDecimal | null) => a === null || b === null ? null : a.minus(b).toStorageString();
+  const rate = FinancialDecimal.parseFxRate(fx.rate);
+  const commissionBase = fee.times(rate);
+  // Isolate this purchase from capital contributions and pre-existing holdings.
+  // Other unpriced holdings do not hide the result of a priced purchase.
+  const priceDifferenceBase = position.quote && position.issues.length === 0
+    ? quantity.times(parseAmount(position.quote.price).minus(price)).times(rate) : null;
+  const netEffectBase = priceDifferenceBase?.minus(commissionBase) ?? null;
+  const newMoneyBase = input.funding === 'NEW_MONEY' ? budget.times(rate) : FinancialDecimal.parse('0');
   return {
+    impact: { newMoneyBase: newMoneyBase.toStorageString(), commissionBase: commissionBase.toStorageString(),
+      priceDifferenceBase: priceDifferenceBase?.toStorageString() ?? null, netEffectBase: netEffectBase?.toStorageString() ?? null,
+      netEffectPct: netEffectBase?.percentOf(cost.times(rate)).value?.toString() ?? null },
     assumptions: { ...input, currency: instrument.currency, quantityScale: instrument.quantityScale, reference: position.quote, fx },
     quantity: quantity.toString(), actualCost: cost.toString(), budgetRemaining: budget.minus(cost).toString(),
     remainingCash: ledger.balances[instrument.currency].plus(input.funding === 'NEW_MONEY' ? budget : FinancialDecimal.parse('0')).minus(cost).toString(),
