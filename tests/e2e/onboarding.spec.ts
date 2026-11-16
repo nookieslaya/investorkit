@@ -1,3 +1,4 @@
+import { cashHistorySchema } from '@investorkit/shared';
 import { localNow } from '../../apps/web/src/lib/format.js';
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
@@ -45,6 +46,46 @@ test('registers, persists a private portfolio and signs out', async ({ page }, t
   await page.reload();
   await expect(pln).toContainText('850,00');
   await expect(page.getByText('Pierwsza wpłata', { exact: true })).toBeVisible();
+  // Reproduce a long, overflowing history without adding operations to the ledger.
+  const historyUrl = '**/api/v1/portfolios/*/cash-operations';
+  await page.route(historyUrl, async route => {
+    const response = await route.fetch();
+    const body = cashHistorySchema.parse(await response.json());
+    await route.fulfill({ response, json: { ...body, items: Array.from({ length: 12 }, (_, index) => ({ ...body.items[0], id: crypto.randomUUID(), amount: '5500', note: `Wpis ${index + 1}: długa notatka demonstracyjna, która nie powinna ściskać ani zasłaniać kwoty operacji. `.repeat(2) })) } });
+  });
+  await page.reload();
+  const cashHistory = page.getByRole('region', { name: 'Historia gotówki', exact: true });
+  const cashList = page.getByRole('list', { name: 'Operacje gotówkowe — przewijana historia' });
+  await expect(cashList.getByRole('listitem')).toHaveCount(12);
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const theme of ['light', 'dark']) {
+      const toggle = page.getByRole('button', { name: theme === 'dark' ? 'Włącz ciemny motyw' : 'Włącz jasny motyw' });
+      if (await toggle.count()) await toggle.click();
+      await cashList.evaluate(list => { list.scrollTop = 0; });
+      expect(await cashList.evaluate(list => {
+        const bounds = list.getBoundingClientRect();
+        return list.scrollHeight > list.clientHeight && list.scrollWidth <= list.clientWidth &&
+          [...list.querySelectorAll('.cash-row-amount')].every(amount => {
+            const rect = amount.getBoundingClientRect();
+            const text = document.createRange(); text.selectNodeContents(amount.firstChild!);
+            return rect.right <= bounds.left + list.clientWidth - 10 && text.getClientRects().length === 1;
+          });
+      })).toBe(true);
+      await cashList.focus();
+      await expect(cashList).toBeFocused();
+      await cashList.press('End');
+      await expect.poll(() => cashList.evaluate(list => list.scrollTop)).toBeGreaterThan(0);
+      await cashList.press('Home');
+      await expect.poll(() => cashList.evaluate(list => list.scrollTop)).toBe(0);
+      await cashHistory.screenshot({ path: testInfo.outputPath(`cash-history-${width}-${theme}.png`), animations: 'disabled' });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    }
+  }
+  await page.unroute(historyUrl);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.getByRole('button', { name: 'Włącz jasny motyw' }).click();
+  await page.reload();
   await go('Inwestycje');
   const editor = page.getByRole('group', { name: 'Wybierz formularz' });
   await editor.getByRole('button', { name: 'Instrument', exact: true }).click();

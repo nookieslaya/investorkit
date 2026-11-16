@@ -39,3 +39,6 @@ P06/A07 `055dcdc`: CI [PASS](https://github.com/nookieslaya/investorkit/actions/
 - Lokalnie107 unit/40 integration/3 E2E PASS; build:packages/typecheck/build/openapi:check i frontend noUnused PASS. Przykład11699,50/600/40% potwierdzony w unit i UI:360,11459,50,−240/−2,05%,5,13%→3,14%. UI E2E obejmuje invalidację po parametrach/refetch i późnej odpowiedzi. Obejrzano desktop/mobile × oba motywy, bez poziomego overflow. Brak pełnego audytu WCAG; znane informacyjne ostrzeżenie bundle>500kB. Następny etap nadal P07, potem A08.
 
 Uproszczenie scenariuszy `5737d75`: CI [PASS](https://github.com/nookieslaya/investorkit/actions/runs/43934016619) — build/typecheck/OpenAPI, migracje dedykowanej bazy,107 unit,40 integration i3 E2E Chromium.
+
+## Historia gotówki — 16.11.2026
+CashOverview: przewijana lista ma tabIndex i nazwę dostępną. Style ograniczone do .cash-history: cienki scrollbar z przezroczystym torem, scrollbar-gutter:stable i padding12px. Grid36px/minmax(0,1fr)/auto chroni kwotę przed długą notatką; przy≤480px kwota jest w drugim wierszu. Bez zmian finansów/API/DB i nowych bibliotek. Lokalnie build:packages/typecheck/build,107 unit,3 E2E PASS; po doprecyzowaniu walidacji fixture ponownie typecheck i onboarding E2E PASS. Cztery zrzuty desktop/mobile × light/dark obejrzane.
