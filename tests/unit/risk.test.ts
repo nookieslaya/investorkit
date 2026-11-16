@@ -109,6 +109,7 @@ describe('P06 concentration and scenarios', () => {
     const stale = { ...usd, fxRates: [{ ...usd.fxRates[0]!, asOf: '2026-11-10T12:00:00Z' }] };
     expect(stressPortfolio(stale, market).lossBase).toBeNull();
     expect(analyzeRisk({ ...usd, fxRates: [] }, metadata).concentration.top3Pct).toBeNull();
+    expect(stressPortfolio({ ...usd, fxRates: [] }, market)).toMatchObject({ lossBase: null, lossPct: null, reason: 'INCOMPLETE_VALUATION' });
   });
   it('computes losses and scenario prices before rounding valuation snapshots', () => {
     const tiny = { ...context, instruments: [instruments[0]!], operations: [{ ...deposit, amount: '1' }, { ...operations[1]!, quantity: '0.6', unitPrice: '0.0000000003' }], quotes: [{ ...quotes[0]!, price: '0.0000000004' }] };
@@ -116,6 +117,14 @@ describe('P06 concentration and scenarios', () => {
     expect(result.before.totalValue).toBe('1.0000000001'); expect(result.after.totalValue).toBe('0.9999999999');
     expect(result.lossBase).toBe('0.0000000001');
     expect(stressPortfolio(tiny, { ...market, dropPct: '33.3333333333' }).after.positions[0]?.scenarioPrice).toBe('0.0000000002666666666668');
+  });
+  it('matches the 11699.50 portfolio example for a 40% drop on a 600 position', () => {
+    const result = stressPortfolio({ ...context, operations: [{ ...deposit, amount: '11699.5' }, ...operations.slice(1)] }, { scope: 'INSTRUMENT', instrumentId: ids[0], dropPct: '40' });
+    expect(result).toMatchObject({ before: { totalValue: '11699.5' }, after: { totalValue: '11459.5' }, lossBase: '240' });
+    expect(result.before.positions[0]?.valueBase).toBe('600'); expect(result.after.positions[0]?.valueBase).toBe('360');
+    expect(result.before.positions[0]?.weightPct).toMatch(/^5\.128/);
+    expect(result.after.positions[0]?.weightPct).toMatch(/^3\.141/);
+    expect(result.lossPct).toMatch(/^2\.051/);
   });
   it('keeps inputs immutable and gives repeatable results with deterministic ranking ties', () => {
     const saved = structuredClone(context);

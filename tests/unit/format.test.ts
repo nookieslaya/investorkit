@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { formatAmount, formatPercent, formatRounded, formatMoney, formatQuantity, formatCash, formatAverageCosts } from '../../apps/web/src/lib/format.js';
+import { formatAmount, formatPercent, formatRounded, formatMoney, formatQuantity, formatCash, formatAverageCosts, formatDecrease } from '../../apps/web/src/lib/format.js';
 it('formats financial strings beyond binary safe integers and preserves tiny quantities', () => {
   expect(formatAmount('9007199254740993.0000000001')).toBe('9 007 199 254 740 993,0000000001');
   expect(formatAmount('0.0000000001')).toBe('0,0000000001');
@@ -38,4 +38,14 @@ it('reveals cost differences hidden by two decimal places using the same scale b
   expect(formatAverageCosts('1.00000000001', '1.00000000002')).toEqual({ before: '1,00000000001', after: '1,00000000002' });
   expect(formatAverageCosts('100.0010', '100.001')).toEqual({ before: '100,00', after: '100,00' });
   expect(formatAverageCosts(null, '0.0000000001')).toEqual({ before: '—', after: '0,0000000001' });
+});
+
+it('shows loss magnitudes as signed changes without negative zero or replacing missing data', () => {
+  expect(formatDecrease('240', 'money')).toBe('−240,00');
+  expect(formatDecrease('2.051369716654558', 'percent')).toBe('−2,05%');
+  expect(formatDecrease('0', 'money')).toBe('0,00');
+  expect(formatDecrease('0.004', 'money')).toBe('0,00');
+  expect(formatDecrease('0.005', 'percent')).toBe('0,00%');
+  expect(formatDecrease(null, 'money')).toBe('—');
+  expect(formatDecrease(null, 'percent')).toBe('—');
 });

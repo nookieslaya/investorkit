@@ -15,7 +15,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F07 | Rate limit, origin guard, errors, log redaction | 2 | F05 | DONE: origin/errors/size/HTTP429 integration |
 | F08 | React/Tailwind/shadcn, Router, Query | 2 | F02 | DONE: build/theme, desktop/mobile/dark i inspekcja zrzutów inwestycji/gotówki |
 | F09 | Rejestracja/logowanie i portfel UI | 2 | F06,F08 | DONE: E2E i użytkownik potwierdzili rejestrację/logowanie/portfel |
-| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie105 unit i40 integration PASS |
+| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie107 unit i40 integration PASS |
 | F11 | Playwright i CI | 2 | F09,F10 | DONE: GitHub Actions PASS, Chromium E2E 1/1 (15.11.2026) |
 | F12 | OpenAPI i contract tests | 2 | F07 | DONE: OpenAPI z Zod, endpoint i artefakt JSON, kontrola aktualności CI oraz testy odpowiedzi |
 | F13 | Select shadcn/ui w formularzach | — | F08 | DONE: 7 pól, strzałki z odstępem16px, stylizowana lista, motywy i klawiatura |
@@ -75,3 +75,5 @@ Doprecyzowanie A06 (16.11.2026) DONE: dopłata oddzielona od wyniku zakupu i P/L
 Uproszczenie A06 (16.11.2026) DONE:4 główne wyniki, szczegóły na żądanie, automatyczna cena referencyjna bez nadpisywania własnego wpisu, formatowanie pieniędzy/ilości/średniej i jawna reszta<grosza. Symulator oddzielony od Operacji, dane i funkcje gotówki zachowane. Silnik i istniejące16 kontraktów bez zmian; konieczny dodatkowy GET cen do podpowiedzi nieposiadanych instrumentów. Bez bibliotek/migracji. Usunięte pozostałości poprzedniego układu. Lokalnie93 unit/32 integration/2 E2E, build/typecheck i4 warianty widoku PASS.
 
 P06/A07 ukończone16.11.2026: czysta koncentracja i stress, widok Ryzyko, ustawienia progów/świeżości stosowane przez wszystkie odczyty finansowe, migracja0003 bez zmian historii. Golden5 i granice0/100%, gotówka stała, UNKNOWN w mianowniku, brak fałszywych udziałów przy niepełności. Zapis ustawień owner-scoped z blokadą i revision/If-Match, konflikt409. Lokalnie105 unit,40 integration i3 E2E PASS. P07 pozostaje osobnym przeglądem regresji; potem dziennik A08.
+
+Uproszczenie A07 (16.11.2026) DONE: podsumowanie wpływu na cały portfel, podpisane zmiany, porównanie wybranej pozycji, zbiorczy wynik wszystkich papierów, szczegóły na żądanie i presety10/20/40%. Neutralne0%, braki bez zer, ostrzeżenia poza panelami. Reset po edycji/refetch także przy identycznych danych i późnej odpowiedzi; stare hashe z nowymi etykietami nawigacji. Bez zmian silnika/API, zależności i migracji; usunięto dawny renderer wyniku i zbędne style.107 unit/40 integration/3 E2E, typecheck/build/OpenAPI, noUnused i4 warianty wizualne PASS. P07 nadal osobnym etapem.

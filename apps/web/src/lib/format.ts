@@ -50,6 +50,12 @@ export function formatAverageCosts(before: string | null, after: string | null) 
   return { before: display(before), after: display(after) };
 }
 export function formatPercent(value: string): string { return `${formatRounded(value, 2)}%`; }
+/** Presentation of the API's nonnegative loss magnitude as a portfolio change. */
+export function formatDecrease(value: string | null, kind: 'money' | 'percent'): string {
+  if (value === null) return '—';
+  const display = kind === 'money' ? formatMoney(value) : formatPercent(value);
+  return display === '0,00' || display === '0,00%' ? display : `−${display}`;
+}
 export function localNow() {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;

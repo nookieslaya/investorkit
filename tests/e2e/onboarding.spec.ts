@@ -101,7 +101,7 @@ test('registers, persists a private portfolio and signs out', async ({ page }, t
   await page.reload();
   await expect(portfolioValue).toContainText('895,78'); await expect(page.getByText('Pierwszy zakup', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('investments-desktop.png'), fullPage: true });
-  await go('Symulator');
+  await go('Symulacja zakupu');
   const simulator = page.getByRole('region', { name: 'Symulator zakupu', exact: true });
   const result = page.getByRole('region', { name: 'Wynik symulacji', exact: true });
   await expect(page.getByRole('button', { name: 'Zapisz wpłatę', exact: true })).toHaveCount(0);
