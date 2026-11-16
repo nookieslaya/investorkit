@@ -42,3 +42,5 @@ Uproszczenie scenariuszy `5737d75`: CI [PASS](https://github.com/nookieslaya/inv
 
 ## Historia gotówki — 16.11.2026
 CashOverview: przewijana lista ma tabIndex i nazwę dostępną. Style ograniczone do .cash-history: cienki scrollbar z przezroczystym torem, scrollbar-gutter:stable i padding12px. Grid36px/minmax(0,1fr)/auto chroni kwotę przed długą notatką; przy≤480px kwota jest w drugim wierszu. Bez zmian finansów/API/DB i nowych bibliotek. Lokalnie build:packages/typecheck/build,107 unit,3 E2E PASS; po doprecyzowaniu walidacji fixture ponownie typecheck i onboarding E2E PASS. Cztery zrzuty desktop/mobile × light/dark obejrzane.
+
+Poprawka historii gotówki `ffbc28e`: CI [PASS](https://github.com/nookieslaya/investorkit/actions/runs/43935049587) — build/typecheck/OpenAPI, migracje,107 unit,40 integration i3 E2E Chromium.
