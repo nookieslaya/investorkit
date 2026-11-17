@@ -43,7 +43,7 @@ test('records real complete and incomplete valuations without rebuilding missing
   await page.reload(); await expect(completeCard).toContainText('87,15 PLN'); await expect(history.getByRole('article')).toHaveCount(2);
   await expect(page.getByRole('article').filter({ hasText: 'Wartość portfela' }).first()).toContainText('210,00');
   await details.click(); await expect(completeCard).toContainText('Cena: 90,00 USD'); await details.click();
-  const gaps = history.getByText(/^Dni bez zapisanej wyceny:/);
+  const gaps = history.getByText(/^Dni bez rzeczywistej zapisanej wyceny:/);
   await gaps.focus(); await gaps.press('Enter'); await expect(history.getByText('Daty według czasu polskiego.', { exact: false })).toBeVisible(); await gaps.press('Space');
   await history.getByRole('combobox', { name: 'Zakres historii', exact: true }).click();
   await page.getByRole('option', { name: 'Własny zakres', exact: true }).click();
@@ -70,5 +70,31 @@ test('records real complete and incomplete valuations without rebuilding missing
   try { expect((await anonymous.request.get(`${baseURL}/api/v1/valuation-snapshots/${complete.id}`)).status()).toBe(401); } finally { await anonymous.close(); }
   const stored = snapshotSchema.parse(await (await page.request.get(`/api/v1/valuation-snapshots/${complete.id}`)).json()); expect(stored).toEqual(complete);
   const list = portfolioHistorySchema.parse(await (await page.request.get(`/api/v1/portfolios/${portfolio.id}/history`)).json()); expect(list.items).toHaveLength(2);
+  const demoDate = new Date(Date.parse(complete.asOf) - 2 * 86400000).toISOString();
+  const demo = snapshotSchema.parse({ ...complete, id: crypto.randomUUID(), demo: true, asOf: demoDate, valuation: { ...complete.valuation, asOf: demoDate } });
+  await page.route('**/api/v1/portfolios/*/history?*', async route => {
+    const response = await route.fetch();
+    const current = portfolioHistorySchema.parse(await response.json());
+    const items = [...current.items, demo].sort((left, right) => Date.parse(left.asOf) - Date.parse(right.asOf) || left.id.localeCompare(right.id));
+    await route.fulfill({ response, json: portfolioHistorySchema.parse({ ...current, items }) });
+  });
+  await page.route(`**/api/v1/valuation-snapshots/${demo.id}`, route => route.fulfill({ json: demo }));
+  await history.getByRole('button', { name: 'Odśwież historię', exact: true }).click();
+  await expect(history.getByText(/DEMO — widoczne są fikcyjne wyceny/)).toBeVisible();
+  const demoCard = history.getByRole('article').filter({ has: page.getByText('Kompletne dane demonstracyjne', { exact: true }) });
+  await expect(demoCard).toContainText('DEMO');
+  await demoCard.getByText('Szczegóły zapisanej wyceny', { exact: true }).click();
+  await expect(demoCard).toContainText('daty, kwoty, ceny i pozostałe dane tego przykładu są fikcyjne');
+  await expect(demoCard).toContainText('założenie DEMO');
+  await demoCard.getByText('Szczegóły zapisanej wyceny', { exact: true }).click();
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const theme of ['light', 'dark']) {
+      const toggle = page.getByRole('button', { name: theme === 'dark' ? 'Włącz ciemny motyw' : 'Włącz jasny motyw' });
+      if (await toggle.count()) await toggle.click();
+      await history.screenshot({ path: testInfo.outputPath(`history-demo-${width}-${theme}.png`), animations: 'disabled' });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    }
+  }
   const cash = cashSummarySchema.parse(await (await page.request.get(`/api/v1/portfolios/${portfolio.id}/cash`)).json()); expect(cash.operationCount).toBe(3);
 });

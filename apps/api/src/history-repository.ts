@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { createHash } from 'node:crypto';
 import { and, asc, count, eq, gte, lte, sql } from 'drizzle-orm';
 import { portfolios, valuationSnapshots } from '@investorkit/db';
@@ -9,11 +10,12 @@ import { readMarketSnapshot } from './cash-repository.js';
 import { CashApiError } from './domain-error.js';
 import { missingHistoryDays } from './history-dates.js';
 const missing = () => new CashApiError(404, 'NOT_FOUND', 'Nie znaleziono portfela lub zapisanej wyceny.');
+const provenance = z.object({ demo: z.boolean().optional() });
 const summaryValuation = valuationSchema.omit({ positions: true, cash: true });
 type Row = typeof valuationSnapshots.$inferSelect;
 function summary(row: Omit<Row, 'valuation'> & { valuation: unknown }) {
   const value = summaryValuation.parse(row.valuation);
-  return snapshotSummarySchema.parse({ id: row.id, portfolioId: row.portfolioId, asOf: row.asOf.toISOString(), createdAt: row.createdAt.toISOString(), complete: row.complete, valueBase: row.valueBase === null ? null : FinancialDecimal.parse(row.valueBase).toString(), netContributionsBase: FinancialDecimal.parse(row.netContributionsBase).toString(),
+  return snapshotSummarySchema.parse({ demo: provenance.parse(row.valuation).demo ?? false, id: row.id, portfolioId: row.portfolioId, asOf: row.asOf.toISOString(), createdAt: row.createdAt.toISOString(), complete: row.complete, valueBase: row.valueBase === null ? null : FinancialDecimal.parse(row.valueBase).toString(), netContributionsBase: FinancialDecimal.parse(row.netContributionsBase).toString(),
     pricedSubtotal: value.pricedSubtotal, pnl: value.pnl, pnlPct: value.pnlPct, pnlPctReason: value.pnlPctReason, engineVersion: row.engineVersion, quoteMaxAgeHours: value.quoteMaxAgeHours, fxMaxAgeHours: value.fxMaxAgeHours, valuationRange: value.valuationRange });
 }
 const detail = (row: Row) => snapshotSchema.parse({ ...summary(row), valuation: row.valuation, inputsHash: row.inputsHash });
@@ -61,7 +63,8 @@ export function historyRepository(db: Database) {
         const rows = await tx.select({ id: valuationSnapshots.id, ownerId: valuationSnapshots.ownerId, portfolioId: valuationSnapshots.portfolioId, asOf: valuationSnapshots.asOf, createdAt: valuationSnapshots.createdAt, complete: valuationSnapshots.complete, valueBase: valuationSnapshots.valueBase, netContributionsBase: valuationSnapshots.netContributionsBase, inputsHash: valuationSnapshots.inputsHash, engineVersion: valuationSnapshots.engineVersion,
           valuation: sql<unknown>`${valuationSnapshots.valuation} - 'positions' - 'cash'`,
         }).from(valuationSnapshots).where(and(eq(valuationSnapshots.ownerId, ownerId), eq(valuationSnapshots.portfolioId, portfolioId), gte(valuationSnapshots.asOf, new Date(from)), lte(valuationSnapshots.asOf, new Date(to)))).orderBy(asc(valuationSnapshots.asOf), asc(valuationSnapshots.id)).limit(366);
-        return portfolioHistorySchema.parse({ items: rows.map(summary), limit: 366, from, to, dayTimeZone: 'Europe/Warsaw', missingDays: missingHistoryDays(from, to, rows.map(row => row.asOf.toISOString())) });
+        const items = rows.map(summary);
+        return portfolioHistorySchema.parse({ items, limit: 366, from, to, dayTimeZone: 'Europe/Warsaw', missingDays: missingHistoryDays(from, to, items.filter(row => !row.demo).map(row => row.asOf)) });
       }, { isolationLevel: 'repeatable read', accessMode: 'read only' });
     },
     async valuationSnapshot(ownerId: string, id: string) {

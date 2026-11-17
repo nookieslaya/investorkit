@@ -78,3 +78,7 @@
 - Ręczne zapisy rzeczywistych wycen w Inwestycjach, pełne źródła/założenia, niepełność i dni bez zapisów jawne. Zakresy7/30/90/365 oraz własne daty, klawiatura i oba motywy.
 -3 endpointy i migracja0005 (valuation_snapshots), limit366, spójny SERIALIZABLE capture. Stare punkty nie przeliczają się po zmianach ledgeru/rynku/settings; GET i scenariusze niczego nie zapisują.
 -25 istniejących API i silnik bez zmian; brak nowych zależności i fikcyjnej historii.127 unit,56 integration,5 E2E oraz build/typecheck/OpenAPI zweryfikowane. Następny I01/I03; próbka XTB nadal potrzebna.
+
+### Przykładowe okresy historii — 17.11.2026
+- Na polecenie użytkownika dodano12 oznaczonych DEMO przykładów z różnych okresów. Lista i szczegóły odróżniają fikcyjne dane od rzeczywistych zapisów; DEMO nie wypełnia realnych luk.
+- Flaga pochodzenia w istniejącym JSONB i odpowiedziach API, bez migracji, zmian silnika i finansów użytkownika.

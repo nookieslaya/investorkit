@@ -31,7 +31,7 @@
     "/api/v1/portfolios/{id}/history": {
       "get": {
         "operationId": "portfolioHistory",
-        "summary": "Rzeczywiste zapisane wyceny i dni bez zapisów; bez interpolacji i zapisów przy odczycie.",
+        "summary": "Zapisane wyceny i oznaczone przykłady DEMO; luki obejmują brak rzeczywistych zapisów, bez interpolacji.",
         "security": [
           {
             "session": []
@@ -87,6 +87,10 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "demo": {
+                            "default": false,
+                            "type": "boolean"
+                          },
                           "id": {
                             "type": "string",
                             "format": "uuid",
@@ -174,6 +178,7 @@
                           }
                         },
                         "required": [
+                          "demo",
                           "id",
                           "portfolioId",
                           "asOf",
@@ -510,6 +515,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "demo": {
+                      "default": false,
+                      "type": "boolean"
+                    },
                     "id": {
                       "type": "string",
                       "format": "uuid",
@@ -929,6 +938,7 @@
                     }
                   },
                   "required": [
+                    "demo",
                     "id",
                     "portfolioId",
                     "asOf",
@@ -1347,6 +1357,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "demo": {
+                      "default": false,
+                      "type": "boolean"
+                    },
                     "id": {
                       "type": "string",
                       "format": "uuid",
@@ -1766,6 +1780,7 @@
                     }
                   },
                   "required": [
+                    "demo",
                     "id",
                     "portfolioId",
                     "asOf",

@@ -23,7 +23,7 @@ OpenAPI28 operacji (17 wcześniejszych schematów request/response zachowane). N
 Migracja0003_small_electro.sql wygenerowana/przejrzana: tylko CREATE risk_settings + constraints/FK. Zastosowana na investorkit_contract_test, potem lokalnej aplikacji po prywatnym pg_dump `.local-backups/before-risk-2026-11-16.dump` (ignorowany Git). Bez UPDATE/DELETE starych danych. W samym etapie P06 nie dodawano scenariuszy/testowych transakcji do konta użytkownika. Później, na osobne polecenie użytkownika, dodano sześć fikcyjnych pozycji DEMO i odpowiadające wpłaty do lokalnej bazy aplikacji; zachowano wcześniejszy instrument i historię. Prywatny plan oraz kopia przed zmianą są w ignorowanym .local-backups. Nie ponawiać zasilenia. Bieżące testy UI nie używają tych danych. `.env` zachowane.
 
 ## Weryfikacja i dalsza praca
-Node24: `export PATH=/opt/homebrew/opt/node@24/bin:$PATH`. Lokalnie build/typecheck/OpenAPI i dodatkowe noUnusedLocals/noUnusedParameters web PASS,127 unit,56 integration,5 E2E Chromium. Baza testowa investorkit_contract_test; E2E5174/3002, nie zatrzymywać5173/3001.
+Node24: `export PATH=/opt/homebrew/opt/node@24/bin:$PATH`. Lokalnie build/typecheck/OpenAPI i dodatkowe noUnusedLocals/noUnusedParameters web PASS,127 unit,57 integration,5 E2E Chromium. Baza testowa investorkit_contract_test; E2E5174/3002, nie zatrzymywać5173/3001.
 
 Golden5 i granice0/100%, cash-only/empty, UNKNOWN, stale/future/FX, precyzja przed zaokrągleniem. API przeciw realnemu PostgreSQL: owner/session/origin, readonly/powtórki/równoległe scenariusze bez zapisów, ustawienia z kontrolą wersji/race i bezpośrednie constraints. Trzeci E2E Ryzyko używa zwalidowanych fixture odpowiedzi do izolacji UI i ograniczenia wspólnego rate limitu; rzeczywiste obliczenia i zapis ustawień pokrywają unit/integration. Onboarding i zakupowe E2E nadal realne API. Cztery zrzuty Risk desktop/mobile × light/dark obejrzane; bez poziomego overflow. Szczegóły i CI w VERIFICATION.md.
 
@@ -79,3 +79,12 @@ A08 `1e0f86f`: CI [PASS](https://github.com/nookieslaya/investorkit/actions/runs
 Następny I01: kontrakt parsera, potem I03 podgląd/mapowanie CSV; nie zgadywać eksportu XTB bez próbki (I02/I04 BLOCKED).
 
 A09 `504a5c0`: CI [PASS](https://github.com/nookieslaya/investorkit/actions/runs/44130813326) — build/typecheck/OpenAPI, migracje na pustej bazie,127 unit,56 integration i5 E2E Chromium. Panel historii w Inwestycjach gotowy; następny I01/I03, XTB nadal wymaga próbki.
+
+## Przykłady okresów historii — 17.11.2026
+Na jawne polecenie użytkownika dodano12 fikcyjnych snapshotów do lokalnego portfela:11 pełnych/1 niepełny; wiek od1h do340 dni. Filtry7/30/90/365 pokazują4/6/8/12 przykładów. To NIE rzeczywiste datowane wyceny: DTO ma demo:true, lista etykietę DEMO i status „dane demonstracyjne”, źródła w szczegółach to „założenie DEMO”, globalny komunikat mówi o fikcyjnych kwotach/datach. Dni bez rzeczywistych zapisów nadal obejmują dni z samym DEMO.
+
+Metadane demo:true/demoBatch w istniejącym valuationJSONB, bez migracji. Rzeczywiste snapshoty nie zostały zmienione; brak pola oznacza false, capture nadal generuje rzeczywisty DTO bez metadanychdemo i nie przyjmuje ich od klienta. Summary/detail dodają pole demo:boolean,3 kontrakty A09 rozszerzone addytywnie;25 pozostałych bez zmian. Valuation API/silnik nie zmienione. Nie maskować przykładu ustawieniem prawdziwej daty lub wersji engine; obecna wersja silnika faktycznie oblicza fikcyjne wejścia w prywatnym skrypcie.
+
+Prywatny backup .local-backups/before-demo-history-2026-11-17.dump, skrypt apply-demo-history-2026-11-17.mjs i manifest demo-history-2026-11-17-result.json ignorowane Git,600. Jedna transakcja z lock portfela, właściciel z aktywnej sesji. Hash ledgeru/notowań/FX/settings/dziennika przed i po identyczny, wcześniejsze snapshoty niezmienione. Odczyt przez repo API potwierdził12 flag i liczby okresów. Nie ponawiać seeda; marker batch chroni przed dublowaniem.
+
+Dodano integrację: DEMO w szczegółach/liście, bez realnego pokrycia i bez możliwości podania demo wPOST. E2E ma zwalidowaną fixture mieszaną do etykiet/źródeł (główna część scenariusza nadal realne API).127 unit/57 integration/5 E2E, typecheck/build/OpenAPI/noUnused PASS; widoki DEMO desktop/mobile w obu motywach sprawdzone. Następny I01/I03.

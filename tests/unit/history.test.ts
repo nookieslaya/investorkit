@@ -10,7 +10,7 @@ it('keeps Polish calendar coverage correct across midnight, leap day and dayligh
 });
 it('rejects client valuations and dates when saving, and strictly validates history filters', () => {
   expect(snapshotInputSchema.parse({})).toEqual({});
-  for (const input of [{ asOf: '2020-01-01T00:00:00Z' }, { totalValue: '100' }, { ownerId: 'forged' }]) expect(snapshotInputSchema.safeParse(input).success).toBe(false);
+  for (const input of [{ asOf: '2020-01-01T00:00:00Z' }, { totalValue: '100' }, { ownerId: 'forged' }, { demo: true }]) expect(snapshotInputSchema.safeParse(input).success).toBe(false);
   expect(portfolioHistoryQuerySchema.parse({ from: '2026-01-01T00:00:00Z' })).toEqual({ from: '2026-01-01T00:00:00Z' });
   expect(portfolioHistoryQuerySchema.safeParse({ from: 'bad' }).success).toBe(false);
   expect(portfolioHistoryQuerySchema.safeParse({ limit: '9999' }).success).toBe(false);

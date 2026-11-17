@@ -180,6 +180,7 @@ export type JournalEntry = z.infer<typeof journalEntrySchema>;
 
 export const snapshotInputSchema = z.object({}).strict();
 export const snapshotSummarySchema = z.object({
+  demo: z.boolean().default(false),
   id: z.uuid(), portfolioId: z.uuid(), asOf: z.iso.datetime(), createdAt: z.iso.datetime(),
   complete: z.boolean(), valueBase: signedDecimalSchema.nullable(), pricedSubtotal: signedDecimalSchema,
   netContributionsBase: signedDecimalSchema, pnl: signedDecimalSchema.nullable(), pnlPct: computedDecimalSchema.nullable(),

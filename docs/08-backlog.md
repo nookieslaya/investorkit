@@ -15,7 +15,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F07 | Rate limit, origin guard, errors, log redaction | 2 | F05 | DONE: origin/errors/size/HTTP429 integration |
 | F08 | React/Tailwind/shadcn, Router, Query | 2 | F02 | DONE: build/theme, desktop/mobile/dark i inspekcja zrzutów inwestycji/gotówki |
 | F09 | Rejestracja/logowanie i portfel UI | 2 | F06,F08 | DONE: E2E i użytkownik potwierdzili rejestrację/logowanie/portfel |
-| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie127 unit i56 integration PASS |
+| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie127 unit i57 integration PASS |
 | F11 | Playwright i CI | 2 | F09,F10 | DONE: GitHub Actions PASS, Chromium E2E 1/1 (15.11.2026) |
 | F12 | OpenAPI i contract tests | 2 | F07 | DONE: OpenAPI z Zod, endpoint i artefakt JSON, kontrola aktualności CI oraz testy odpowiedzi |
 | F13 | Select shadcn/ui w formularzach | — | F08 | DONE: 7 pól, strzałki z odstępem16px, stylizowana lista, motywy i klawiatura |
@@ -85,3 +85,5 @@ P07 ukończone17.11.2026: przegląd obecnych testów P02–P06 i mapa golden1–
 A08 ukończone17.11.2026: dziennik #journal, wymagany powód i teza, opcjonalny instrument/horyzont/ryzyka/warunki/notatki. CRUD owner-scoped,100 wpisów, plain text, daty, limit długości, pełny PATCH i DELETE z If-Match/revision oraz blokadą wpisu. Szkic nie znika przy konflikcie/odświeżeniu, jawne zastąpienie aktualną wersją i potwierdzenie usunięcia. Migracja0004 z composite ownerFK iCHECK, bez zmian historii finansowej; zastosowana po backupie.125 unit/49 integration/4 E2E PASS; build/typecheck/OpenAPI/noUnused i4 warianty wizualne PASS. Bez nowych bibliotek. Następny A09. Brak autosave, scalania konfliktów, historii wersji i publicznego deploymentu.
 
 A09 ukończone17.11.2026: nowe POST zapisuje tylko bieżącą wycenę, GET history/detail są READ ONLY. Wyceny kompletne/niepełne, pełne zachowane źródła i założenia, limit366, serializowalny zapis z retry przy konflikcie, immutable punkty i unique(portfolio,asOf,inputs_hash). Panel Inwestycji, zakres7/30/90/365 i własny, jawne dni bez zapisu w czasie polskim. Bez automatycznego backfill, wykresu/interpolacji, harmonogramu i przeliczania punktów po zmianach ledgeru. Migracja0005 CREATE-only po backupie; silnik i25 API zachowane,3 nowe =>28.127 unit/56 integration/5 E2E, typecheck/build/OpenAPI/noUnused i4 warianty widoku PASS. Następny I01, potem I03. I02/I04 nadal BLOCKED bez zanonimizowanej próbki XTB.
+
+17.11.2026 — prezentacja danych testowych A09 na polecenie użytkownika:12 jawnych DEMO snapshotów w lokalnej bazie, podział okresów7/30/90/365→4/6/8/12. Flaga provenance w istniejącym JSONB i DTO, bez migracji; DEMO nie zastępuje realnych punktów ani pokrycia dni. Dotychczasowe finanse i zapisy zachowane, źródła/ceny fikcyjne oznaczone także w szczegółach. Dodany test integracyjny i scenariusz UI etykiet. Następny nadal I01/I03.

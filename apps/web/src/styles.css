@@ -118,3 +118,5 @@
 @media(max-width:650px) { .portfolio-history { padding:20px; }.history-values { grid-template-columns:repeat(2,minmax(0,1fr)); }.portfolio-history .investment-heading { align-items:start; } }
 
 .history-range { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin:0 0 20px; }.history-range label { margin:0; flex:1; min-width:150px; }.history-range .error { width:100%; margin-bottom:0; }.app-shell[data-theme=dark] .history-range input { color-scheme:dark; }
+
+.history-demo-notice { border:1px solid var(--border); border-left:3px solid var(--primary); border-radius:8px; padding:12px 16px; font-size:12px; line-height:1.8; background:var(--background); }.demo-label { display:inline-block; margin-right:8px; color:var(--primary); font-size:10px; font-weight:700; letter-spacing:.6px; }

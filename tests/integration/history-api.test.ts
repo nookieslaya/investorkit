@@ -106,6 +106,18 @@ describe('A09 recorded valuation history', () => {
       await expect(db.insert(valuationSnapshots).values({ ...original, id: randomUUID(), ...extra })).rejects.toThrow();
     }
   });
+  it('marks illustrative records as demo and does not count them as real coverage', async () => {
+    const asOf = '2026-03-29T12:00:00Z';
+    const valuation = valuePortfolio({ instruments: [], operations: [], quotes: [], fxRates: [], asOf });
+    const [row] = await db.insert(valuationSnapshots).values({ ownerId: owner, portfolioId: portfolio, asOf: new Date(asOf), valueBase: '0', netContributionsBase: '0', complete: true, inputsHash: 'c'.repeat(64), engineVersion: valuation.engineVersion, valuation: { ...valuation, demo: true } }).returning();
+    if (!row) throw new Error('Missing demo fixture');
+    const recorded = snapshotSchema.parse((await call('GET', `/valuation-snapshots/${row.id}`)).json());
+    expect(recorded.demo).toBe(true); expect(recorded.valuation).not.toHaveProperty('demo');
+    const list = await history('?from=2026-03-29T00:00:00Z&to=2026-03-29T20:00:00Z');
+    expect(list.items).toHaveLength(1); expect(list.items[0]?.demo).toBe(true); expect(list.missingDays).toEqual(['2026-03-29']);
+    expect(full.demo).toBe(false);
+    expect((await call('POST', endpoint('snapshots'), { demo: true })).statusCode).toBe(400);
+  });
   it('serializes captures at the capacity boundary and records real zero-value portfolios', async () => {
     const empty = valuePortfolio({ instruments: [], operations: [], quotes: [], fxRates: [], asOf: day });
     await db.insert(valuationSnapshots).values(Array.from({ length: 365 }, (_, index) => {

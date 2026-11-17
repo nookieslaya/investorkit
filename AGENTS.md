@@ -34,6 +34,7 @@
 - Bez haseł brokerów, kluczy VITE_* z sekretami, logowania tokenów/cookies/body/raportów.
 - URL raportu jest niezaufany. Nie dodawaj fetch dowolnego URL bez ochrony SSRF/redirect/DNS.
 - Historia: GET pozostaje READ ONLY. Tylko jawny POST snapshots zapisuje obecną wycenę; bez backfill/interpolacji ani zapisu scenariuszy. Snapshot immutable, pełne źródła/diagnostyka, limit366, dni bez zapisu według Europe/Warsaw. Nie przeliczaj dawnych punktów po zmianie ledgeru lub ustawień.
+- Dane DEMO historii tylko na wyraźne polecenie właściciela: valuation JSONB demo:true, envelope API demo:true, widoczne oznaczenia UI. Nie liczyć DEMO jako rzeczywistego pokrycia dni. POST snapshots nie przyjmuje demo ani dat klienta.
 - Dziennik: owner scope i composite FK, plain text, max100 wpisów/portfel. PATCH/DELETE wymagają aktualnego If-Match; konflikt409 nie może kasować szkicu. Bez zmiany ledgeru i danych rynkowych.
 - Private cache raportu per user. Wspólny cache tylko dla zweryfikowanych dokumentów publicznych.
 - Analiza AI wymaga atomowej rezerwacji budżetu, limitu wyjścia i weryfikacji cytatów. UNKNOWN usage nie oznacza kosztu0.

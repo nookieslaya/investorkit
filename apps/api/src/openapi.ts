@@ -23,7 +23,7 @@ const protectedErrors = { ...commonErrors, 401: error('Brak ważnej sesji.') };
 
 // Only implemented first-party operations. Better Auth owns /api/auth/* contracts.
 export const apiContracts: Record<string, Partial<Record<'get' | 'post' | 'patch' | 'delete', OperationContract>>> = {
-  '/api/v1/portfolios/{id}/history': { get: { operationId: 'portfolioHistory', summary: 'Rzeczywiste zapisane wyceny i dni bez zapisów; bez interpolacji i zapisów przy odczycie.', authenticated: true, params: portfolioIdParamsSchema, historyQuery: true,
+  '/api/v1/portfolios/{id}/history': { get: { operationId: 'portfolioHistory', summary: 'Zapisane wyceny i oznaczone przykłady DEMO; luki obejmują brak rzeczywistych zapisów, bez interpolacji.', authenticated: true, params: portfolioIdParamsSchema, historyQuery: true,
     responses: { 200: { description: 'Zapisy i jawne dni bez snapshotu (czas polski).', schema: portfolioHistorySchema }, ...protectedErrors, 400: error('UUID/query.'), 404: error('Brak portfela.'), 422: error('Zakres dłuższy niż366 dni, odwrócony lub przyszły.') } } },
   '/api/v1/portfolios/{id}/snapshots': { post: { operationId: 'captureValuation', summary: 'Zapisz obecną wycenę serwera (także niepełną), bez zmiany finansów i bez datowania wstecz.', authenticated: true, params: portfolioIdParamsSchema, body: snapshotInputSchema,
     responses: { 201: { description: 'Utrwalona wycena z datami, źródłami i diagnostyką.', schema: snapshotSchema }, ...protectedErrors, 400: error('UUID/body.'), 403: error('Origin.'), 404: error('Brak portfela.'), 409: error('Dane zmieniły się podczas zapisu.'), 422: error('Limit366 lub błąd stanu/zakresu kwot.'), 413: error('Limit body.'), 415: error('Content-Type.') } } },
