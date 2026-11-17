@@ -88,3 +88,5 @@ Metadane demo:true/demoBatch w istniejącym valuationJSONB, bez migracji. Rzeczy
 Prywatny backup .local-backups/before-demo-history-2026-11-17.dump, skrypt apply-demo-history-2026-11-17.mjs i manifest demo-history-2026-11-17-result.json ignorowane Git,600. Jedna transakcja z lock portfela, właściciel z aktywnej sesji. Hash ledgeru/notowań/FX/settings/dziennika przed i po identyczny, wcześniejsze snapshoty niezmienione. Odczyt przez repo API potwierdził12 flag i liczby okresów. Nie ponawiać seeda; marker batch chroni przed dublowaniem.
 
 Dodano integrację: DEMO w szczegółach/liście, bez realnego pokrycia i bez możliwości podania demo wPOST. E2E ma zwalidowaną fixture mieszaną do etykiet/źródeł (główna część scenariusza nadal realne API).127 unit/57 integration/5 E2E, typecheck/build/OpenAPI/noUnused PASS; widoki DEMO desktop/mobile w obu motywach sprawdzone. Następny I01/I03.
+
+Oznaczenia okresów DEMO `0ac589b`: CI [PASS](https://github.com/nookieslaya/investorkit/actions/runs/44133219192) — build/typecheck/OpenAPI,127 unit,57 integration i5 E2E Chromium.12 przykładów w lokalnej aplikacji, wcześniejsze dane bez zmian.
