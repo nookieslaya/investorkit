@@ -3,7 +3,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { fromNodeHeaders } from 'better-auth/node';
 import { z, ZodError } from 'zod';
-import { createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema, stressInputSchema, riskSettingsInputSchema } from '@investorkit/shared';
+import { journalInputSchema, createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema, stressInputSchema, riskSettingsInputSchema } from '@investorkit/shared';
 import { CashApiError } from './cash-repository.js';
 import { LedgerDomainError, DecimalDomainError, PositionDomainError, ValuationDomainError, SimulationDomainError, RiskDomainError } from '@investorkit/portfolio-engine';
 import { buildOpenApiDocument } from './openapi.js';
@@ -79,6 +79,24 @@ export async function buildApp(config: Config, services: Services, logging = tru
       if (!session) return reply.code(401).send(fail('UNAUTHENTICATED', 'Zaloguj się.', req.id));
       req.ownerId = session.user.id;
     });
+    scoped.get('/portfolios/:id/journal', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return services.portfolios.listJournal(req.ownerId, id);
+    });
+    scoped.post('/portfolios/:id/journal', async (req, reply) => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      const row = await services.portfolios.createJournal(req.ownerId, id, journalInputSchema.parse(req.body));
+      return reply.code(201).header('ETag', `"${row.revision}"`).send(row);
+    });
+    for (const method of ['PATCH', 'DELETE'] as const) scoped.route({ method, url: '/journal/:id', handler: async (req, reply) => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      if (req.headers['if-match'] === undefined) throw new CashApiError(428, 'PRECONDITION_REQUIRED', 'Wczytaj wpis przed zmianą.');
+      const header = z.string().regex(/^"([1-9]\d{0,9})"$/).parse(req.headers['if-match']);
+      const revision = z.number().int().min(1).max(2147483647).parse(Number(header.slice(1, -1)));
+      const result = await services.portfolios.changeJournal(req.ownerId, id, revision, method === 'PATCH' ? journalInputSchema.parse(req.body) : null);
+      if ('revision' in result) reply.header('ETag', `"${result.revision}"`);
+      return result;
+    } });
     scoped.get('/instruments', async req => services.portfolios.listInstruments(req.ownerId));
     scoped.post('/instruments', async (req, reply) => reply.code(201).send(await services.portfolios.createInstrument(req.ownerId, createInstrumentSchema.parse(req.body))));
     scoped.get('/instruments/:id/quotes', async req => {

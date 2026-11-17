@@ -42,6 +42,7 @@ export const instruments = pgTable('instruments', {
   type: text('type').$type<'STOCK' | 'ETF'>().notNull(), symbol: text('symbol').notNull(), mic: text('mic').notNull(), name: text('name').notNull(),
   currency: text('currency').$type<'PLN' | 'EUR' | 'USD'>().notNull(), quantityScale: integer('quantity_scale').notNull(), isin: text('isin'), issuerCountry: text('issuer_country'), createdAt: created(),
 }, t => [
+  uniqueIndex('instrument_id_owner').on(t.id, t.ownerId),
   uniqueIndex('instrument_identity').on(t.ownerId, t.symbol, t.mic, t.currency),
   uniqueIndex('instrument_owner_currency').on(t.id, t.ownerId, t.currency),
   check('instrument_type', sql`${t.type} IN ('STOCK','ETF')`), check('instrument_currency', sql`${t.currency} IN ('PLN','EUR','USD')`),
@@ -104,4 +105,20 @@ export const riskSettings = pgTable('risk_settings', {
   check('risk_thresholds', sql`${t.maxPositionPct} BETWEEN 0 AND 100 AND ${t.top3Pct} BETWEEN ${t.maxPositionPct} AND 100 AND ${t.top5Pct} BETWEEN ${t.top3Pct} AND 100`),
   check('risk_freshness', sql`${t.quoteMaxAgeHours} BETWEEN 1 AND 8760 AND ${t.fxMaxAgeHours} BETWEEN 1 AND 8760`),
   check('risk_revision', sql`${t.revision} >= 1`),
+]);
+
+export const journalEntries = pgTable('journal_entries', {
+  id: uuid('id').primaryKey().defaultRandom(), ownerId: text('owner_id').notNull(), portfolioId: uuid('portfolio_id').notNull(),
+  instrumentId: uuid('instrument_id'), decidedAt: timestamp('decided_at', { withTimezone: true }).notNull(),
+  reason: text('reason').notNull(), horizon: text('horizon').notNull().default(''), thesis: text('thesis').notNull(),
+  risks: text('risks').notNull().default(''), reviewConditions: text('review_conditions').notNull().default(''), notes: text('notes').notNull().default(''),
+  revision: integer('revision').notNull().default(1), createdAt: created(), updatedAt: updated(),
+}, t => [
+  foreignKey({ columns: [t.portfolioId, t.ownerId], foreignColumns: [portfolios.id, portfolios.ownerId] }).onDelete('cascade'),
+  foreignKey({ columns: [t.instrumentId, t.ownerId], foreignColumns: [instruments.id, instruments.ownerId] }),
+  index('journal_owner_portfolio_date').on(t.ownerId, t.portfolioId, t.decidedAt),
+  check('journal_revision', sql`${t.revision} >= 1`),
+  check('journal_reason', sql`char_length(trim(${t.reason})) BETWEEN 1 AND 500`),
+  check('journal_thesis', sql`char_length(trim(${t.thesis})) BETWEEN 1 AND 5000`),
+  check('journal_text_lengths', sql`char_length(${t.horizon}) <= 500 AND char_length(${t.risks}) <= 3000 AND char_length(${t.reviewConditions}) <= 3000 AND char_length(${t.notes}) <= 10000`),
 ]);

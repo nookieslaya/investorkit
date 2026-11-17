@@ -1,3 +1,4 @@
+import { journalRepository } from './journal-repository.js';
 import { marketRepository } from './market-repository.js';
 import { riskSettingsRepository } from './risk-settings-repository.js';
 import { cashRepository } from './cash-repository.js';
@@ -9,6 +10,7 @@ import type { CreatePortfolio } from '@investorkit/shared';
 export function portfolioRepository(db: Database) {
   return {
     ...cashRepository(db),
+    ...journalRepository(db),
     ...marketRepository(db),
     ...riskSettingsRepository(db),
     list: (ownerId: string) => db.select().from(portfolios).where(eq(portfolios.ownerId, ownerId)),

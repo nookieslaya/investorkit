@@ -1,5 +1,5 @@
 # InvestorKit
-Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Ręczny silnik finansowy i przegląd regresji P01–P07 ukończone; następny etap to dziennik decyzji. Projekt do lokalnego rozwijania, bez publicznego deploymentu.
+Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Ręczny silnik finansowy i przegląd regresji P01–P07 ukończone; działa prywatny dziennik decyzji A08. Projekt do lokalnego rozwijania, bez publicznego deploymentu.
 
 ## Start tutaj
 - [Pełna specyfikacja](docs/INVESTORKIT-MVP.md)
@@ -22,11 +22,12 @@ Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Ręczny siln
 - P03: chronologiczny replay, gotówka w PLN/EUR/USD, historyczny koszt bazowy/FX i wpłaty netto; panel sald, wpłaty/wypłaty i historia na froncie.
 - P02: niemutowalne pozycje BUY/SELL, średni koszt i wynik sprzedaży w walucie instrumentu, prowizje i blokada oversell; przypadki kontrolne1/2 kosztu PASS.
 - P01: czysta arytmetyka `FinancialDecimal` (decimal.js, precision40, HALF_EVEN), walidacja kwot/ilości/prowizji i jawne granice zaokrągleń.
+- Prywatny dziennik decyzji: wpisy dla portfela lub instrumentu, edycja/usuwanie z kontrolą wersji, bez zapisu transakcji.
 - Vitest unit/integration, Playwright onboarding, workflow CI.
 - OpenAPI 3.0.3 generowane z Zod: [dokument](docs/openapi.json), lokalnie `/api/v1/openapi.json`; testy odpowiedzi i kontrola aktualności w CI.
 
 ## Jeszcze niezaimplementowane
-Dziennik, import XTB, upload/AI, snapshoty historyczne i landing z zapisem zainteresowania. portfolio-engine zawiera P01–P06; API/UI używają wspólnego ledgeru oraz ręcznych cen/FX. report-engine pozostaje szkieletem. Pozostałe tabele raportów/importu/dziennika są specyfikacją. Brak płatności, danych rynkowych na żywo i automatycznego pobierania raportów.
+Import XTB, upload/AI, snapshoty historyczne i landing z zapisem zainteresowania. portfolio-engine zawiera P01–P06; API/UI używają wspólnego ledgeru oraz ręcznych cen/FX. report-engine pozostaje szkieletem. Pozostałe tabele raportów/importu są specyfikacją. Brak płatności, danych rynkowych na żywo i automatycznego pobierania raportów.
 
 ## Uruchomienie lokalne
 Wymagania: Node24 LTS, npm11+, Docker z Compose. Rozpakuj archiwum i wejdź do katalogu investorkit.
@@ -67,7 +68,7 @@ Przejrzyj SQL przed zatwierdzeniem. Nie stosujemy drizzle-kit push w produkcji. 
 Obecny auth jest sprawdzony lokalnie, lecz przed publicznym pilotem wymagane są email verification/reset, proces usunięcia/eksportu danych, polityka prywatności, restore drill oraz test E2E w środowisku obsługującym Chromium. Lista w backlogu B04–B06. Brak połączenia z brokerem i przechowywania jego haseł. Ograniczenia procesu in-memory rate limit są opisane w architekturze.
 
 ## Kontynuacja
-F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P07 i A01–A07 ukończone dla ręcznego MVP; następnie A08 — dziennik decyzji. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck,124 testy unit,42 integracyjne i3 E2E na Node24; szczegóły w raporcie weryfikacji.
+F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P07 i A01–A08 ukończone dla ręcznego MVP; następnie A09 — rzeczywiste snapshoty. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck,125 testów unit,49 integracyjnych i4 E2E na Node24; szczegóły w raporcie weryfikacji.
 
 CI potwierdza build, typecheck, migrację, 4 testy jednostkowe, 8 integracyjnych i 1 E2E: [pierwszy przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43749258894).
 
@@ -86,7 +87,7 @@ API: `GET /api/v1/portfolios/:id/cash`, `GET/POST /api/v1/portfolios/:id/cash-op
 
 Dane starsze niż ustawiony próg (domyślnie72h) są nieaktualne. Przy brakujących/starych danych pełna wartość i P/L są kreską, a osobno pokazana jest tylko wyceniona część. Przyszłe ceny/kursy nie są dopuszczane do zapisu ani używane do historycznej wyceny. Wpłaty netto≤0 dają brak procentu. Prosta stopa nie uwzględnia czasu przepływów; koszt średni jest analityczny, nie podatkowy. Kursy i ceny są wpisami użytkownika, bez notowań live.
 
-API: GET/POST `/api/v1/instruments`, POST `/api/v1/instruments/:id/quotes`, POST `/api/v1/fx-rates`, GET/POST `/api/v1/portfolios/:id/operations`, GET `/api/v1/portfolios/:id/valuation?asOf=...`. OpenAPI obejmuje21 operacji. Limity tej wersji:100 instrumentów/użytkownika, 500 cen/instrument i1000 kursów wyceny/użytkownika. Dane są append-only, bez edycji/korekt i stronicowania w tym etapie.
+API: GET/POST `/api/v1/instruments`, POST `/api/v1/instruments/:id/quotes`, POST `/api/v1/fx-rates`, GET/POST `/api/v1/portfolios/:id/operations`, GET `/api/v1/portfolios/:id/valuation?asOf=...`. OpenAPI obejmuje25 operacji. Limity tej wersji:100 instrumentów/użytkownika, 500 cen/instrument i1000 kursów wyceny/użytkownika. Dane są append-only, bez edycji/korekt i stronicowania w tym etapie.
 
 ## Symulator zakupu (P05/A06)
 Wybierz **Symulacja zakupu** w nawigacji portfela: http://localhost:5173/#simulator. To osobny widok; formularz wpłat/wypłat, salda i historia są w **Operacjach** (`#operations`, także poprzedni link `#cash-operations`). Inwestycje pozostają w `#investments`. Wszystkie sekcje są dostępne również na telefonie.
@@ -119,3 +120,10 @@ Historia gotówki ma cienki pasek przewijania z zarezerwowanym miejscem i odstę
 
 ## Regresje finansowe P07 — 17.11.2026
 Przegląd P02–P06 domknięty bez zmiany algorytmów, API, UI i danych użytkownika. Dodano17 testów jednostkowych (w tym18 kombinacji waluty/finansowania/skali ilości) i2 integracyjne. Sprawdzono uzgodnienie gotówki, kosztów i wyniku po BUY/SELL, legalne identyczne zakupy a ponowienia klucza, zerowe/ujemne wpłaty netto, ułamki poniżej skali zapisu, overflow i osobne granice świeżości. [Mapa golden1–7 i granic](docs/04-calculations.md#p07--przegląd-regresji-zakończony-17112026). Lokalnie124 unit,42 integration i3 E2E PASS, typecheck/build/OpenAPI PASS. Następny etap: A08, prywatny dziennik decyzji z owner scope i revision.
+
+## Dziennik decyzji (A08)
+Wybierz **Dziennik**: http://localhost:5173/#journal. Zapisz powód i tezę decyzji, opcjonalnie horyzont, ryzyka, warunki przeglądu i notatki. Wpis może dotyczyć całego portfela albo własnego instrumentu, również wcześniej nieposiadanego. Data decyzji nie może być w przyszłości. Każdy wpis jest prywatny, zapisany jako zwykły tekst; jego utworzenie, edycja i usunięcie nie zmieniają gotówki, transakcji, notowań ani wyceny.
+
+Lista mieści do100 wpisów na portfel, od najnowszej decyzji. Edytuj wpis albo usuń go po potwierdzeniu. Jeśli wpis zmieni się w innym oknie, zapis/usunięcie zwróci konflikt wersji. Szkic edycji pozostaje w formularzu przy odświeżeniu listy i błędzie; przycisk wczytania aktualnej wersji jawnie zastępuje formularz. Nie ma automatycznego scalania ani trwałego zapisu niezapisanych szkiców. Usunięcia nie można cofnąć; historia poprzednich wersji nie jest archiwizowana.
+
+API: GET/POST `.../portfolios/:id/journal`, PATCH/DELETE `.../journal/:id`, If-Match z revision wpisu. Migracja0004 tworzy dziennik, composite FK/CHECK i indeks instrument_id_owner; istniejące finanse i21 wcześniejszych kontraktów zachowane. Zastosowana lokalnie po prywatnym pg_dump.125 unit,49 integration,4 E2E, typecheck/build/OpenAPI i noUnused PASS. Cztery widoki desktop/mobile × oba motywy sprawdzone; szczegóły w VERIFICATION.md. E2E dziennika uruchamia dodatkowe serwery: lokalnie5175/3003, w CI5174/3002 (porty bazowe+1), na tej samej dedykowanej bazie testowej. Nie osłabia limitów aplikacji.

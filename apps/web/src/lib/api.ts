@@ -1,13 +1,16 @@
 import { createAuthClient } from 'better-auth/react';
-import { portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema, riskSchema, riskSettingsSchema, stressSchema } from '@investorkit/shared';
-import type { CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput, RiskSettingsInput, StressInput } from '@investorkit/shared';
+import { journalListSchema, journalEntrySchema, journalDeletedSchema, portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema, riskSchema, riskSettingsSchema, stressSchema } from '@investorkit/shared';
+import type { JournalInput, CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput, RiskSettingsInput, StressInput } from '@investorkit/shared';
 export const auth = createAuthClient();
+export class ApiRequestError extends Error {
+  constructor(message: string, readonly code: string, readonly status: number) { super(message); }
+}
 async function request(path: string, options?: RequestInit): Promise<unknown> {
   const response = await fetch(`/api/v1${path}`, { credentials: 'include', ...options });
   const data: unknown = await response.json();
   if (!response.ok) {
     const parsed = apiErrorSchema.safeParse(data);
-    throw new Error(parsed.success ? parsed.data.error.message : 'Nie można pobrać danych. Spróbuj ponownie.');
+    throw new ApiRequestError(parsed.success ? parsed.data.error.message : 'Nie można pobrać danych. Spróbuj ponownie.', parsed.success ? parsed.data.error.code : 'REQUEST_FAILED', response.status);
   }
   return data;
 }
@@ -44,4 +47,14 @@ export async function saveRiskSettings(id: string, settings: RiskSettingsInput, 
 }
 export async function runStress(id: string, input: StressInput) {
   return stressSchema.parse(await request(`/portfolios/${id}/stress-tests`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }));
+}
+
+export async function loadJournal(id: string) { return journalListSchema.parse(await request(`/portfolios/${id}/journal`)); }
+export async function saveJournal(portfolioId: string, input: JournalInput, existing?: { id: string; revision: number }) {
+  return journalEntrySchema.parse(await request(existing ? `/journal/${existing.id}` : `/portfolios/${portfolioId}/journal`, {
+    method: existing ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json', ...(existing ? { 'If-Match': `"${existing.revision}"` } : {}) }, body: JSON.stringify(input),
+  }));
+}
+export async function deleteJournal(id: string, revision: number) {
+  return journalDeletedSchema.parse(await request(`/journal/${id}`, { method: 'DELETE', headers: { 'If-Match': `"${revision}"` } }));
 }

@@ -162,3 +162,18 @@ export type RiskSettings = z.infer<typeof riskSettingsSchema>;
 export type Risk = z.infer<typeof riskSchema>;
 export type StressInput = z.infer<typeof stressInputSchema>;
 export type Stress = z.infer<typeof stressSchema>;
+
+export const journalInputSchema = z.object({
+  instrumentId: z.uuid().nullable().default(null), decidedAt: z.iso.datetime(),
+  reason: z.string().trim().min(1).max(500), horizon: z.string().trim().max(500).default(''),
+  thesis: z.string().trim().min(1).max(5000), risks: z.string().trim().max(3000).default(''),
+  reviewConditions: z.string().trim().max(3000).default(''), notes: z.string().trim().max(10000).default(''),
+}).strict();
+export const journalEntrySchema = journalInputSchema.extend({
+  id: z.uuid(), portfolioId: z.uuid(), revision: z.number().int().min(1).max(2147483647),
+  createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
+});
+export const journalListSchema = z.object({ items: z.array(journalEntrySchema), limit: z.literal(100) });
+export const journalDeletedSchema = z.object({ id: z.uuid(), deleted: z.literal(true) });
+export type JournalInput = z.infer<typeof journalInputSchema>;
+export type JournalEntry = z.infer<typeof journalEntrySchema>;

@@ -15,7 +15,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F07 | Rate limit, origin guard, errors, log redaction | 2 | F05 | DONE: origin/errors/size/HTTP429 integration |
 | F08 | React/Tailwind/shadcn, Router, Query | 2 | F02 | DONE: build/theme, desktop/mobile/dark i inspekcja zrzutów inwestycji/gotówki |
 | F09 | Rejestracja/logowanie i portfel UI | 2 | F06,F08 | DONE: E2E i użytkownik potwierdzili rejestrację/logowanie/portfel |
-| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie124 unit i42 integration PASS |
+| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie125 unit i49 integration PASS |
 | F11 | Playwright i CI | 2 | F09,F10 | DONE: GitHub Actions PASS, Chromium E2E 1/1 (15.11.2026) |
 | F12 | OpenAPI i contract tests | 2 | F07 | DONE: OpenAPI z Zod, endpoint i artefakt JSON, kontrola aktualności CI oraz testy odpowiedzi |
 | F13 | Select shadcn/ui w formularzach | — | F08 | DONE: 7 pól, strzałki z odstępem16px, stylizowana lista, motywy i klawiatura |
@@ -33,7 +33,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | A05 | Dashboard i pozycje | 3 | P04,A04 | DONE: rzeczywiste wartości/P&L, pozycje i niepełna wycena; bez danych demonstracyjnych |
 | A06 | Symulator UI/API | 3 | P05,A05 | DONE: formularz shadcn, assumptions + before/after, read-only API |
 | A07 | Ryzyko UI i ustawienia | 2 | P06,A05 | DONE: osobny widok Ryzyko, progi/świeżość z revision/If-Match, scenariusze i źródła |
-| A08 | Dziennik CRUD | 3 | A02,F09 | TODO: prywatność, revision |
+| A08 | Dziennik CRUD | 3 | A02,F09 | DONE: prywatne wpisy portfel/instrument, plain text, If-Match/revision, szkic przy konflikcie, CRUD i4 warianty UI |
 | A09 | Snapshot history | 2 | A05 | TODO: luki danych jawne |
 | I01 | Kontrakt parsera i blokada XTB | 1 | S02 | PARTIAL: availability contract i SAMPLE_REQUIRED; parser DTO przed I03 |
 | I02 | Zanonimizowana próbka XTB | — | użytkownik | BLOCKED: brak pliku |
@@ -54,7 +54,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | B06 | Backup + restore drill + audyt dostępności | 3 | B05 | TODO: przed publicznym pilotem |
 | B07 | Decyzja o płatnym pilotażu | 1 | B03 | TODO: dopiero wtedy backlog billing |
 
-Najbliższy punkt kontynuacji: A08 — prywatny dziennik decyzji; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
+Najbliższy punkt kontynuacji: A09 — rzeczywiste snapshoty; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
 
 Aktualizacja środowiska macOS 15.11.2026: build/typecheck/4 unit PASS na Node 24. Docker CLI dostępny, daemon wyłączony; F03/F08/F09 zachowują status PARTIAL; F11 zamknięte po przejściu CI. Utworzono publiczne repozytorium `nookieslaya/investorkit`; pierwszy przebieg CI PASS: build/typecheck, migracja, 4 unit, 8 integration, 1 E2E w Chromium.
 
@@ -81,3 +81,5 @@ Uproszczenie A07 (16.11.2026) DONE: podsumowanie wpływu na cały portfel, podpi
 Poprawka historii gotówki (16.11.2026) DONE: subtelny scrollbar, stabilny gutter i odstęp, osobna kolumna kwoty bez łamania, na mobile kwota pod opisem. Dostępny focus i przewijanie klawiaturą. Bez zmian danych/API i zależności; P07 nadal następny.
 
 P07 ukończone17.11.2026: przegląd obecnych testów P02–P06 i mapa golden1–7 w docs/04-calculations.md. Dodano17 unit i2 realne integracyjne PostgreSQL: wspólna historia uzgadnia realized38/unrealized58/P&L96, zerowe/ujemne wkłady, podskala10 i pełne wyjście, overflow, FX freshness1ms,18 kombinacji PLN/EUR/USD×oba finansowania×skale0/3/10, legalne identyczne BUY z różnymi kluczami a retry/konflikt oraz brak skutków odrzuconych zapisów.124 unit/42 integration/3 E2E PASS, typecheck/build/OpenAPI PASS. Silnik/API/UI i precyzja zachowane, bez migracji/zależności; brak wykrytej usterki wymagającej poprawki obliczeń. Następny etap A08.
+
+A08 ukończone17.11.2026: dziennik #journal, wymagany powód i teza, opcjonalny instrument/horyzont/ryzyka/warunki/notatki. CRUD owner-scoped,100 wpisów, plain text, daty, limit długości, pełny PATCH i DELETE z If-Match/revision oraz blokadą wpisu. Szkic nie znika przy konflikcie/odświeżeniu, jawne zastąpienie aktualną wersją i potwierdzenie usunięcia. Migracja0004 z composite ownerFK iCHECK, bez zmian historii finansowej; zastosowana po backupie.125 unit/49 integration/4 E2E PASS; build/typecheck/OpenAPI/noUnused i4 warianty wizualne PASS. Bez nowych bibliotek. Następny A09. Brak autosave, scalania konfliktów, historii wersji i publicznego deploymentu.

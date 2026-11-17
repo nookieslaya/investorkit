@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
+  journalInputSchema, journalEntrySchema, journalListSchema, journalDeletedSchema, apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
   portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema, instrumentsSchema, createInstrumentSchema, instrumentSchema, quoteInputSchema, quoteSchema, quotesSchema, fxInputSchema, fxSchema, ledgerOperationSchema, operationSchema, operationHistorySchema, valuationSchema, valuationTimeSchema, simulationInputSchema, simulationSchema, riskSettingsInputSchema, riskSettingsSchema, riskSchema, stressInputSchema, stressSchema,
 } from '@investorkit/shared';
 
@@ -11,7 +11,7 @@ interface OperationContract {
   authenticated?: boolean;
   idempotency?: boolean;
   valuationQuery?: boolean;
-  ifMatch?: boolean;
+  ifMatch?: boolean | 'entry';
   body?: z.ZodType;
   params?: typeof portfolioIdParamsSchema;
   responses: Record<number, ResponseContract>;
@@ -21,7 +21,19 @@ const commonErrors = { 429: error('Limit żądań.'), 500: error('Błąd serwera
 const protectedErrors = { ...commonErrors, 401: error('Brak ważnej sesji.') };
 
 // Only implemented first-party operations. Better Auth owns /api/auth/* contracts.
-export const apiContracts: Record<string, Partial<Record<'get' | 'post' | 'patch', OperationContract>>> = {
+export const apiContracts: Record<string, Partial<Record<'get' | 'post' | 'patch' | 'delete', OperationContract>>> = {
+  '/api/v1/portfolios/{id}/journal': {
+    get: { operationId: 'listJournal', summary: 'Prywatny dziennik, do100 wpisów od najnowszej decyzji.', authenticated: true, params: portfolioIdParamsSchema,
+      responses: { 200: { description: 'Własne wpisy i limit100.', schema: journalListSchema }, ...protectedErrors, 400: error('UUID.'), 404: error('Brak portfela.') } },
+    post: { operationId: 'createJournal', summary: 'Zapisz prywatny powód decyzji; bez operacji finansowej.', authenticated: true, params: portfolioIdParamsSchema, body: journalInputSchema,
+      responses: { 201: { description: 'Wpis z revision1.', schema: journalEntrySchema }, ...protectedErrors, 400: error('UUID/body.'), 403: error('Origin.'), 404: error('Brak własnego portfela lub instrumentu.'), 422: error('Limit100 lub przyszła data.'), 413: error('Limit body64KiB.'), 415: error('Content-Type.') } },
+  },
+  '/api/v1/journal/{id}': {
+    patch: { operationId: 'updateJournal', summary: 'Zmień pełną treść wpisu z aktualną revision w If-Match.', authenticated: true, params: portfolioIdParamsSchema, body: journalInputSchema, ifMatch: 'entry',
+      responses: { 200: { description: 'Wpis z nową revision.', schema: journalEntrySchema }, ...protectedErrors, 400: error('UUID/body/If-Match.'), 403: error('Origin.'), 404: error('Brak własnego wpisu/instrumentu.'), 409: error('Konflikt wersji.'), 422: error('Data lub limit wersji.'), 428: error('Brak If-Match.'), 413: error('Limit body64KiB.'), 415: error('Content-Type.') } },
+    delete: { operationId: 'deleteJournal', summary: 'Usuń własny wpis z kontrolą If-Match, bez zmiany portfela.', authenticated: true, params: portfolioIdParamsSchema, ifMatch: 'entry',
+      responses: { 200: { description: 'Potwierdzenie usunięcia.', schema: journalDeletedSchema }, ...protectedErrors, 400: error('UUID/If-Match.'), 403: error('Origin.'), 404: error('Brak wpisu.'), 409: error('Konflikt wersji.'), 428: error('Brak If-Match.') } },
+  },
   '/api/v1/portfolios/{id}/risk-settings': {
     get: { operationId: 'getRiskSettings', summary: 'Ustawienia progów i świeżości, domyślne bez zapisu (revision0); ETag zawiera revision.', authenticated: true, params: portfolioIdParamsSchema,
       responses: { 200: { description: 'Progi produktu i wersja ustawień.', schema: riskSettingsSchema }, ...protectedErrors, 400: error('UUID.'), 404: error('Brak portfela.') } },
@@ -120,9 +132,9 @@ export function buildOpenApiDocument() {
         security: contract.authenticated ? [{ session: [] }, { localSession: [] }] : [],
         parameters: [
           ...(contract.params ? [{ name: 'id', in: 'path', required: true, schema: jsonSchema(contract.params.shape.id, 'input') }] : []),
-          ...(contract.body ? [{ name: 'Origin', in: 'header', required: true, description: 'Musi być równy WEB_ORIGIN.', schema: { type: 'string', format: 'uri' } }] : []),
+          ...(['post', 'patch', 'delete'].includes(method) ? [{ name: 'Origin', in: 'header', required: true, description: 'Musi być równy WEB_ORIGIN.', schema: { type: 'string', format: 'uri' } }] : []),
           ...(contract.valuationQuery ? [{ name: 'asOf', in: 'query', required: false, description: 'UTC; domyślnie zegar serwera, przyszła data niedozwolona.', schema: jsonSchema(valuationTimeSchema, 'input') }] : []),
-          ...(contract.ifMatch ? [{ name: 'If-Match', in: 'header', required: true, description: 'Aktualna revision w cudzysłowie, np. "0"; GET zwraca ETag i revision.', schema: { type: 'string', pattern: '^"(0|[1-9][0-9]{0,9})"$' } }] : []),
+          ...(contract.ifMatch ? [{ name: 'If-Match', in: 'header', required: true, description: contract.ifMatch === 'entry' ? 'Aktualna revision wpisu z listy w cudzysłowie, np. "1".' : 'Aktualna revision w cudzysłowie, np. "0"; GET zwraca ETag i revision.', schema: { type: 'string', pattern: contract.ifMatch === 'entry' ? '^"[1-9][0-9]{0,9}"$' : '^"(0|[1-9][0-9]{0,9})"$' } }] : []),
           ...(contract.idempotency ? [{ name: 'Idempotency-Key', in: 'header', required: true, description: 'UUID; ten sam klucz i body zwracają tę samą operację.', schema: { type: 'string', format: 'uuid' } }] : []),
         ],
         ...(contract.body ? {

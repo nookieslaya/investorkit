@@ -68,3 +68,8 @@
 - Mapa pokrycia golden1–7 i17 nowych testów jednostkowych, w tym18 kombinacji waluty, finansowania i precyzji ilości.
 - Dwa nowe testy PostgreSQL legalnych identycznych zakupów, idempotencji i braku zmian po odrzuconych zapisach.
 - Pokryte przekrojowo koszty i P/L, zerowe/ujemne wkłady, ułamki poniżej skali zapisu, pełne wyjście, overflow i świeżość FX. Silnik/API/UI bez zmian, brak nowych zależności i migracji. Następny etap A08.
+
+### A08 — prywatny dziennik decyzji — 17.11.2026
+- Nowy #journal: uzasadnienie, teza, horyzont, ryzyka, warunki przeglądu i notatki dla portfela lub instrumentu. Plain text, edycja/usuwanie z potwierdzeniem i ochroną If-Match/revision; zachowanie szkicu przy konflikcie.
+-4 endpointy i migracja0004 z composite FK oraz kontrolą długości/revision. Limit100 wpisów, bez zmian finansów i21 istniejących kontraktów API; bez nowych zależności.
+-125 unit,49 integration,4 E2E oraz desktop/mobile/light/dark zweryfikowane. Następny etap A09.
