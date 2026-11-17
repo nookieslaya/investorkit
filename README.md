@@ -1,5 +1,5 @@
 # InvestorKit
-Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Foundation ukończone; rozpoczęty etap silnika finansowego. To kod foundation do lokalnego rozwijania, nie gotowa aplikacja inwestycyjna ani publiczny deployment.
+Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Ręczny silnik finansowy i przegląd regresji P01–P07 ukończone; następny etap to dziennik decyzji. Projekt do lokalnego rozwijania, bez publicznego deploymentu.
 
 ## Start tutaj
 - [Pełna specyfikacja](docs/INVESTORKIT-MVP.md)
@@ -67,7 +67,7 @@ Przejrzyj SQL przed zatwierdzeniem. Nie stosujemy drizzle-kit push w produkcji. 
 Obecny auth jest sprawdzony lokalnie, lecz przed publicznym pilotem wymagane są email verification/reset, proces usunięcia/eksportu danych, polityka prywatności, restore drill oraz test E2E w środowisku obsługującym Chromium. Lista w backlogu B04–B06. Brak połączenia z brokerem i przechowywania jego haseł. Ograniczenia procesu in-memory rate limit są opisane w architekturze.
 
 ## Kontynuacja
-F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P06 i A01–A07 ukończone dla ręcznego MVP; następnie P07 i dziennik. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck i 4 testy unit na Node 24; szczegóły w raporcie weryfikacji.
+F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P07 i A01–A07 ukończone dla ręcznego MVP; następnie A08 — dziennik decyzji. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck,124 testy unit,42 integracyjne i3 E2E na Node24; szczegóły w raporcie weryfikacji.
 
 CI potwierdza build, typecheck, migrację, 4 testy jednostkowe, 8 integracyjnych i 1 E2E: [pierwszy przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43749258894).
 
@@ -99,7 +99,7 @@ Wyświetlanie: pieniądze2 miejsca, procenty2, ilości maksymalnie6 bez końcowy
 
 Kurs hipotetycznej wpłaty/zakupu to aktualny ręczny FX (według ustawionego wieku, domyślnie72h), PLN=1. Nie ma automatycznej wymiany walut. Cena zakupu nie nadpisuje ceny wyceny. Istniejąca pozycja bez ceny oraz stare/przyszłe notowania zachowują diagnostykę i brak pełnej wyceny. Po zmianie danych ponów obliczenie. Symulacja nie zapisuje transakcji i nie zmienia portfela.
 
-Silnik i istniejące16 kontraktów API zachowane. Jedyny dodatkowy odczyt to `GET /api/v1/instruments/:id/quotes`, potrzebny do podpowiadania cen także dla nieposiadanych instrumentów, z sesją i owner scope. `POST /api/v1/portfolios/:id/simulations` nadal używa spójnej transakcji READ ONLY. Bez nowych zależności, migracji i zapisu scenariuszy. Weryfikacja:107 unit,40 integration,3 E2E Chromium; szczegóły w VERIFICATION.md.
+Silnik i istniejące16 kontraktów API zachowane. Jedyny dodatkowy odczyt to `GET /api/v1/instruments/:id/quotes`, potrzebny do podpowiadania cen także dla nieposiadanych instrumentów, z sesją i owner scope. `POST /api/v1/portfolios/:id/simulations` nadal używa spójnej transakcji READ ONLY. Bez nowych zależności, migracji i zapisu scenariuszy. Weryfikacja:124 unit,42 integration,3 E2E Chromium; szczegóły w VERIFICATION.md.
 
 ## Koncentracja i testy spadków (P06/A07)
 Wybierz **Scenariusze spadków**: http://localhost:5173/#risk. Zobaczysz największą pozycję, Top3/5 oraz podział według typu aktywów, waluty notowania/gotówki i kraju emitenta. Mianownikiem jest cały portfel z gotówką; Top3/5 obejmuje same papiery. Nieznane kategorie pozostają widoczne i w mianowniku. Kraj emitenta/funduszu ETF nie oznacza ekspozycji geograficznej aktywów; waluta notowania nie opisuje całego ryzyka walutowego.
@@ -113,6 +113,9 @@ API: GET `/api/v1/portfolios/:id/risk`, GET/PATCH `.../risk-settings` (If-Match/
 ### Uproszczona prezentacja scenariuszy — 16.11.2026
 Przyciski 10%, 20% i 40% uzupełniają dodatnią wielkość spadku; nadal można wpisać własną wartość 0–100%. Wynik zaczyna się od krótkiego podsumowania wpływu na cały portfel, wartości przed → po i zmiany ze znakiem minus. Dla 0% komunikat jest neutralny. Scenariusz jednej pozycji pokazuje jej cenę, wartość PLN i udział przed → po; cały portfel ma podsumowanie zbiorcze. Pełna lista, ceny, źródła, daty i FX są w domyślnie zamkniętych „Szczegółach obliczeń”, dostępnych klawiaturą. Ostrzeżenia oraz założenia pozostają widoczne.
 
-Edycja parametrów, zapis ustawień i odświeżenie danych (również automatyczne, bez zmiany odpowiedzi) usuwają poprzedni wynik. Spóźniona odpowiedź nie przywraca starego scenariusza. Dotychczasowe linki `#risk` i `#simulator` działają z nowymi etykietami nawigacji. Silnik, precyzja, API i dane bez zmian; bez nowych zależności. Kontrole:107 unit,40 integration,3 E2E, typecheck/build/OpenAPI oraz desktop/mobile w jasnym i ciemnym motywie; szczegóły w docs/VERIFICATION.md.
+Edycja parametrów, zapis ustawień i odświeżenie danych (również automatyczne, bez zmiany odpowiedzi) usuwają poprzedni wynik. Spóźniona odpowiedź nie przywraca starego scenariusza. Dotychczasowe linki `#risk` i `#simulator` działają z nowymi etykietami nawigacji. Silnik, precyzja, API i dane bez zmian; bez nowych zależności. Kontrole:124 unit,42 integration,3 E2E, typecheck/build/OpenAPI oraz desktop/mobile w jasnym i ciemnym motywie; szczegóły w docs/VERIFICATION.md.
 
 Historia gotówki ma cienki pasek przewijania z zarezerwowanym miejscem i odstępem od tekstu. Kwoty nie łamią się w środku; na telefonie są pod opisem. Przewijaną listę można wybrać klawiszem Tab i przewijać klawiaturą.
+
+## Regresje finansowe P07 — 17.11.2026
+Przegląd P02–P06 domknięty bez zmiany algorytmów, API, UI i danych użytkownika. Dodano17 testów jednostkowych (w tym18 kombinacji waluty/finansowania/skali ilości) i2 integracyjne. Sprawdzono uzgodnienie gotówki, kosztów i wyniku po BUY/SELL, legalne identyczne zakupy a ponowienia klucza, zerowe/ujemne wpłaty netto, ułamki poniżej skali zapisu, overflow i osobne granice świeżości. [Mapa golden1–7 i granic](docs/04-calculations.md#p07--przegląd-regresji-zakończony-17112026). Lokalnie124 unit,42 integration i3 E2E PASS, typecheck/build/OpenAPI PASS. Następny etap: A08, prywatny dziennik decyzji z owner scope i revision.

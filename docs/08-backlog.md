@@ -15,7 +15,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F07 | Rate limit, origin guard, errors, log redaction | 2 | F05 | DONE: origin/errors/size/HTTP429 integration |
 | F08 | React/Tailwind/shadcn, Router, Query | 2 | F02 | DONE: build/theme, desktop/mobile/dark i inspekcja zrzutów inwestycji/gotówki |
 | F09 | Rejestracja/logowanie i portfel UI | 2 | F06,F08 | DONE: E2E i użytkownik potwierdzili rejestrację/logowanie/portfel |
-| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie107 unit i40 integration PASS |
+| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie124 unit i42 integration PASS |
 | F11 | Playwright i CI | 2 | F09,F10 | DONE: GitHub Actions PASS, Chromium E2E 1/1 (15.11.2026) |
 | F12 | OpenAPI i contract tests | 2 | F07 | DONE: OpenAPI z Zod, endpoint i artefakt JSON, kontrola aktualności CI oraz testy odpowiedzi |
 | F13 | Select shadcn/ui w formularzach | — | F08 | DONE: 7 pól, strzałki z odstępem16px, stylizowana lista, motywy i klawiatura |
@@ -25,7 +25,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | P04 | Wycena, kompletność, P/L | 3 | P03 | DONE: wycena z gotówką, P/L, percent/null, subtotal, daty/źródła i stale/missing/future |
 | P05 | Symulator oba źródła środków | 3 | P04 | DONE: case4, oba źródła, fee/reszta, FX i brak zapisów |
 | P06 | Koncentracja i stress | 2 | P04 | DONE: case5, Top3/5 z gotówką, UNKNOWN, spadki0–100% i jawna niepełność |
-| P07 | Testy regresji i granic | 3 | P02–06 | TODO: case6/7, ułamki i zero |
+| P07 | Testy regresji i granic | 3 | P02–06 | DONE: golden1–7, case6/7 przekrojowo, ułamki/zero, overflow,18 kombinacji i brak zapisów po odrzuceniu |
 | A01 | Migracje instrument/ledger/FK/check | 2 | P01,F04 | DONE: wspólny ledger4 typów, instrument/quote/FX, composite owner/currency FK i CHECK |
 | A02 | Instrument i ręczne quote/FX API | 2 | A01 | DONE: instrumenty i ręczne quote/FX z owner scope i walidacją dat/walut |
 | A03 | Operacje API i blokada salda | 3 | P03,A01 | DONE: wspólny replay, blokada/idempotencja, concurrent BUY/SELL/withdrawal i operacje wsteczne PASS |
@@ -54,7 +54,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | B06 | Backup + restore drill + audyt dostępności | 3 | B05 | TODO: przed publicznym pilotem |
 | B07 | Decyzja o płatnym pilotażu | 1 | B03 | TODO: dopiero wtedy backlog billing |
 
-Najbliższy punkt kontynuacji: P07, następnie A08; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
+Najbliższy punkt kontynuacji: A08 — prywatny dziennik decyzji; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
 
 Aktualizacja środowiska macOS 15.11.2026: build/typecheck/4 unit PASS na Node 24. Docker CLI dostępny, daemon wyłączony; F03/F08/F09 zachowują status PARTIAL; F11 zamknięte po przejściu CI. Utworzono publiczne repozytorium `nookieslaya/investorkit`; pierwszy przebieg CI PASS: build/typecheck, migracja, 4 unit, 8 integration, 1 E2E w Chromium.
 
@@ -79,3 +79,5 @@ P06/A07 ukończone16.11.2026: czysta koncentracja i stress, widok Ryzyko, ustawi
 Uproszczenie A07 (16.11.2026) DONE: podsumowanie wpływu na cały portfel, podpisane zmiany, porównanie wybranej pozycji, zbiorczy wynik wszystkich papierów, szczegóły na żądanie i presety10/20/40%. Neutralne0%, braki bez zer, ostrzeżenia poza panelami. Reset po edycji/refetch także przy identycznych danych i późnej odpowiedzi; stare hashe z nowymi etykietami nawigacji. Bez zmian silnika/API, zależności i migracji; usunięto dawny renderer wyniku i zbędne style.107 unit/40 integration/3 E2E, typecheck/build/OpenAPI, noUnused i4 warianty wizualne PASS. P07 nadal osobnym etapem.
 
 Poprawka historii gotówki (16.11.2026) DONE: subtelny scrollbar, stabilny gutter i odstęp, osobna kolumna kwoty bez łamania, na mobile kwota pod opisem. Dostępny focus i przewijanie klawiaturą. Bez zmian danych/API i zależności; P07 nadal następny.
+
+P07 ukończone17.11.2026: przegląd obecnych testów P02–P06 i mapa golden1–7 w docs/04-calculations.md. Dodano17 unit i2 realne integracyjne PostgreSQL: wspólna historia uzgadnia realized38/unrealized58/P&L96, zerowe/ujemne wkłady, podskala10 i pełne wyjście, overflow, FX freshness1ms,18 kombinacji PLN/EUR/USD×oba finansowania×skale0/3/10, legalne identyczne BUY z różnymi kluczami a retry/konflikt oraz brak skutków odrzuconych zapisów.124 unit/42 integration/3 E2E PASS, typecheck/build/OpenAPI PASS. Silnik/API/UI i precyzja zachowane, bez migracji/zależności; brak wykrytej usterki wymagającej poprawki obliczeń. Następny etap A08.

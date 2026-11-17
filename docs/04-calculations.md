@@ -22,7 +22,7 @@ Szok jednej pozycji: wartość' = wartość − wartość pozycji×spadek; FX st
 3. BUY 0.125×80 +0.5 USD przy FX4 → koszt 42 PLN; cena90 i FX4.2 → wartość47.25, unrealized5.25.
 4. Budżet1000, cena300, fee5, scale0 → 3 sztuki, koszt905, reszta95. Na gotówce portfela1000 → wartość995; nowe środki do portfela1000 →1995 przy wycenie300.
 5. Aktywa600/300/100 +cash100 → top3 90.909…%, pozycja600 54.545…%; szok50% całości papierów →600.
-6. SELL przy zerowej ilości, niedostateczna gotówka, ujemna opłata, brak FX i future quote → błąd; dwie identyczne legalne transakcje nie są automatycznie duplikatem.
+6. SELL przy zerowej ilości, niedostateczna gotówka, ujemna opłata i brak historycznego FX → błąd. API odrzuca zapis future quote; historyczna wycena pomija przyszłe rekordy i zgłasza diagnostykę przy braku wcześniejszej ceny. Dwie identyczne legalne transakcje z różnymi kluczami nie są automatycznie duplikatem.
 7. Wycofanie całości wkładów → mianownik ≤0 → procent null; niepełna wycena → brak pełnego P/L.
 
 ## Zaimplementowana podstawa P01
@@ -103,3 +103,22 @@ Niepełna wycena → pełny wynik scenariusza/loss/procentnull i INCOMPLETE_VALU
 Kwoty końcowe HALF_EVEN10, procenty precision40. Ranking, grupy, straty i udziały nie korzystają z zaokrąglonych snapshotów. Wewnętrzny cashValues przenosi FinancialDecimal obok istniejącego positionValues; publiczny kontrakt wyceny pozostał bez zmian. Golden5:600/300/100 +cash100 → Top3=90.9090…%, największa54.5454…%; szok50% wszystkich papierów → po600, strata500, cash100. Szok50% tylko pozycji600 → po800, strata300. Wynik nie jest liczony z cen zaokrąglonych w UI.
 
 Ustawienia wieku cen/FX są wspólne dla wyceny, symulatora i ryzyka. Zakres API to pełne godziny1–8760; engine valuePortfolio nadal dopuszcza jawne dodatnie wartości do8760, bez zegara. Historyczny FX ledgeru nie jest zmieniany ustawieniami bieżącej wyceny. Historia zmian ustawień i scenariuszy nie jest przechowywana w tym etapie.
+
+## P07 — przegląd regresji zakończony 17.11.2026
+P07 utrwala powyższą semantykę, bez zmian silnika/API i precyzji. Golden cases mają następujące pokrycie (pliki w tests/):
+
+| Przypadek | Pokrycie i wynik |
+|---|---|
+| 1: koszt333 i średnia111 | unit/portfolio-position.test.ts; przekrojowy unit/portfolio-regression.test.ts |
+| 2: realized38, koszt222, unrealized58 | position + regression: gotówka816, wartość1096, P/L96, zgodność wyceny/symulatora/ryzyka, spadek50%→956 |
+| 3: USD0.125, historyczny FX4 i bieżący4.2 | unit/portfolio-ledger.test.ts, portfolio-valuation.test.ts i integration/investments-api.test.ts; pozycja47.25/koszt42, gotówka39.9, pełny P/L7.15 |
+| 4: budżet1000/cena300/fee5 | unit/simulation.test.ts i integration/simulation-api.test.ts;3 szt.,905 koszt,95 reszta,995/1995 zależnie od finansowania |
+| 5: koncentracja i spadki | unit/risk.test.ts i integration/risk-api.test.ts; cash stały,50% papierów→600, progi/UNKNOWN/jawna niepełność |
+| 6: granice operacji i legalne powtórzenia | regression + investments-api: SELL bez ilości, brak cash/FX, fee<0, future quote; dwa różne klucze→dwa BUY, ten sam klucz→jeden zapis, konflikt body409; odrzucenie bez zmiany historii/notowań |
+| 7: niedodatnie wkłady i niepełna wycena | valuation + regression: po wypłacie100 zostaje50 wartości i P/L50 przy wpłatach netto0; procentnull, lecz udział pozycji20% i spadek100% daje40. Wpłata10USD FX4/wypłata10USD FX5→wkłady−10, P/L10, procentnull. Brak ceny→pełna wartość/P&Lnull |
+
+Dodatkowe regresje w portfolio-regression.test.ts:18 kombinacji trzech walut, obu finansowań i skal ilości0/3/10. Budżet100.25/cena3.2/fee0.15 daje odpowiednio ilości31/31.281/31.28125, koszty99.35/100.2492/100.25 i reszty0.9/0.0008/0. Oczekiwania to literalne liczby, niezależne od kodu liczącego wynik. P/L to sama ujemna prowizja, dopłata nie stanowi zysku.
+
+Dwa BUY po0.0000000001 szt.×0.5 odejmują łącznie0.0000000001 od cash; każdy z osobna nie może być zaokrąglony do0 przed dalszym replay. Pełny SELL zeruje ilość i koszt. Maksymalna kwota numeric(28,10) pozostaje poprawna, przekroczenie przez sumę/FX/cenę wyceny jest odrzucane STORAGE_OVERFLOW. Osobny próg FX1h: age==1h poprawne,1ms później STALE_FX. Istniejące testy nadal obejmują0/100%, brak/stale/future cen/FX, zerowy mianownik, precyzję40 i brak zapisów symulacji.
+
+To zestaw deterministycznych regresji, nie dowód poprawności wszystkich możliwych historii. Koszt średni pozostaje analityczny; P07 nie dodaje podatków, nowych miar stopy zwrotu, importu ani nowych widoków.

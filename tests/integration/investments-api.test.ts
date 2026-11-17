@@ -118,6 +118,47 @@ describe('P04 integrated ledger, markets and valuation', () => {
     expect(cashHistorySchema.parse((await call('GET', `/portfolios/${portfolio}/cash-operations`)).json()).items).toHaveLength(2);
     expect(operationHistorySchema.parse((await call('GET', `/portfolios/${portfolio}/operations`)).json()).items).toHaveLength(5);
   });
+  it('golden6 stores identical legal BUYs with different keys, while retrying one key only once', async () => {
+    const beforeCash = cashSummarySchema.parse((await call('GET', `/portfolios/${portfolio}/cash`)).json());
+    const input = trade({ instrumentId: pln, currency: 'PLN', commissionCurrency: 'PLN', quantity: '1', unitPrice: '10', commission: '0', fxToBase: '1', occurredAt: '2026-01-03T12:00:00Z' });
+    const keys = [randomUUID(), randomUUID()];
+    const responses = await Promise.all(keys.map(key => call('POST', `/portfolios/${portfolio}/operations`, input, a, key)));
+    expect(responses.map(response => response.statusCode)).toEqual([201, 201]);
+    const ids = responses.map(response => operationSchema.parse(response.json()).id);
+    expect(new Set(ids).size).toBe(2);
+    const retry = await call('POST', `/portfolios/${portfolio}/operations`, input, a, keys[0]);
+    expect(retry.statusCode).toBe(201); expect(operationSchema.parse(retry.json()).id).toBe(ids[0]);
+    expect((await call('POST', `/portfolios/${portfolio}/operations`, { ...input, unitPrice: '11' }, a, keys[0])).statusCode).toBe(409);
+    expect((await value()).positions.find(row => row.instrumentId === pln)).toMatchObject({ quantity: '2', remainingCostBase: '20' });
+    const afterCash = cashSummarySchema.parse((await call('GET', `/portfolios/${portfolio}/cash`)).json());
+    expect(afterCash.operationCount).toBe(beforeCash.operationCount + 2);
+    expect(afterCash.balances[0]?.amount).toBe('1030');
+    const sell = await call('POST', `/portfolios/${portfolio}/operations`, { ...input, kind: 'SELL', quantity: '2' });
+    expect(sell.statusCode).toBe(201);
+    expect((await value()).positions.some(row => row.instrumentId === pln)).toBe(false);
+    expect(cashSummarySchema.parse((await call('GET', `/portfolios/${portfolio}/cash`)).json()).balances).toEqual(beforeCash.balances);
+  });
+  it('golden6 leaves the ledger and valuation unchanged after rejected operations and market records', async () => {
+    const beforeRows = await db.select().from(cashOperations).where(eq(cashOperations.portfolioId, portfolio)).orderBy(cashOperations.sequence);
+    const beforeQuotes = await db.select().from(manualQuotes).where(eq(manualQuotes.ownerId, ownerA)).orderBy(manualQuotes.id);
+    const before = await value(`?asOf=${day2}`);
+    const cases = [
+      { payload: trade({ kind: 'SELL', quantity: '100' }), status: 422, code: 'INSUFFICIENT_QUANTITY' },
+      { payload: trade({ quantity: '1', unitPrice: '1000' }), status: 422, code: 'INSUFFICIENT_CASH' },
+      { payload: trade({ commission: '-0.01' }), status: 400, code: 'VALIDATION_ERROR' },
+      { payload: trade({ fxToBase: undefined }), status: 400, code: 'VALIDATION_ERROR' },
+    ];
+    for (const { payload, status, code } of cases) {
+      const result = await call('POST', `/portfolios/${portfolio}/operations`, payload);
+      expect(result.statusCode, result.body).toBe(status);
+      expect(result.json().error.code).toBe(code);
+    }
+    const future = await call('POST', `/instruments/${usd}/quotes`, { currency: 'USD', price: '1', asOf: '2099-01-01T00:00:00Z', source: 'manual' });
+    expect(future.statusCode).toBe(422);
+    expect(await db.select().from(cashOperations).where(eq(cashOperations.portfolioId, portfolio)).orderBy(cashOperations.sequence)).toEqual(beforeRows);
+    expect(await db.select().from(manualQuotes).where(eq(manualQuotes.ownerId, ownerA)).orderBy(manualQuotes.id)).toEqual(beforeQuotes);
+    expect(await value(`?asOf=${day2}`)).toEqual(before);
+  });
   it('enforces tenant and currency boundaries directly in PostgreSQL', async () => {
     await expect(db.insert(manualQuotes).values({ ownerId: ownerB, instrumentId: usd, currency: 'USD', price: '90', asOf: new Date(), source: 'manual' })).rejects.toThrow();
     await expect(db.insert(manualQuotes).values({ ownerId: ownerA, instrumentId: usd, currency: 'EUR', price: '90', asOf: new Date(), source: 'manual' })).rejects.toThrow();

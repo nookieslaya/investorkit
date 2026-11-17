@@ -63,3 +63,8 @@
 - Wszystkie natywne pola wyboru zamienione na Select shadcn/ui/Radix: spójna lista, strzałka odsunięta16px od krawędzi, zaznaczenie i stany focus/disabled.
 - Motywy zachowane także w portalu, długie etykiety obsługiwane bez rozpychania formularzy; klawiatura i FormData zweryfikowane w E2E.
 - Bez zmian API, silnika i danych. P05 pozostaje następnym etapem.
+
+### P07 — regresje i granice silnika — 17.11.2026
+- Mapa pokrycia golden1–7 i17 nowych testów jednostkowych, w tym18 kombinacji waluty, finansowania i precyzji ilości.
+- Dwa nowe testy PostgreSQL legalnych identycznych zakupów, idempotencji i braku zmian po odrzuconych zapisach.
+- Pokryte przekrojowo koszty i P/L, zerowe/ujemne wkłady, ułamki poniżej skali zapisu, pełne wyjście, overflow i świeżość FX. Silnik/API/UI bez zmian, brak nowych zależności i migracji. Następny etap A08.

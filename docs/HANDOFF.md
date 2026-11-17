@@ -1,6 +1,6 @@
 # Stan projektu i następna sesja
 
-16.11.2026: P01–P06 i A01–A07 DONE dla ręcznego MVP. Repo publiczne https://github.com/nookieslaya/investorkit, origin/main. Użytkownik chce widzieć zmiany na froncie i utrzymać proste widoki. Lokalnie localhost:5173, API127.0.0.1:3001, Compose PostgreSQL17. Konto, portfel i historia użytkownika zachowane; brak publicznego deploymentu.
+17.11.2026: P01–P07 i A01–A07 DONE dla ręcznego MVP. Repo publiczne https://github.com/nookieslaya/investorkit, origin/main. Użytkownik chce widzieć zmiany na froncie i utrzymać proste widoki. Lokalnie localhost:5173, API127.0.0.1:3001, Compose PostgreSQL17. Konto, portfel i historia użytkownika zachowane; brak publicznego deploymentu.
 
 ## Obliczenia i dane
 - portfolio-engine0.6.0-risk: decimal40/HALF_EVEN, niemutowalny BUY/SELL, replay, historyczne FX/koszt PLN, wycena, symulator zakupu, koncentracja i testy spadków. Bez DB/frameworków/zegara; jawne asOf. `valuePortfolioState` wewnętrznie udostępnia niezaokrąglone totalValue/positionValues/cashValues. Publiczna wycena zachowuje dotychczasowy kontrakt. Kwoty końcowe HALF_EVEN10, procenty40; UI pieniądze/procenty2, qty≤6 z≈, średnia2 adaptacyjnie więcej.
@@ -23,11 +23,11 @@ OpenAPI21 operacji (17 wcześniejszych schematów request/response zachowane). N
 Migracja0003_small_electro.sql wygenerowana/przejrzana: tylko CREATE risk_settings + constraints/FK. Zastosowana na investorkit_contract_test, potem lokalnej aplikacji po prywatnym pg_dump `.local-backups/before-risk-2026-11-16.dump` (ignorowany Git). Bez UPDATE/DELETE starych danych. W samym etapie P06 nie dodawano scenariuszy/testowych transakcji do konta użytkownika. Później, na osobne polecenie użytkownika, dodano sześć fikcyjnych pozycji DEMO i odpowiadające wpłaty do lokalnej bazy aplikacji; zachowano wcześniejszy instrument i historię. Prywatny plan oraz kopia przed zmianą są w ignorowanym .local-backups. Nie ponawiać zasilenia. Bieżące testy UI nie używają tych danych. `.env` zachowane.
 
 ## Weryfikacja i dalsza praca
-Node24: `export PATH=/opt/homebrew/opt/node@24/bin:$PATH`. Lokalnie build/typecheck/OpenAPI i dodatkowe noUnusedLocals/noUnusedParameters web PASS,107 unit,40 integration,3 E2E Chromium. Baza testowa investorkit_contract_test; E2E5174/3002, nie zatrzymywać5173/3001.
+Node24: `export PATH=/opt/homebrew/opt/node@24/bin:$PATH`. Lokalnie build/typecheck/OpenAPI i dodatkowe noUnusedLocals/noUnusedParameters web PASS,124 unit,42 integration,3 E2E Chromium. Baza testowa investorkit_contract_test; E2E5174/3002, nie zatrzymywać5173/3001.
 
 Golden5 i granice0/100%, cash-only/empty, UNKNOWN, stale/future/FX, precyzja przed zaokrągleniem. API przeciw realnemu PostgreSQL: owner/session/origin, readonly/powtórki/równoległe scenariusze bez zapisów, ustawienia z kontrolą wersji/race i bezpośrednie constraints. Trzeci E2E Ryzyko używa zwalidowanych fixture odpowiedzi do izolacji UI i ograniczenia wspólnego rate limitu; rzeczywiste obliczenia i zapis ustawień pokrywają unit/integration. Onboarding i zakupowe E2E nadal realne API. Cztery zrzuty Risk desktop/mobile × light/dark obejrzane; bez poziomego overflow. Szczegóły i CI w VERIFICATION.md.
 
-Następny etap P07: przegląd/regresje granic całego silnika P02–P06, potem A08 prywatny dziennik (revision/owner scope). Nie zaczynać od AI lub płatności. Pozostają także A09 rzeczywiste snapshoty, import XTB (BLOCKED bez próbki), PDF/AI, publiczny deployment, email verify/reset, retencja/export/delete, backup restore drill i audyt WCAG. Bez rekomendacji kup/sprzedaj, prognoz, PIT i live feeds.
+P07 zakończone; następny etap A08 — prywatny dziennik decyzji (revision/owner scope). Nie zaczynać od AI lub płatności. Pozostają także A09 rzeczywiste snapshoty, import XTB (BLOCKED bez próbki), PDF/AI, publiczny deployment, email verify/reset, retencja/export/delete, backup restore drill i audyt WCAG. Bez rekomendacji kup/sprzedaj, prognoz, PIT i live feeds.
 
 P06/A07 `055dcdc`: CI [PASS](https://github.com/nookieslaya/investorkit/actions/runs/43928508396) — build/typecheck/OpenAPI, migracje,105 unit,40 integration i3 E2E Chromium. Lokalny widok Ryzyko dostępny pod #risk, konto i dane zachowane. Kolejny punkt P07, następnie A08.
 
@@ -44,3 +44,10 @@ Uproszczenie scenariuszy `5737d75`: CI [PASS](https://github.com/nookieslaya/inv
 CashOverview: przewijana lista ma tabIndex i nazwę dostępną. Style ograniczone do .cash-history: cienki scrollbar z przezroczystym torem, scrollbar-gutter:stable i padding12px. Grid36px/minmax(0,1fr)/auto chroni kwotę przed długą notatką; przy≤480px kwota jest w drugim wierszu. Bez zmian finansów/API/DB i nowych bibliotek. Lokalnie build:packages/typecheck/build,107 unit,3 E2E PASS; po doprecyzowaniu walidacji fixture ponownie typecheck i onboarding E2E PASS. Cztery zrzuty desktop/mobile × light/dark obejrzane.
 
 Poprawka historii gotówki `ffbc28e`: CI [PASS](https://github.com/nookieslaya/investorkit/actions/runs/43935049587) — build/typecheck/OpenAPI, migracje,107 unit,40 integration i3 E2E Chromium.
+
+## P07 — 17.11.2026
+Przejrzano testy i implementację P02–P06. Nowy tests/unit/portfolio-regression.test.ts:17 testów, w tym18 kombinacji skali0/3/10 × PLN/EUR/USD × NEW_MONEY/EXISTING_CASH. Literalne oczekiwania pieniędzy, wyników i reszt, bez liczenia oczekiwań samym symulatorem. Przekrojowe golden1/2 i6/7, sub-storage cash, pełne zamknięcie, overflow snapshotów oraz osobny próg FX na granicy1ms. Golden6 future quote: API odrzuca zapis, wycena historyczna pomija rekord z przyszłości i zwraca diagnostykę; nie zamieniać jej na pozorną cenę0.
+
+Dwa nowe testy w investments-api: różne UUID kluczy zapisują dwa identyczne legalne BUY, retry jednego klucza nie dopisuje, inne body daje409; odrzucone SELL/BUY/fee/FX i przyszła cena nie zmieniają ledgeru/notowań ani historycznej wyceny. Przed/po rzeczywiste SELECT w deterministycznej kolejności. Bez zmian kodu silnika, wersji0.6.0-risk, API/shared/DB/UI/deps; nie wykryto błędu wymagającego ich zmiany. Pozostałości robocze nie są dodawane do Git.
+
+Lokalnie Node24: build:packages/typecheck/build/openapi:check,124 unit (10 plików),42 integration (5 plików) i3 E2E PASS. Baza wyłącznie investorkit_contract_test, E2E5174/3002. Nie zmieniano danych użytkownika. Brak nowej inspekcji wizualnej: etap nie zmienia UI, istniejące E2E uruchomione ponownie. Pełny audyt dostępności i znane ostrzeżenie bundle>500kB pozostają. Następny punkt A08; import nadal wymaga próbki XTB. Mapa przypadków w docs/04-calculations.md.

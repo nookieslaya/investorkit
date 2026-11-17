@@ -5,6 +5,7 @@
 - Semantyka finansowa: docs/04-calculations.md. Kontrakty: docs/05-api.md. Pełny zakres: docs/INVESTORKIT-MVP.md.
 - Realizuj małe zadanie z backlogu. Nie generuj całego systemu w jednej zmianie.
 - Oddziel specyfikację docelową od istniejącego kodu. Nie opisuj szkicu ani kontraktu jako działającej integracji.
+- P07 zakończone: regresje przekrojowe i golden1–7, patrz docs/04-calculations.md. Następny etap A08 (dziennik).
 - portfolio-engine zawiera P01–P06: decimal, wspólny replay BUY/SELL/wpłat/wypłat, historyczny koszt PLN i wycenę z diagnostyką oraz symulator i testy spadków bez zapisów, koncentrację i grupy z UNKNOWN. API/UI obsługują instrumenty, transakcje, ręczne ceny/FX i dashboard. Import/AI pozostają niewdrożone; report-engine jest szkieletem.
 - Historyczna nazwa tabeli cash_operations obejmuje już wszystkie cztery typy operacji. Nie twórz drugiego niezależnego ledgeru ani salda.
 
