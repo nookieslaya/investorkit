@@ -5,7 +5,7 @@
 - Semantyka finansowa: docs/04-calculations.md. Kontrakty: docs/05-api.md. Pełny zakres: docs/INVESTORKIT-MVP.md.
 - Realizuj małe zadanie z backlogu. Nie generuj całego systemu w jednej zmianie.
 - Oddziel specyfikację docelową od istniejącego kodu. Nie opisuj szkicu ani kontraktu jako działającej integracji.
-- P07 zakończone: regresje przekrojowe i golden1–7, patrz docs/04-calculations.md. A08 zakończone: prywatny dziennik (#journal), If-Match/revision; następny A09 (rzeczywiste snapshoty).
+- P07 zakończone: regresje przekrojowe i golden1–7, patrz docs/04-calculations.md. A08 zakończone: prywatny dziennik (#journal), If-Match/revision; A09 zakończone: rzeczywiste wyceny zapisane ręcznie, jawne luki; następny I01 (kontrakt parsera), potem I03, adapter XTB nadal wymaga próbki.
 - portfolio-engine zawiera P01–P06: decimal, wspólny replay BUY/SELL/wpłat/wypłat, historyczny koszt PLN i wycenę z diagnostyką oraz symulator i testy spadków bez zapisów, koncentrację i grupy z UNKNOWN. API/UI obsługują instrumenty, transakcje, ręczne ceny/FX i dashboard. Import/AI pozostają niewdrożone; report-engine jest szkieletem.
 - Historyczna nazwa tabeli cash_operations obejmuje już wszystkie cztery typy operacji. Nie twórz drugiego niezależnego ledgeru ani salda.
 
@@ -33,6 +33,7 @@
 - Przy ledgerze używaj transakcji, blokady portfela i idempotencji. Composite FK mają chronić granice tenantów.
 - Bez haseł brokerów, kluczy VITE_* z sekretami, logowania tokenów/cookies/body/raportów.
 - URL raportu jest niezaufany. Nie dodawaj fetch dowolnego URL bez ochrony SSRF/redirect/DNS.
+- Historia: GET pozostaje READ ONLY. Tylko jawny POST snapshots zapisuje obecną wycenę; bez backfill/interpolacji ani zapisu scenariuszy. Snapshot immutable, pełne źródła/diagnostyka, limit366, dni bez zapisu według Europe/Warsaw. Nie przeliczaj dawnych punktów po zmianie ledgeru lub ustawień.
 - Dziennik: owner scope i composite FK, plain text, max100 wpisów/portfel. PATCH/DELETE wymagają aktualnego If-Match; konflikt409 nie może kasować szkicu. Bez zmiany ledgeru i danych rynkowych.
 - Private cache raportu per user. Wspólny cache tylko dla zweryfikowanych dokumentów publicznych.
 - Analiza AI wymaga atomowej rezerwacji budżetu, limitu wyjścia i weryfikacji cytatów. UNKNOWN usage nie oznacza kosztu0.
@@ -41,7 +42,7 @@
 - npm run build:packages przed testami importującymi workspace exports.
 - npm run typecheck, npm test i npm run build dla adekwatnej zmiany.
 - npm run test:integration wymaga TEST_DATABASE_URL: dedykowana, migrowana baza jednorazowa. Nigdy baza produkcyjna.
-- npm run test:e2e wymaga Chromium i TEST_DATABASE_URL. Nie używa istniejących serwerów; lokalnie E2E_WEB_PORT=5174 E2E_API_PORT=3002; projekt dziennika ma osobne instancje5175/3003 (domyślnie porty+1), by nie zatrzymywać aplikacji użytkownika. Test tworzy konta w dedykowanej bazie.
+- npm run test:e2e wymaga Chromium i TEST_DATABASE_URL. Nie używa istniejących serwerów; lokalnie E2E_WEB_PORT=5174 E2E_API_PORT=3002; projekt dziennika/historii ma osobne instancje5175/3003 (domyślnie porty+1), by nie zatrzymywać aplikacji użytkownika. Test tworzy konta w dedykowanej bazie.
 - Matematyka: golden cases i granice z dokumentacji, w tym SELL częściowy, fees, FX, ułamki, zero i brak wyceny.
 - Import: powtórny i równoległy import, nakładające się eksporty, identyczne legalne transakcje.
 - Nie usuwaj testu, by ukryć błąd; nie deklaruj testów jako wykonanych, jeśli środowisko je blokuje.

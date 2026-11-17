@@ -177,3 +177,21 @@ export const journalListSchema = z.object({ items: z.array(journalEntrySchema), 
 export const journalDeletedSchema = z.object({ id: z.uuid(), deleted: z.literal(true) });
 export type JournalInput = z.infer<typeof journalInputSchema>;
 export type JournalEntry = z.infer<typeof journalEntrySchema>;
+
+export const snapshotInputSchema = z.object({}).strict();
+export const snapshotSummarySchema = z.object({
+  id: z.uuid(), portfolioId: z.uuid(), asOf: z.iso.datetime(), createdAt: z.iso.datetime(),
+  complete: z.boolean(), valueBase: signedDecimalSchema.nullable(), pricedSubtotal: signedDecimalSchema,
+  netContributionsBase: signedDecimalSchema, pnl: signedDecimalSchema.nullable(), pnlPct: computedDecimalSchema.nullable(),
+  pnlPctReason: valuationSchema.shape.pnlPctReason, engineVersion: z.string(),
+  quoteMaxAgeHours: z.number(), fxMaxAgeHours: z.number(), valuationRange: valuationSchema.shape.valuationRange,
+});
+export const snapshotSchema = snapshotSummarySchema.extend({ valuation: valuationSchema, inputsHash: z.string().regex(/^[0-9a-f]{64}$/) });
+export const portfolioHistoryQuerySchema = z.object({ from: z.iso.datetime().optional(), to: z.iso.datetime().optional() }).strict();
+export const portfolioHistorySchema = z.object({
+  items: z.array(snapshotSummarySchema), limit: z.literal(366), from: z.iso.datetime(), to: z.iso.datetime(),
+  missingDays: z.array(z.iso.date()), dayTimeZone: z.literal('Europe/Warsaw'),
+});
+export type Snapshot = z.infer<typeof snapshotSchema>;
+export type SnapshotSummary = z.infer<typeof snapshotSummarySchema>;
+export type PortfolioHistoryQuery = z.infer<typeof portfolioHistoryQuerySchema>;

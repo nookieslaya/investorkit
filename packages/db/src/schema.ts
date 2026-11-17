@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, uuid, uniqueIndex, index, check, numeric, bigserial, foreignKey, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, uuid, uniqueIndex, index, check, numeric, bigserial, foreignKey, integer, jsonb } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 const created = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const updated = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date());
@@ -121,4 +121,19 @@ export const journalEntries = pgTable('journal_entries', {
   check('journal_reason', sql`char_length(trim(${t.reason})) BETWEEN 1 AND 500`),
   check('journal_thesis', sql`char_length(trim(${t.thesis})) BETWEEN 1 AND 5000`),
   check('journal_text_lengths', sql`char_length(${t.horizon}) <= 500 AND char_length(${t.risks}) <= 3000 AND char_length(${t.reviewConditions}) <= 3000 AND char_length(${t.notes}) <= 10000`),
+]);
+
+export const valuationSnapshots = pgTable('valuation_snapshots', {
+  id: uuid('id').primaryKey().defaultRandom(), ownerId: text('owner_id').notNull(), portfolioId: uuid('portfolio_id').notNull(),
+  asOf: timestamp('as_of', { withTimezone: true }).notNull(), createdAt: created(),
+  valueBase: numeric('value_base', { precision: 28, scale: 10 }), netContributionsBase: numeric('net_contributions_base', { precision: 28, scale: 10 }).notNull(),
+  complete: boolean('complete').notNull(), inputsHash: text('inputs_hash').notNull(), engineVersion: text('engine_version').notNull(),
+  valuation: jsonb('valuation').$type<Record<string, unknown>>().notNull(),
+}, t => [
+  foreignKey({ columns: [t.portfolioId, t.ownerId], foreignColumns: [portfolios.id, portfolios.ownerId] }).onDelete('cascade'),
+  uniqueIndex('snapshot_point_inputs').on(t.portfolioId, t.asOf, t.inputsHash),
+  index('snapshot_owner_portfolio_date').on(t.ownerId, t.portfolioId, t.asOf),
+  check('snapshot_completeness', sql`(${t.complete} AND ${t.valueBase} IS NOT NULL AND ${t.valueBase} >= 0) OR (NOT ${t.complete} AND ${t.valueBase} IS NULL)`),
+  check('snapshot_hash', sql`${t.inputsHash} ~ '^[0-9a-f]{64}$'`),
+  check('snapshot_engine', sql`char_length(${t.engineVersion}) BETWEEN 1 AND 100`),
 ]);

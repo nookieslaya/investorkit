@@ -1,5 +1,5 @@
 # InvestorKit
-Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Ręczny silnik finansowy i przegląd regresji P01–P07 ukończone; działa prywatny dziennik decyzji A08. Projekt do lokalnego rozwijania, bez publicznego deploymentu.
+Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Ręczny silnik finansowy i przegląd regresji P01–P07 ukończone; działają prywatny dziennik decyzji A08 i zapisy historii wyceny A09. Projekt do lokalnego rozwijania, bez publicznego deploymentu.
 
 ## Start tutaj
 - [Pełna specyfikacja](docs/INVESTORKIT-MVP.md)
@@ -22,12 +22,13 @@ Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Ręczny siln
 - P03: chronologiczny replay, gotówka w PLN/EUR/USD, historyczny koszt bazowy/FX i wpłaty netto; panel sald, wpłaty/wypłaty i historia na froncie.
 - P02: niemutowalne pozycje BUY/SELL, średni koszt i wynik sprzedaży w walucie instrumentu, prowizje i blokada oversell; przypadki kontrolne1/2 kosztu PASS.
 - P01: czysta arytmetyka `FinancialDecimal` (decimal.js, precision40, HALF_EVEN), walidacja kwot/ilości/prowizji i jawne granice zaokrągleń.
+- Historia wyceny: rzeczywiste zapisy na żądanie, zachowane ceny/FX/diagnostyka i jawne dni bez zapisów.
 - Prywatny dziennik decyzji: wpisy dla portfela lub instrumentu, edycja/usuwanie z kontrolą wersji, bez zapisu transakcji.
 - Vitest unit/integration, Playwright onboarding, workflow CI.
 - OpenAPI 3.0.3 generowane z Zod: [dokument](docs/openapi.json), lokalnie `/api/v1/openapi.json`; testy odpowiedzi i kontrola aktualności w CI.
 
 ## Jeszcze niezaimplementowane
-Import XTB, upload/AI, snapshoty historyczne i landing z zapisem zainteresowania. portfolio-engine zawiera P01–P06; API/UI używają wspólnego ledgeru oraz ręcznych cen/FX. report-engine pozostaje szkieletem. Pozostałe tabele raportów/importu są specyfikacją. Brak płatności, danych rynkowych na żywo i automatycznego pobierania raportów.
+Import XTB, upload/AI i landing z zapisem zainteresowania. portfolio-engine zawiera P01–P06; API/UI używają wspólnego ledgeru oraz ręcznych cen/FX. report-engine pozostaje szkieletem. Pozostałe tabele raportów/importu są specyfikacją. Brak płatności, danych rynkowych na żywo i automatycznego pobierania raportów.
 
 ## Uruchomienie lokalne
 Wymagania: Node24 LTS, npm11+, Docker z Compose. Rozpakuj archiwum i wejdź do katalogu investorkit.
@@ -68,7 +69,7 @@ Przejrzyj SQL przed zatwierdzeniem. Nie stosujemy drizzle-kit push w produkcji. 
 Obecny auth jest sprawdzony lokalnie, lecz przed publicznym pilotem wymagane są email verification/reset, proces usunięcia/eksportu danych, polityka prywatności, restore drill oraz test E2E w środowisku obsługującym Chromium. Lista w backlogu B04–B06. Brak połączenia z brokerem i przechowywania jego haseł. Ograniczenia procesu in-memory rate limit są opisane w architekturze.
 
 ## Kontynuacja
-F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P07 i A01–A08 ukończone dla ręcznego MVP; następnie A09 — rzeczywiste snapshoty. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck,125 testów unit,49 integracyjnych i4 E2E na Node24; szczegóły w raporcie weryfikacji.
+F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P07 i A01–A09 ukończone dla ręcznego MVP; następnie I01 — kontrakt parsera, potem I03 — podgląd CSV. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck,127 testów unit,56 integracyjnych i5 E2E na Node24; szczegóły w raporcie weryfikacji.
 
 CI potwierdza build, typecheck, migrację, 4 testy jednostkowe, 8 integracyjnych i 1 E2E: [pierwszy przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43749258894).
 
@@ -87,7 +88,7 @@ API: `GET /api/v1/portfolios/:id/cash`, `GET/POST /api/v1/portfolios/:id/cash-op
 
 Dane starsze niż ustawiony próg (domyślnie72h) są nieaktualne. Przy brakujących/starych danych pełna wartość i P/L są kreską, a osobno pokazana jest tylko wyceniona część. Przyszłe ceny/kursy nie są dopuszczane do zapisu ani używane do historycznej wyceny. Wpłaty netto≤0 dają brak procentu. Prosta stopa nie uwzględnia czasu przepływów; koszt średni jest analityczny, nie podatkowy. Kursy i ceny są wpisami użytkownika, bez notowań live.
 
-API: GET/POST `/api/v1/instruments`, POST `/api/v1/instruments/:id/quotes`, POST `/api/v1/fx-rates`, GET/POST `/api/v1/portfolios/:id/operations`, GET `/api/v1/portfolios/:id/valuation?asOf=...`. OpenAPI obejmuje25 operacji. Limity tej wersji:100 instrumentów/użytkownika, 500 cen/instrument i1000 kursów wyceny/użytkownika. Dane są append-only, bez edycji/korekt i stronicowania w tym etapie.
+API: GET/POST `/api/v1/instruments`, POST `/api/v1/instruments/:id/quotes`, POST `/api/v1/fx-rates`, GET/POST `/api/v1/portfolios/:id/operations`, GET `/api/v1/portfolios/:id/valuation?asOf=...`. OpenAPI obejmuje28 operacji. Limity tej wersji:100 instrumentów/użytkownika, 500 cen/instrument i1000 kursów wyceny/użytkownika. Dane są append-only, bez edycji/korekt i stronicowania w tym etapie.
 
 ## Symulator zakupu (P05/A06)
 Wybierz **Symulacja zakupu** w nawigacji portfela: http://localhost:5173/#simulator. To osobny widok; formularz wpłat/wypłat, salda i historia są w **Operacjach** (`#operations`, także poprzedni link `#cash-operations`). Inwestycje pozostają w `#investments`. Wszystkie sekcje są dostępne również na telefonie.
@@ -127,3 +128,12 @@ Wybierz **Dziennik**: http://localhost:5173/#journal. Zapisz powód i tezę decy
 Lista mieści do100 wpisów na portfel, od najnowszej decyzji. Edytuj wpis albo usuń go po potwierdzeniu. Jeśli wpis zmieni się w innym oknie, zapis/usunięcie zwróci konflikt wersji. Szkic edycji pozostaje w formularzu przy odświeżeniu listy i błędzie; przycisk wczytania aktualnej wersji jawnie zastępuje formularz. Nie ma automatycznego scalania ani trwałego zapisu niezapisanych szkiców. Usunięcia nie można cofnąć; historia poprzednich wersji nie jest archiwizowana.
 
 API: GET/POST `.../portfolios/:id/journal`, PATCH/DELETE `.../journal/:id`, If-Match z revision wpisu. Migracja0004 tworzy dziennik, composite FK/CHECK i indeks instrument_id_owner; istniejące finanse i21 wcześniejszych kontraktów zachowane. Zastosowana lokalnie po prywatnym pg_dump.125 unit,49 integration,4 E2E, typecheck/build/OpenAPI i noUnused PASS. Cztery widoki desktop/mobile × oba motywy sprawdzone; szczegóły w VERIFICATION.md. E2E dziennika uruchamia dodatkowe serwery: lokalnie5175/3003, w CI5174/3002 (porty bazowe+1), na tej samej dedykowanej bazie testowej. Nie osłabia limitów aplikacji.
+
+## Historia wartości portfela (A09)
+W **Inwestycjach** znajdziesz panel „Historia wartości portfela”. Przycisk **Zapisz obecną wycenę** zachowuje wycenę obliczoną w chwili zapisu, również gdy jest niepełna. Zapis zawiera wartość portfela, wpłaty netto, nominalny wynik i prostą stopę, a w szczegółach pozycje, gotówkę, ceny, FX, ich daty/źródła, progi świeżości i wersję silnika. Braki nie stają się zerami. Zapis nie zmienia finansów ani danych rynkowych; samo wejście na stronę i odświeżenie nie tworzą punktów historii.
+
+Wybierz ostatnie7/30/90/365 dni albo własny zakres dat (do366 dni). Lista pokazuje wyłącznie rzeczywiście zapisane punkty; panel dni bez zapisu używa kalendarza Europe/Warsaw. Nie łączymy punktów wykresem, nie interpolujemy i nie rekonstruujemy brakujących dni z aktualnych cen. Dzień z niepełnym snapshotem ma zapis, lecz nie ma pełnej wartości. Dopłata nie jest zyskiem. Późniejsze ceny, ustawienia oraz operacje dopisane wstecz nie przeliczają wcześniejszego zapisu — zapis jest obserwacją znanych wtedy danych, nie źródłem prawdy zamiast ledgeru.
+
+Limit tej wersji:366 zapisów na portfel. Brak automatycznego harmonogramu, edycji/usuwania i odtwarzania historii wstecz. POST nie ma klucza idempotencji; po przerwanym połączeniu należy sprawdzić listę przed ponowieniem zapisu. GET historii i szczegółów pozostają bez zapisów. API: GET `.../portfolios/:id/history?from&to`, POST `.../portfolios/:id/snapshots` z pustym body `{}`, GET `.../valuation-snapshots/:id`.25 wcześniejszych kontraktów bez zmian, nowe3 =>28.
+
+Migracja0005 dodaje wyłącznie valuation_snapshots z FK/CHECK i indeksami; zastosowana lokalnie po prywatnej kopii bazy.127 unit,56 integration,5 E2E, build/typecheck/OpenAPI/noUnused PASS; desktop/mobile i oba motywy sprawdzone. Test historii korzysta z serwerów projektu journal-chromium, wyłącznie na bazie testowej. Następny etap I01/I03; adapter XTB pozostaje zablokowany do próbki eksportu.

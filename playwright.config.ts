@@ -14,10 +14,10 @@ const journalApi = `http://127.0.0.1:${journalApiPort}`;
 export default defineConfig({
   testDir: './tests/e2e', fullyParallel: false, retries: process.env.CI ? 1 : 0,
   use: { baseURL: origin, trace: 'retain-on-failure', launchOptions: process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {} },
-  // Journal has its own servers: parallel signup/CRUD must not consume the other suite's rate limit.
+  // Journal and snapshot history share their own servers: parallel signup/CRUD must not consume the other suite's rate limit.
   projects: [
-    { name: 'chromium', testIgnore: '**/journal.spec.ts', use: { ...devices['Desktop Chrome'] } },
-    { name: 'journal-chromium', testMatch: '**/journal.spec.ts', use: { ...devices['Desktop Chrome'], baseURL: journalOrigin, locale: 'pl-PL', timezoneId: 'Europe/Warsaw' } },
+    { name: 'chromium', testIgnore: ['**/journal.spec.ts', '**/history.spec.ts'], use: { ...devices['Desktop Chrome'] } },
+    { name: 'journal-chromium', testMatch: ['**/journal.spec.ts', '**/history.spec.ts'], use: { ...devices['Desktop Chrome'], baseURL: journalOrigin, locale: 'pl-PL', timezoneId: 'Europe/Warsaw' } },
   ],
   webServer: [
     { command: 'npm run dev -w @investorkit/api', url: `${journalApi}/ready`, reuseExistingServer: false,

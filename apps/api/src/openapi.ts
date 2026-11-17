@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  journalInputSchema, journalEntrySchema, journalListSchema, journalDeletedSchema, apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
+  snapshotInputSchema, snapshotSchema, portfolioHistorySchema, portfolioHistoryQuerySchema, journalInputSchema, journalEntrySchema, journalListSchema, journalDeletedSchema, apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
   portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema, instrumentsSchema, createInstrumentSchema, instrumentSchema, quoteInputSchema, quoteSchema, quotesSchema, fxInputSchema, fxSchema, ledgerOperationSchema, operationSchema, operationHistorySchema, valuationSchema, valuationTimeSchema, simulationInputSchema, simulationSchema, riskSettingsInputSchema, riskSettingsSchema, riskSchema, stressInputSchema, stressSchema,
 } from '@investorkit/shared';
 
@@ -11,6 +11,7 @@ interface OperationContract {
   authenticated?: boolean;
   idempotency?: boolean;
   valuationQuery?: boolean;
+  historyQuery?: boolean;
   ifMatch?: boolean | 'entry';
   body?: z.ZodType;
   params?: typeof portfolioIdParamsSchema;
@@ -22,6 +23,12 @@ const protectedErrors = { ...commonErrors, 401: error('Brak ważnej sesji.') };
 
 // Only implemented first-party operations. Better Auth owns /api/auth/* contracts.
 export const apiContracts: Record<string, Partial<Record<'get' | 'post' | 'patch' | 'delete', OperationContract>>> = {
+  '/api/v1/portfolios/{id}/history': { get: { operationId: 'portfolioHistory', summary: 'Rzeczywiste zapisane wyceny i dni bez zapisów; bez interpolacji i zapisów przy odczycie.', authenticated: true, params: portfolioIdParamsSchema, historyQuery: true,
+    responses: { 200: { description: 'Zapisy i jawne dni bez snapshotu (czas polski).', schema: portfolioHistorySchema }, ...protectedErrors, 400: error('UUID/query.'), 404: error('Brak portfela.'), 422: error('Zakres dłuższy niż366 dni, odwrócony lub przyszły.') } } },
+  '/api/v1/portfolios/{id}/snapshots': { post: { operationId: 'captureValuation', summary: 'Zapisz obecną wycenę serwera (także niepełną), bez zmiany finansów i bez datowania wstecz.', authenticated: true, params: portfolioIdParamsSchema, body: snapshotInputSchema,
+    responses: { 201: { description: 'Utrwalona wycena z datami, źródłami i diagnostyką.', schema: snapshotSchema }, ...protectedErrors, 400: error('UUID/body.'), 403: error('Origin.'), 404: error('Brak portfela.'), 409: error('Dane zmieniły się podczas zapisu.'), 422: error('Limit366 lub błąd stanu/zakresu kwot.'), 413: error('Limit body.'), 415: error('Content-Type.') } } },
+  '/api/v1/valuation-snapshots/{id}': { get: { operationId: 'valuationSnapshot', summary: 'Prywatne szczegóły zapisanej wyceny, nie przeliczane aktualnymi danymi.', authenticated: true, params: portfolioIdParamsSchema,
+    responses: { 200: { description: 'Wycena i założenia z chwili zapisu.', schema: snapshotSchema }, ...protectedErrors, 400: error('UUID.'), 404: error('Brak zapisu.') } } },
   '/api/v1/portfolios/{id}/journal': {
     get: { operationId: 'listJournal', summary: 'Prywatny dziennik, do100 wpisów od najnowszej decyzji.', authenticated: true, params: portfolioIdParamsSchema,
       responses: { 200: { description: 'Własne wpisy i limit100.', schema: journalListSchema }, ...protectedErrors, 400: error('UUID.'), 404: error('Brak portfela.') } },
@@ -133,6 +140,7 @@ export function buildOpenApiDocument() {
         parameters: [
           ...(contract.params ? [{ name: 'id', in: 'path', required: true, schema: jsonSchema(contract.params.shape.id, 'input') }] : []),
           ...(['post', 'patch', 'delete'].includes(method) ? [{ name: 'Origin', in: 'header', required: true, description: 'Musi być równy WEB_ORIGIN.', schema: { type: 'string', format: 'uri' } }] : []),
+          ...(contract.historyQuery ? Object.entries(portfolioHistoryQuerySchema.shape).map(([name, schema]) => ({ name, in: 'query', required: false, description: 'UTC, zakres do366 dni; domyślnie ostatnie30 dni.', schema: jsonSchema(schema, 'input') })) : []),
           ...(contract.valuationQuery ? [{ name: 'asOf', in: 'query', required: false, description: 'UTC; domyślnie zegar serwera, przyszła data niedozwolona.', schema: jsonSchema(valuationTimeSchema, 'input') }] : []),
           ...(contract.ifMatch ? [{ name: 'If-Match', in: 'header', required: true, description: contract.ifMatch === 'entry' ? 'Aktualna revision wpisu z listy w cudzysłowie, np. "1".' : 'Aktualna revision w cudzysłowie, np. "0"; GET zwraca ETag i revision.', schema: { type: 'string', pattern: contract.ifMatch === 'entry' ? '^"[1-9][0-9]{0,9}"$' : '^"(0|[1-9][0-9]{0,9})"$' } }] : []),
           ...(contract.idempotency ? [{ name: 'Idempotency-Key', in: 'header', required: true, description: 'UUID; ten sam klucz i body zwracają tę samą operację.', schema: { type: 'string', format: 'uuid' } }] : []),

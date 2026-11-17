@@ -1,6 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
-import { journalListSchema, journalEntrySchema, journalDeletedSchema, portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema, riskSchema, riskSettingsSchema, stressSchema } from '@investorkit/shared';
-import type { JournalInput, CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput, RiskSettingsInput, StressInput } from '@investorkit/shared';
+import { snapshotSchema, portfolioHistorySchema, journalListSchema, journalEntrySchema, journalDeletedSchema, portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema, riskSchema, riskSettingsSchema, stressSchema } from '@investorkit/shared';
+import type { PortfolioHistoryQuery, JournalInput, CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput, RiskSettingsInput, StressInput } from '@investorkit/shared';
 export const auth = createAuthClient();
 export class ApiRequestError extends Error {
   constructor(message: string, readonly code: string, readonly status: number) { super(message); }
@@ -58,3 +58,13 @@ export async function saveJournal(portfolioId: string, input: JournalInput, exis
 export async function deleteJournal(id: string, revision: number) {
   return journalDeletedSchema.parse(await request(`/journal/${id}`, { method: 'DELETE', headers: { 'If-Match': `"${revision}"` } }));
 }
+
+export async function loadPortfolioHistory(id: string, days: number, range?: PortfolioHistoryQuery) {
+  const from = range?.from ?? new Date(Date.now() - days * 86400000).toISOString();
+  // Let the server choose the range end; client clock skew must not request future history.
+  return portfolioHistorySchema.parse(await request(`/portfolios/${id}/history?${new URLSearchParams({ from, ...(range?.to ? { to: range.to } : {}) })}`));
+}
+export async function captureValuation(id: string) {
+  return snapshotSchema.parse(await request(`/portfolios/${id}/snapshots`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }));
+}
+export async function loadValuationSnapshot(id: string) { return snapshotSchema.parse(await request(`/valuation-snapshots/${id}`)); }

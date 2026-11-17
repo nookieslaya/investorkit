@@ -1,3 +1,4 @@
+import { historyRepository } from './history-repository.js';
 import { journalRepository } from './journal-repository.js';
 import { marketRepository } from './market-repository.js';
 import { riskSettingsRepository } from './risk-settings-repository.js';
@@ -10,6 +11,7 @@ import type { CreatePortfolio } from '@investorkit/shared';
 export function portfolioRepository(db: Database) {
   return {
     ...cashRepository(db),
+    ...historyRepository(db),
     ...journalRepository(db),
     ...marketRepository(db),
     ...riskSettingsRepository(db),

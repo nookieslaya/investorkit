@@ -73,3 +73,8 @@
 - Nowy #journal: uzasadnienie, teza, horyzont, ryzyka, warunki przeglądu i notatki dla portfela lub instrumentu. Plain text, edycja/usuwanie z potwierdzeniem i ochroną If-Match/revision; zachowanie szkicu przy konflikcie.
 -4 endpointy i migracja0004 z composite FK oraz kontrolą długości/revision. Limit100 wpisów, bez zmian finansów i21 istniejących kontraktów API; bez nowych zależności.
 -125 unit,49 integration,4 E2E oraz desktop/mobile/light/dark zweryfikowane. Następny etap A09.
+
+### A09 — historia wartości portfela — 17.11.2026
+- Ręczne zapisy rzeczywistych wycen w Inwestycjach, pełne źródła/założenia, niepełność i dni bez zapisów jawne. Zakresy7/30/90/365 oraz własne daty, klawiatura i oba motywy.
+-3 endpointy i migracja0005 (valuation_snapshots), limit366, spójny SERIALIZABLE capture. Stare punkty nie przeliczają się po zmianach ledgeru/rynku/settings; GET i scenariusze niczego nie zapisują.
+-25 istniejących API i silnik bez zmian; brak nowych zależności i fikcyjnej historii.127 unit,56 integration,5 E2E oraz build/typecheck/OpenAPI zweryfikowane. Następny I01/I03; próbka XTB nadal potrzebna.

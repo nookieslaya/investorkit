@@ -3,7 +3,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { fromNodeHeaders } from 'better-auth/node';
 import { z, ZodError } from 'zod';
-import { journalInputSchema, createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema, stressInputSchema, riskSettingsInputSchema } from '@investorkit/shared';
+import { snapshotInputSchema, portfolioHistoryQuerySchema, journalInputSchema, createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema, stressInputSchema, riskSettingsInputSchema } from '@investorkit/shared';
 import { CashApiError } from './cash-repository.js';
 import { LedgerDomainError, DecimalDomainError, PositionDomainError, ValuationDomainError, SimulationDomainError, RiskDomainError } from '@investorkit/portfolio-engine';
 import { buildOpenApiDocument } from './openapi.js';
@@ -78,6 +78,19 @@ export async function buildApp(config: Config, services: Services, logging = tru
       const session = await services.auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
       if (!session) return reply.code(401).send(fail('UNAUTHENTICATED', 'Zaloguj się.', req.id));
       req.ownerId = session.user.id;
+    });
+    scoped.get('/portfolios/:id/history', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return services.portfolios.portfolioHistory(req.ownerId, id, portfolioHistoryQuerySchema.parse(req.query));
+    });
+    scoped.post('/portfolios/:id/snapshots', async (req, reply) => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      snapshotInputSchema.parse(req.body);
+      return reply.code(201).send(await services.portfolios.captureValuation(req.ownerId, id));
+    });
+    scoped.get('/valuation-snapshots/:id', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return services.portfolios.valuationSnapshot(req.ownerId, id);
     });
     scoped.get('/portfolios/:id/journal', async req => {
       const { id } = portfolioIdParamsSchema.parse(req.params);

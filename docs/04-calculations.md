@@ -122,3 +122,8 @@ Dodatkowe regresje w portfolio-regression.test.ts:18 kombinacji trzech walut, ob
 Dwa BUY po0.0000000001 szt.×0.5 odejmują łącznie0.0000000001 od cash; każdy z osobna nie może być zaokrąglony do0 przed dalszym replay. Pełny SELL zeruje ilość i koszt. Maksymalna kwota numeric(28,10) pozostaje poprawna, przekroczenie przez sumę/FX/cenę wyceny jest odrzucane STORAGE_OVERFLOW. Osobny próg FX1h: age==1h poprawne,1ms później STALE_FX. Istniejące testy nadal obejmują0/100%, brak/stale/future cen/FX, zerowy mianownik, precyzję40 i brak zapisów symulacji.
 
 To zestaw deterministycznych regresji, nie dowód poprawności wszystkich możliwych historii. Koszt średni pozostaje analityczny; P07 nie dodaje podatków, nowych miar stopy zwrotu, importu ani nowych widoków.
+
+## A09 — utrwalona obserwacja wyceny
+Snapshot powstaje wyłącznie po jawnym zapisie aktualnego valuePortfolio z jednym asOf serwera i spójnym odczytem wejść. Nie zmienia obliczeń ani zaokrągleń: finalne money10/HALF_EVEN i computed decimal strings zostają zachowane wJSONB. Niepełność/zerowy mianownik zachowują null i reason, wyceniona część pozostaje osobna. Gotówka, ledger, ceny i FX nie są modyfikowane przez snapshot.
+
+Historia odczytuje zachowane liczby, źródła i progi z chwili zapisu. Nie przelicza wcześniejszego punktu po zmianie ustawień, nowych cenach lub operacjach wpisanych wstecz. To obserwacja wiedzy dostępnej podczas zapisu, nie zamiennik ledgeru. Nie interpoluje dat bez punktów i nie utożsamia przyrostu wartości z dopłatą ze stopą zwrotu. Dni bez zapisów oznaczają wyłącznie brak obserwacji w danym dniu kalendarzowym Europe/Warsaw; niepełna obserwacja nie zapewnia pełnej wyceny.
