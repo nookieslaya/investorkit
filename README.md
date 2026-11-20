@@ -69,7 +69,7 @@ Przejrzyj SQL przed zatwierdzeniem. Nie stosujemy drizzle-kit push w produkcji. 
 Obecny auth jest sprawdzony lokalnie, lecz przed publicznym pilotem wymagane są email verification/reset, proces usunięcia/eksportu danych, polityka prywatności, restore drill oraz test E2E w środowisku obsługującym Chromium. Lista w backlogu B04–B06. Brak połączenia z brokerem i przechowywania jego haseł. Ograniczenia procesu in-memory rate limit są opisane w architekturze.
 
 ## Kontynuacja
-F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P07 i A01–A09 ukończone dla ręcznego MVP; następnie I01 — kontrakt parsera, potem I03 — podgląd CSV. Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck,127 testów unit,57 integracyjnych i5 E2E na Node24; szczegóły w raporcie weryfikacji.
+F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P07 i A01–A09 ukończone dla ręcznego MVP; I01/I03 ukończone: ogólny podgląd CSV bez zapisu; następne I02 (próbka XTB), I04 (adapter) i I05 (zapis/deduplikacja). Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck,176 testów unit,70 integracyjnych i7 E2E na Node24; szczegóły w raporcie weryfikacji.
 
 CI potwierdza build, typecheck, migrację, 4 testy jednostkowe, 8 integracyjnych i 1 E2E: [pierwszy przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43749258894).
 
@@ -140,3 +140,24 @@ Migracja0005 dodaje wyłącznie valuation_snapshots z FK/CHECK i indeksami; zast
 
 ### Przykłady historii DEMO
 Na życzenie właściciela dodano12 fikcyjnych przykładów z różnych okresów (4 w ostatnich7 dniach,6 w30,8 w90 i12 w365):11 kompletnych i1 niepełny. Kwoty/źródła/datowanie są demonstracyjne, oznaczone na liście i w szczegółach. Nie zmieniają rzeczywistych finansów ani wcześniejszych zapisów i nie usuwają dni bez rzeczywistej obserwacji z panelu luk. Publiczny POST nadal pozwala zapisać wyłącznie bieżącą rzeczywistą wycenę. API historii/szczegółów ma dodatkowe pole demo:boolean (domyślnie false dla dawnych i nowych rzeczywistych zapisów); brak zmiany silnika i migracji.
+
+## Marketstack — lokalne ceny dzienne EOD
+Wyszukiwanie po nazwie/tickerze, dodawanie i jawne łączenie instrumentu są w **Uzupełnij swój portfel → Instrument**. Ręczny formularz pozostaje pod „Dodaj instrument ręcznie”; przy wyłączonym dostawcy jest dostępny bez rozwijania. Panel **Ceny dzienne · Marketstack** pokazuje zapisane ceny, daty, wybór źródła ręczne/EOD i odświeżanie. Typ instrumentu potwierdza użytkownik, waluta wynika z EOD; brak automatycznego mapowania starych tickerów. Koszt transakcji, historyczny FX i dawne snapshoty pozostają bez zmian. Cena EOD bez aktualnego FX nie daje kompletnej wyceny PLN.
+
+Konfiguracja tylko backendowa: `MARKETSTACK_API_KEY`, `MARKETSTACK_ENABLED=true` (wyłącznie NODE_ENV=development), `MARKETSTACK_MONTHLY_BUDGET=60`, `MARKETSTACK_DAILY_UTC_HOUR=19`. Po migracjach zwykłe `npm run dev`. .env.example domyślnie wyłącza pobieranie; lokalna aplikacja użytkownika ma je włączone. Każdy użytkownik jawnie wybiera mapowanie i źródło. Sekret nigdy w VITE_*, Git ani logowanych URL-ach.
+
+Dzienny job w działającym API sprawdza ostatnią dostępną sesję po19:00UTC tylko dla otwartych zmapowanych pozycji. Jedna próba/instrument/dzień UTC także po błędzie; to samo ograniczenie dla ręcznego odświeżania. Zachowuje cenę i datę sesji przy błędzie, pokazuje osobno ostatnią próbę. Harmonogram nie stanowi gwarancji publikacji danych tego samego dnia. Limit60/miesiąc UTC jest trwałym limitem aplikacji, obejmuje retry/błędy; cache wyszukiwania15min prywatny per właściciel. Diagnostyka `npm run marketstack:diagnose` ma osobny limit1–10/przebieg (`MARKETSTACK_DIAGNOSTIC_BUDGET`) i zapis600 w ignorowanym .local-backups.
+
+[Weryfikacja i ograniczenia](docs/MARKETSTACK-VERIFICATION.md): potwierdzone XTB/PKO/Orlen (XWAR,PLN), Apple (XNAS,USD) iVTI (ARCX,USD), sesja16.11.2026,19 rzeczywistych operacji łącznie. Inne notowania muszą być indywidualnie zweryfikowane EOD. Publiczne uruchomienie BLOCKED do ustalenia praw SaaS/cache/retencji; plan konta nieustalony, brak zakupu.157 unit,65 integration i6 E2E PASS; nowe kontrole opisane w docs/VERIFICATION.md.
+
+Panel cen ma odnośnik **Ceny dzienne** w zakładkach portfela. Bezpośrednio lokalnie: http://localhost:5173/#market-data (po zalogowaniu).
+
+
+## Ogólny podgląd CSV — I01/I03
+Wybierz **Import CSV** w nawigacji lub otwórz http://localhost:5173/#imports. Wskaż plik, kodowanie i separator, odczytaj kolumny, przypisz pola i kliknij „Sprawdź mapowanie”. Możesz pobrać ogólny przykład CSV z fikcyjnymi danymi. Wynik pokazuje surowe wartości, błędy poszczególnych rekordów i propozycje operacji;50 wierszy na stronę. Zmiana pliku lub ustawień unieważnia wynik. To **podgląd bez zapisywania transakcji**.
+
+Obsługa do5MiB/10000 rekordów/64 kolumn, UTF-8 i Windows-1250, separator przecinek/średnik/tabulator, escaped quotes i wielowierszowe komórki. Kwoty i FX pozostają dokładnymi stringami; daty wymagają jawnej strefy. Instrument rozpoznawany wyłącznie po własnym symbolu+MIC+walucie. Weryfikacja sald, deduplikacja i commit jeszcze niedostępne. XTB zablokowany do próbki eksportu; CSV ogólny nie udaje adaptera brokera. Pełna specyfikacja wdrożenia: docs/06-import-reports.md. Bez nowych zależności i migracji; zwykłe `npm run dev` po `npm run build:packages`.
+
+Kontrole I01/I03:176 unit,70 integration i7 E2E PASS, typecheck/build/OpenAPI/noUnused PASS. E2E używa1 workera i oddzielnych instancji CSV (lokalnie5176/3004, domyślnie porty podstawowe+2); konfiguracja nie zatrzymuje aplikacji użytkownika5173/3001.
+
+Na polecenie właściciela lokalny portfel zastąpiono prywatnym przykładem DEMO na podstawie zdjęcia. Dane zakupów są fikcyjne, pliki pozostają poza repozytorium. Jednorazowe wczytanie administracyjne nie dodaje funkcji zapisu w podglądzie CSV ani adaptera XTB.

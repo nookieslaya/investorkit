@@ -137,3 +137,38 @@ export const valuationSnapshots = pgTable('valuation_snapshots', {
   check('snapshot_hash', sql`${t.inputsHash} ~ '^[0-9a-f]{64}$'`),
   check('snapshot_engine', sql`char_length(${t.engineVersion}) BETWEEN 1 AND 100`),
 ]);
+
+// Provider data is private per owner. Manual prices and ledger FX stay append-only.
+export const marketBindings = pgTable('market_bindings', {
+  instrumentId: uuid('instrument_id').primaryKey(), ownerId: text('owner_id').notNull(),
+  symbol: text('symbol').notNull(), mic: text('mic').notNull(), currency: text('currency').$type<'PLN' | 'EUR' | 'USD'>().notNull(),
+  mode: text('mode').$type<'manual' | 'marketstack'>().notNull(),
+  lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }), status: text('status').notNull().default('ready'),
+}, t => [
+  foreignKey({ columns: [t.instrumentId, t.ownerId, t.currency], foreignColumns: [instruments.id, instruments.ownerId, instruments.currency] }).onDelete('cascade'),
+  uniqueIndex('market_binding_owner').on(t.instrumentId, t.ownerId, t.currency),
+  check('market_binding_mode', sql`${t.mode} IN ('manual','marketstack')`),
+  check('market_binding_symbol', sql`${t.symbol} ~ '^[A-Za-z0-9.^:_/-]{1,64}$'`),
+  check('market_binding_mic', sql`${t.mic} ~ '^[A-Z0-9]{4}$'`),
+]);
+export const marketQuotes = pgTable('market_quotes', {
+  id: uuid('id').primaryKey().defaultRandom(), instrumentId: uuid('instrument_id').notNull(), ownerId: text('owner_id').notNull(),
+  currency: text('currency').$type<'PLN' | 'EUR' | 'USD'>().notNull(), symbol: text('symbol').notNull(), mic: text('mic').notNull(),
+  price: numeric('price', { precision: 28, scale: 10 }).notNull(), source: text('source').$type<'marketstack'>().notNull().default('marketstack'),
+  sessionDate: text('session_date').notNull(), asOf: timestamp('as_of', { withTimezone: true }).notNull(), fetchedAt: created(),
+}, t => [
+  foreignKey({ columns: [t.instrumentId, t.ownerId, t.currency], foreignColumns: [marketBindings.instrumentId, marketBindings.ownerId, marketBindings.currency] }).onDelete('cascade'),
+  uniqueIndex('market_quote_session').on(t.instrumentId, t.symbol, t.mic, t.sessionDate),
+  index('market_quote_owner').on(t.ownerId, t.instrumentId, t.asOf),
+  check('market_quote_positive', sql`${t.price} >= 0`), check('market_quote_source', sql`${t.source} = 'marketstack'`),
+]);
+export const marketSelections = pgTable('market_selections', {
+  id: uuid('id').primaryKey().defaultRandom(), ownerId: text('owner_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  query: text('query').notNull(), symbol: text('symbol').notNull(), mic: text('mic').notNull(),
+  name: text('name').notNull(), currency: text('currency').$type<'PLN' | 'EUR' | 'USD'>().notNull(),
+  price: numeric('price', { precision: 28, scale: 10 }).notNull(), sessionDate: text('session_date').notNull(),
+  asOf: timestamp('as_of', { withTimezone: true }).notNull(), fetchedAt: created(), expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+}, t => [index('market_selection_owner_query').on(t.ownerId, t.query, t.mic), check('market_selection_currency', sql`${t.currency} IN ('PLN','EUR','USD')`)]);
+export const marketBudget = pgTable('market_budget', {
+  id: text('id').primaryKey(), used: integer('used').notNull().default(0), blocked: text('blocked'),
+}, t => [check('market_budget_used', sql`${t.used} >= 0`)]);

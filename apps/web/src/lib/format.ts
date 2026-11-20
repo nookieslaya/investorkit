@@ -63,3 +63,5 @@ export function localNow() {
 export function formatDate(value: string) {
   return new Intl.DateTimeFormat('pl-PL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Warsaw' }).format(new Date(value));
 }
+
+export const quoteSourceLabel = (source: 'manual' | 'scenario' | 'marketstack') => source === 'marketstack' ? 'Marketstack · cena zamknięcia' : source === 'scenario' ? 'założenie scenariusza' : 'wpis ręczny';

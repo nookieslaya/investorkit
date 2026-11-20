@@ -1,3 +1,4 @@
+import { quoteSourceLabel } from '../lib/format';
 import type { Stress } from '@investorkit/shared';
 import { formatAmount, formatDate, formatDecrease, formatMoney, formatPercent, trimDecimal } from '../lib/format';
 const money = (value: string | null) => value === null ? '—' : formatMoney(value);
@@ -34,7 +35,7 @@ export function StressResult({ data }: { data: Stress }) {
       <p>Stan na {formatDate(before.asOf)} · {scenario}. Wynik odpowiada danym z chwili obliczenia.</p>
       <ul className="stress-holdings">{after.positions.map(row => {
         const original = before.positions.find(item => item.instrumentId === row.instrumentId);
-        return <li key={row.instrumentId}><h4>{row.symbol} · {row.name}</h4>{original && <><PositionComparison before={original} after={row} /><p>Cena referencyjna: {money(row.referencePrice)} {row.currency}{original.quote ? ` · ${formatDate(original.quote.asOf)} · ${original.quote.source === 'manual' ? 'wpis ręczny' : 'założenie'}` : ''}.</p><p>FX: {fxSource(original.fx, row.currency)}.</p></>}</li>;
+        return <li key={row.instrumentId}><h4>{row.symbol} · {row.name}</h4>{original && <><PositionComparison before={original} after={row} /><p>Cena referencyjna: {money(row.referencePrice)} {row.currency}{original.quote ? ` · ${formatDate(original.quote.asOf)} · ${quoteSourceLabel(original.quote.source)}` : ''}.</p><p>FX: {fxSource(original.fx, row.currency)}.</p></>}</li>;
       })}</ul>
       <p>Gotówka przed i po: {after.cash.map(row => `${formatMoney(row.amount)} ${row.currency}`).join(' · ')}.</p>
       {after.cash.map(row => <p key={row.currency}>FX gotówki {row.currency}: {row.fx === null && trimDecimal(row.amount) === '0' ? 'niewymagany przy zerowym saldzie' : fxSource(row.fx, row.currency)}.</p>)}

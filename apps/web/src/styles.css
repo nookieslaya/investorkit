@@ -120,3 +120,41 @@
 .history-range { display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin:0 0 20px; }.history-range label { margin:0; flex:1; min-width:150px; }.history-range .error { width:100%; margin-bottom:0; }.app-shell[data-theme=dark] .history-range input { color-scheme:dark; }
 
 .history-demo-notice { border:1px solid var(--border); border-left:3px solid var(--primary); border-radius:8px; padding:12px 16px; font-size:12px; line-height:1.8; background:var(--background); }.demo-label { display:inline-block; margin-right:8px; color:var(--primary); font-size:10px; font-weight:700; letter-spacing:.6px; }
+
+.market-panel { margin-block: 1.5rem; padding: 1.5rem; min-width: 0; }
+.market-panel details, .market-picker details { margin-block: 1rem; }
+.market-panel summary, .market-picker summary { cursor: pointer; padding-block: .75rem; font-weight: 650; }
+.market-panel .cash-fields, .market-picker .cash-fields { margin-block: 1rem; }
+.market-panel input, .market-picker input { width: 100%; min-width: 0; }
+.market-results, .market-bindings { list-style: none; margin: 1rem 0; padding: 0; }
+.market-results li { margin-block: .6rem; }
+.market-results button { width: 100%; height: auto; justify-content: flex-start; text-align: left; white-space: normal; }
+.market-panel small, .market-picker small { display: block; color: var(--muted-foreground); overflow-wrap: anywhere; }
+.market-bindings li { padding-block: 1rem; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+.market-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: .75rem; }
+.market-panel :focus-visible, .market-picker :focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+
+.market-panel fieldset, .market-picker fieldset { border: 0; padding: 0; margin: 1rem 0; display: grid; gap: 1rem; }
+.market-panel label, .market-picker label { display: grid; gap: .4rem; font-size: .8rem; }
+@media(max-width:480px) { .market-panel .cash-fields, .market-picker .cash-fields { grid-template-columns: 1fr; }.market-panel { padding: 1rem; } }
+
+.market-picker { min-width: 0; }.market-picker h4 { margin-block: 1rem; font-size: .9rem; }.market-picker .manual-instrument { border-top: 1px solid var(--border); padding-top: .5rem; }.market-panel a { color: var(--primary); text-decoration: underline; }
+@media(max-width:480px) { .market-picker .cash-fields { grid-template-columns: 1fr; } }
+
+.market-picker .cash-fields { align-items: end; }
+
+.csv-import { min-width: 0; }.csv-settings,.csv-result { padding: 1.5rem; margin-block: 1.5rem; min-width: 0; }
+.csv-settings form { display: grid; gap: 1rem; }.csv-settings label { display: grid; gap: .4rem; font-size: .8rem; }.csv-settings input { width: 100%; min-width: 0; }
+.csv-options { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; }.csv-mapping-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; margin-block: 1rem; }
+.csv-settings a { color: var(--primary); text-decoration: underline; }.csv-import summary { cursor: pointer; padding-block: .75rem; font-size: .85rem; font-weight: 600; }
+.csv-actions,.csv-pagination { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }.csv-pagination { justify-content: space-between; margin-top: 1rem; font-size: .8rem; }
+.csv-summary { padding-block: .5rem; font-size: .85rem; }.csv-table-scroll { max-width: 100%; overflow: auto; max-height: 40rem; scrollbar-width: thin; }
+.csv-table-scroll table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: .75rem; }.csv-table-scroll caption { text-align: left; padding-block: .5rem; color: var(--muted-foreground); }
+.csv-table-scroll th,.csv-table-scroll td { text-align: left; vertical-align: top; padding: .75rem; border-bottom: 1px solid var(--border); min-width: 9rem; max-width: 23rem; overflow-wrap: anywhere; }
+.csv-table-scroll th { font-weight: 650; }.csv-cell { max-height: 8rem; overflow: auto; white-space: pre-wrap; min-width: 8rem; max-width: 22rem; overflow-wrap: anywhere; }.csv-table-scroll details ul { padding-left: 1rem; }.csv-table-scroll dd { margin: .2rem 0 .7rem; }
+.csv-provenance { margin-top: 1rem; font-size: .75rem; }.csv-provenance dd { margin: .25rem 0 .75rem; overflow-wrap: anywhere; }
+@media(max-width:800px) { .csv-options { grid-template-columns: 1fr; } }
+@media(max-width:480px) { .csv-mapping-grid { grid-template-columns: 1fr; }.csv-settings,.csv-result { padding: 1rem; }.csv-pagination { flex-direction: column; align-items: stretch; }.csv-pagination span { text-align: center; } }
+
+.csv-row-status { width: 16rem; white-space: normal; overflow-wrap: anywhere; }.csv-table-scroll th:first-child { min-width: 4rem; max-width: 5rem; }
+@media(max-width:480px) { .csv-row-status { width: 12rem; }.csv-table-scroll th,.csv-table-scroll td { padding: .5rem; } }

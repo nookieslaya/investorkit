@@ -15,7 +15,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F07 | Rate limit, origin guard, errors, log redaction | 2 | F05 | DONE: origin/errors/size/HTTP429 integration |
 | F08 | React/Tailwind/shadcn, Router, Query | 2 | F02 | DONE: build/theme, desktop/mobile/dark i inspekcja zrzutów inwestycji/gotówki |
 | F09 | Rejestracja/logowanie i portfel UI | 2 | F06,F08 | DONE: E2E i użytkownik potwierdzili rejestrację/logowanie/portfel |
-| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie127 unit i57 integration PASS |
+| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie176 unit i70 integration PASS |
 | F11 | Playwright i CI | 2 | F09,F10 | DONE: GitHub Actions PASS, Chromium E2E 1/1 (15.11.2026) |
 | F12 | OpenAPI i contract tests | 2 | F07 | DONE: OpenAPI z Zod, endpoint i artefakt JSON, kontrola aktualności CI oraz testy odpowiedzi |
 | F13 | Select shadcn/ui w formularzach | — | F08 | DONE: 7 pól, strzałki z odstępem16px, stylizowana lista, motywy i klawiatura |
@@ -35,9 +35,9 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | A07 | Ryzyko UI i ustawienia | 2 | P06,A05 | DONE: osobny widok Ryzyko, progi/świeżość z revision/If-Match, scenariusze i źródła |
 | A08 | Dziennik CRUD | 3 | A02,F09 | DONE: prywatne wpisy portfel/instrument, plain text, If-Match/revision, szkic przy konflikcie, CRUD i4 warianty UI |
 | A09 | Snapshot history | 2 | A05 | DONE: ręczne rzeczywiste snapshoty, pełne źródła i diagnostyka, zakresy dat, jawne luki, bez backfill |
-| I01 | Kontrakt parsera i blokada XTB | 1 | S02 | PARTIAL: availability contract i SAMPLE_REQUIRED; parser DTO przed I03 |
+| I01 | Kontrakt parsera i blokada XTB | 1 | S02 | DONE: Zod DTO, detect/preview/provenance, previewOnly i serwerowa blokada SAMPLE_REQUIRED |
 | I02 | Zanonimizowana próbka XTB | — | użytkownik | BLOCKED: brak pliku |
-| I03 | CSV preview/mapowanie | 3 | I01 | TODO: quoting, encoding, limit |
+| I03 | CSV preview/mapowanie | 3 | I01 | DONE: UI/API, quoting/UTF-8/Windows-1250, limity, błędy, stronicowanie i brak zapisów |
 | I04 | Zweryfikowany adapter XTB | 3 | I02,I03 | BLOCKED: format, waluty, fees |
 | I05 | Receipt dedup i atomowy commit | 3 | I04,A03 | TODO: powtórny/równoległy import |
 | R01 | Prywatny upload i ekstrakcja PDF | 4 | F07 | TODO: limits/timeout/magic bytes |
@@ -54,7 +54,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | B06 | Backup + restore drill + audyt dostępności | 3 | B05 | TODO: przed publicznym pilotem |
 | B07 | Decyzja o płatnym pilotażu | 1 | B03 | TODO: dopiero wtedy backlog billing |
 
-Najbliższy punkt kontynuacji: I01 — kontrakt parsera, potem I03 — neutralny podgląd CSV; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
+Najbliższy punkt importu: I02 — próbka eksportu XTB, potem I04 — zweryfikowany adapter i I05 — atomowy zapis z deduplikacją. I01/I03 (ogólny podgląd) są ukończone; osobno domknąć wizualną inspekcję F08–F09. Etap3 nie zaczyna się od dashboardu z fikcyjnymi danymi. V2 źródła automatyczne i płatności celowo bez zadań implementacyjnych.
 
 Aktualizacja środowiska macOS 15.11.2026: build/typecheck/4 unit PASS na Node 24. Docker CLI dostępny, daemon wyłączony; F03/F08/F09 zachowują status PARTIAL; F11 zamknięte po przejściu CI. Utworzono publiczne repozytorium `nookieslaya/investorkit`; pierwszy przebieg CI PASS: build/typecheck, migracja, 4 unit, 8 integration, 1 E2E w Chromium.
 
@@ -87,3 +87,19 @@ A08 ukończone17.11.2026: dziennik #journal, wymagany powód i teza, opcjonalny 
 A09 ukończone17.11.2026: nowe POST zapisuje tylko bieżącą wycenę, GET history/detail są READ ONLY. Wyceny kompletne/niepełne, pełne zachowane źródła i założenia, limit366, serializowalny zapis z retry przy konflikcie, immutable punkty i unique(portfolio,asOf,inputs_hash). Panel Inwestycji, zakres7/30/90/365 i własny, jawne dni bez zapisu w czasie polskim. Bez automatycznego backfill, wykresu/interpolacji, harmonogramu i przeliczania punktów po zmianach ledgeru. Migracja0005 CREATE-only po backupie; silnik i25 API zachowane,3 nowe =>28.127 unit/56 integration/5 E2E, typecheck/build/OpenAPI/noUnused i4 warianty widoku PASS. Następny I01, potem I03. I02/I04 nadal BLOCKED bez zanonimizowanej próbki XTB.
 
 17.11.2026 — prezentacja danych testowych A09 na polecenie użytkownika:12 jawnych DEMO snapshotów w lokalnej bazie, podział okresów7/30/90/365→4/6/8/12. Flaga provenance w istniejącym JSONB i DTO, bez migracji; DEMO nie zastępuje realnych punktów ani pokrycia dni. Dotychczasowe finanse i zapisy zachowane, źródła/ceny fikcyjne oznaczone także w szczegółach. Dodany test integracyjny i scenariusz UI etykiet. Następny nadal I01/I03.
+
+## Marketstack — dodatkowy etap na polecenie użytkownika (18.11.2026)
+- M01 diagnostyka CLI i rzeczywisty zakres: DONE dla wymaganych przykładów. Uzupełnienie9/10, razem19 operacji; PKO katalog miał pustą nazwę i wiele funduszy, doprecyzowano do banku. XTB139,72/PKO120,32/Orlen131,72PLN, Apple352,78/VTI364,30USD; wszystkie sesja16.11.2026 i MIC/waluta/has_eod potwierdzone. Nie oznacza pokrycia wszystkich notowań.
+- M02–M05 lokalny adapter/search/EOD/job/UI: DONE. 4 tabele CREATE-only,5 nowych API (33 razem), jawny mapping/source, lossless close, trwały limit60/miesiąc i daily/manual idempotency, owner-only cache15min, debounce600ms. Lokalnie włączone; stare instrumenty bez automatycznych mapowań.157 unit/65 integration/6 E2E, build/typecheck/OpenAPI/noUnused PASS. Szczegóły i ograniczenia w docs/MARKETSTACK-VERIFICATION.md.
+- Publiczne Marketstack: BLOCKED do potwierdzenia licencji SaaS/cache/retencji; konfiguracja odrzuca ENABLED w production/test. Plan konta i SLA publikacji nieustalone, bez zakupu i publicznego deploymentu.19UTC to sprawdzenie ostatniej udostępnionej sesji, nie obietnica dzisiejszych cen.
+- I01/I03 pozostają następnymi zadaniami podstawowego backlogu; import XTB nadal wymaga próbki.
+- Dostępność M05: DONE — zakładka „Ceny dzienne” i bezpośredni #market-data, przejście z innych ekranów oraz reload z przewinięciem/focusem. Typecheck/build frontend/rozszerzony E2E PASS (18.11.2026).
+- M05 doprecyzowanie lokalizacji (19.11.2026): DONE — wyszukiwanie/dodawanie/łączenie w „Uzupełnij swój portfel → Instrument”; ceny dzienne pozostają do zarządzania źródłami. Bez duplikowania wyszukiwarki, ręczny formularz zachowany, bez zmian API/DB/finansów.
+
+
+## I01/I03 — ogólny CSV end to end,19.11.2026
+DONE: Import CSV/#imports, plik do5MiB, parser stanowy z cytowaniem i nowymi liniami, jawne UTF-8/Windows-1250 i separatory, mapowanie kolumn, numery rekordów/linii, surowe dane i znormalizowane propozycje z błędami. Nowy owner-scoped endpoint wyłącznie READ ONLY; plik/preview bez retencji, canCommit zawsze false. Bez nowych zależności, migracji i zmian finansów. Weryfikacja kwot/FX/daty/instrumentu, brak maskowania braków, powtarzające się rekordy zachowane. Commit/receipts/saldo/oversell nie są częścią tego etapu. XTB nadal SAMPLE_REQUIRED; potrzebna zanonimizowana próbka rzeczywistego formatu CSV/XLSX.
+
+Kontrole I01/I03 ukończone19.11.2026:176 unit/70 integration/7 E2E, typecheck/build/OpenAPI/noUnused/diff-check PASS. W regresji poprawiono Home/End w historii gotówki bez zmiany danych. Nie uruchamiano nowego CI ani importu na bazie użytkownika.
+
+19.11.2026 — prywatne dane demonstracyjne na podstawie zdjęcia wczytane po wyraźnie zleconym resecie portfela i backup/restore drill. Dane/CSV/manifesty poza Git, konto i budżet dostawcy zachowane. To operacja administracyjna, bez zmiany statusu I04/I05 i bez publicznej obsługi commit.

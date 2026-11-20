@@ -82,3 +82,14 @@ describe('P04 valuation completeness and P/L', () => {
     expect(() => value({ fxRates: [{ ...fx, rate: '0' }] })).toThrow();
   });
 });
+
+it('keeps Marketstack EOD subject to identical FX/freshness and immutable-cost rules', () => {
+  const automatic = { ...quote, source: 'marketstack' as const };
+  const result = value({ quotes: [automatic] });
+  expect(result.totalValue).toBe('87.15'); expect(result.positions[0]?.remainingCostBase).toBe('42');
+  expect(result.positions[0]?.quote?.source).toBe('marketstack');
+  const missingFx = value({ quotes: [automatic], fxRates: [] });
+  expect(missingFx.totalValue).toBeNull(); expect(missingFx.positions[0]?.issues).toContain('MISSING_FX');
+  const stale = value({ quotes: [{ ...automatic, asOf: '2020-01-01T00:00:00Z' }] });
+  expect(stale.totalValue).toBeNull(); expect(stale.positions[0]?.issues).toContain('STALE_QUOTE');
+});

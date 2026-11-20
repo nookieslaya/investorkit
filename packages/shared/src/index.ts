@@ -81,7 +81,7 @@ export const valuationQuerySchema = z.object({ asOf: z.iso.datetime().optional()
 export const valuationTimeSchema = z.iso.datetime();
 const computedDecimalSchema = z.string().regex(/^-?(0|[1-9]\d*)(\.\d+)?$(?![\s\S])/);
 export const valuationIssueSchema = z.enum(['MISSING_QUOTE', 'STALE_QUOTE', 'FUTURE_QUOTE', 'MISSING_FX', 'STALE_FX', 'FUTURE_FX']);
-export const valuationQuoteSchema = quoteInputSchema.extend({ source: z.enum(['manual', 'scenario']) });
+export const valuationQuoteSchema = quoteInputSchema.extend({ source: z.enum(['manual', 'scenario', 'marketstack']) });
 const quoteUsedSchema = valuationQuoteSchema.omit({ currency: true });
 const fxUsedSchema = z.object({ rate: fxRateSchema, asOf: z.iso.datetime().nullable(), source: z.enum(['manual', 'identity']) });
 export const valuationSchema = z.object({
@@ -196,3 +196,75 @@ export const portfolioHistorySchema = z.object({
 export type Snapshot = z.infer<typeof snapshotSchema>;
 export type SnapshotSummary = z.infer<typeof snapshotSummarySchema>;
 export type PortfolioHistoryQuery = z.infer<typeof portfolioHistoryQuerySchema>;
+
+// Marketstack EOD: new operations; manual quote input remains unchanged.
+export const marketSearchInputSchema = z.object({ query: z.string().trim().min(3).max(80), mic: z.string().regex(/^[A-Z0-9]{4}$/) }).strict();
+export const marketCandidateSchema = z.object({
+  id: z.uuid(), symbol: z.string(), name: z.string(), mic: z.string(), currency: currencySchema,
+  type: z.enum(['STOCK', 'ETF']).nullable(), hasEod: z.literal(true),
+});
+export const marketSearchSchema = z.object({ items: z.array(marketCandidateSchema).max(3), partial: z.boolean(), cached: z.boolean() });
+export const marketBindingInputSchema = z.object({ selectionId: z.uuid() }).strict();
+export const marketModeInputSchema = z.object({ mode: z.enum(['manual', 'marketstack']) }).strict();
+export const marketStateSchema = z.object({
+  instrumentId: z.uuid(), symbol: z.string(), mic: z.string(), currency: currencySchema,
+  mode: z.enum(['manual', 'marketstack']), lastAttemptAt: z.iso.datetime().nullable(), status: z.string(),
+  quote: z.object({ price: decimalSchema, sessionDate: z.string(), asOf: z.iso.datetime(), fetchedAt: z.iso.datetime() }).nullable(),
+});
+export const marketStatesSchema = z.object({ enabled: z.boolean(), used: z.number().int(), limit: z.number().int(), items: z.array(marketStateSchema) });
+
+// I01/I03: transient generic CSV preview. This is not a broker adapter or a commit contract.
+export const CSV_LIMITS = Object.freeze({ bytes: 5 * 1024 * 1024, rows: 10000, columns: 64, fieldChars: 16384 });
+export const CSV_FIELDS = ['kind', 'occurredAt', 'currency', 'amount', 'symbol', 'mic', 'quantity', 'unitPrice', 'commission', 'commissionCurrency', 'fxToBase', 'fxAsOf', 'note', 'sourceId'] as const;
+export const csvFieldSchema = z.enum(CSV_FIELDS);
+const csvColumn = z.number().int().min(0).max(CSV_LIMITS.columns - 1).optional();
+export const csvMappingSchema = z.object({ kind: csvColumn, occurredAt: csvColumn, currency: csvColumn, amount: csvColumn,
+  symbol: csvColumn, mic: csvColumn, quantity: csvColumn, unitPrice: csvColumn, commission: csvColumn,
+  commissionCurrency: csvColumn, fxToBase: csvColumn, fxAsOf: csvColumn, note: csvColumn, sourceId: csvColumn }).strict();
+export const csvPreviewInputSchema = z.object({
+  fileName: z.string().min(1).max(160).refine(value => !/[\\/\u0000-\u001f]/.test(value)),
+  contentBase64: z.string().min(4).max(4 * Math.ceil(CSV_LIMITS.bytes / 3)).regex(/^[A-Za-z0-9+/]+={0,2}$/).refine(value => value.length % 4 === 0),
+  adapterId: z.enum(['generic-csv', 'xtb-verified']).default('generic-csv'),
+  encoding: z.enum(['utf-8', 'windows-1250']), delimiter: z.enum([',', ';', '\t']),
+  decimalSeparator: z.enum(['.', ',']), mapping: csvMappingSchema,
+}).strict();
+export const csvRowIssueSchema = z.object({ field: csvFieldSchema.nullable(), code: z.enum([
+  'REQUIRED', 'INVALID_KIND', 'INVALID_DECIMAL', 'INVALID_DATE', 'FUTURE_DATE', 'UNKNOWN_INSTRUMENT',
+  'AMBIGUOUS_INSTRUMENT', 'CURRENCY_MISMATCH', 'COLUMN_COUNT', 'INVALID_VALUE', 'FX_AFTER_OPERATION',
+]), message: z.string().max(200) });
+export const csvPreviewSchema = z.object({
+  detection: z.enum(['needs_mapping', 'supported']), canCommit: z.literal(false), blockedReason: z.literal('PREVIEW_ONLY'),
+  adapterId: z.literal('generic-csv'), adapterVersion: z.literal('1'),
+  fileName: z.string(), fileSha256: z.string().regex(/^[a-f0-9]{64}$/), byteLength: z.number().int().min(1).max(CSV_LIMITS.bytes),
+  encoding: z.enum(['utf-8', 'windows-1250']), delimiter: z.enum([',', ';', '\t']), decimalSeparator: z.enum(['.', ',']),
+  checkedAt: z.iso.datetime(), mapping: csvMappingSchema,
+  columns: z.array(z.object({ index: z.number().int().min(0).max(63), name: z.string().min(1).max(120) })).min(1).max(CSV_LIMITS.columns),
+  counts: z.object({ total: z.number().int().min(0).max(CSV_LIMITS.rows), blank: z.number().int().nonnegative(),
+    valid: z.number().int().nonnegative().nullable(), invalid: z.number().int().nonnegative().nullable() }),
+  rows: z.array(z.object({ rowNumber: z.number().int().min(1), lineNumber: z.number().int().min(1),
+    cells: z.array(z.string().max(CSV_LIMITS.fieldChars)).max(CSV_LIMITS.columns), sourceId: z.string().max(128).nullable(),
+    operation: ledgerOperationSchema.nullable(), issues: z.array(csvRowIssueSchema),
+  })).max(CSV_LIMITS.rows),
+});
+export type CsvField = z.infer<typeof csvFieldSchema>;
+export type CsvMapping = z.infer<typeof csvMappingSchema>;
+export type CsvPreviewInput = z.infer<typeof csvPreviewInputSchema>;
+export type CsvPreview = z.infer<typeof csvPreviewSchema>;
+export const CSV_FIELD_LABELS: Readonly<Record<CsvField, string>> = Object.freeze({
+  kind: 'Rodzaj operacji', occurredAt: 'Data i godzina operacji', currency: 'Waluta', amount: 'Kwota wpłaty lub wypłaty',
+  symbol: 'Symbol instrumentu', mic: 'Giełda (MIC)', quantity: 'Ilość', unitPrice: 'Cena za jednostkę', commission: 'Prowizja',
+  commissionCurrency: 'Waluta prowizji', fxToBase: 'Historyczny kurs PLN za 1 jednostkę waluty', fxAsOf: 'Data i godzina historycznego kursu',
+  note: 'Notatka', sourceId: 'Identyfikator źródłowy',
+});
+
+export const csvDetectionSchema = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('supported') }),
+  z.object({ status: z.literal('needsMapping') }),
+  z.object({ status: z.literal('unsupported'), reason: z.enum(['SAMPLE_REQUIRED', 'CSV_FILE_LIMIT', 'CSV_EMPTY', 'CSV_UNSUPPORTED_FILE']) }),
+]);
+export type CsvDetection = z.infer<typeof csvDetectionSchema>;
+export interface CsvParserAdapter {
+  readonly id: string; readonly version: string; readonly previewOnly: true;
+  detect(bytes: Uint8Array, metadata: { fileName: string; adapterId: 'generic-csv' | 'xtb-verified' }): CsvDetection;
+  preview(input: CsvPreviewInput, instruments: readonly Instrument[], asOf: string): CsvPreview;
+}

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { and, asc, eq } from 'drizzle-orm';
-import { cashOperations, portfolios, instruments, manualQuotes, fxRates } from '@investorkit/db';
+import { cashOperations, portfolios, instruments, manualQuotes, fxRates, marketBindings, marketQuotes } from '@investorkit/db';
 import type { Database } from '@investorkit/db';
 import { cashOperationSchema, ledgerOperationSchema, operationSchema, valuationSchema, simulationSchema, riskSchema, stressSchema } from '@investorkit/shared';
 import type { CashOperationInput, LedgerOperation, SimulationInput, StressInput } from '@investorkit/shared';
@@ -29,6 +29,12 @@ export async function readMarketSnapshot(executor: ReadDb, ownerId: string, id: 
   const rows = await ownedLedgerRows(executor, ownerId, id);
   const metadata = await executor.select().from(instruments).where(eq(instruments.ownerId, ownerId)).orderBy(asc(instruments.createdAt), asc(instruments.id));
   const quotes = await executor.select().from(manualQuotes).where(eq(manualQuotes.ownerId, ownerId)).orderBy(asc(manualQuotes.sequence));
+  const bindings = await executor.select().from(marketBindings).where(eq(marketBindings.ownerId, ownerId));
+  const automatic = await executor.select().from(marketQuotes).where(eq(marketQuotes.ownerId, ownerId)).orderBy(asc(marketQuotes.asOf), asc(marketQuotes.fetchedAt), asc(marketQuotes.id));
+  const selectedQuotes = [
+    ...quotes.filter(row => !bindings.some(binding => binding.instrumentId === row.instrumentId && binding.mode === 'marketstack')).map(quoteDto),
+    ...automatic.filter(row => bindings.some(binding => binding.instrumentId === row.instrumentId && binding.mode === 'marketstack' && binding.symbol === row.symbol && binding.mic === row.mic)).map(row => ({ instrumentId: row.instrumentId, currency: row.currency, price: row.price, asOf: row.asOf.toISOString(), source: 'marketstack' as const })),
+  ];
   const rates = await executor.select().from(fxRates).where(eq(fxRates.ownerId, ownerId)).orderBy(asc(fxRates.sequence));
   const settings = await readRiskSettings(executor, ownerId, id);
   const hydrate = (result: ReturnType<typeof valuePortfolio>) => valuationSchema.parse({ ...result, positions: result.positions.map(position => {
@@ -36,7 +42,7 @@ export async function readMarketSnapshot(executor: ReadDb, ownerId: string, id: 
     if (!instrument) throw new Error('Missing position metadata');
     return { ...position, name: instrument.name, symbol: instrument.symbol };
   }) });
-  return { metadata, hydrate, settings, context: { quoteMaxAgeHours: settings.quoteMaxAgeHours, fxMaxAgeHours: settings.fxMaxAgeHours, instruments: engineInstruments(metadata), operations: rows.map(operationInput), quotes: quotes.map(quoteDto), fxRates: rates.map(fxDto), asOf } };
+  return { metadata, hydrate, settings, context: { quoteMaxAgeHours: settings.quoteMaxAgeHours, fxMaxAgeHours: settings.fxMaxAgeHours, instruments: engineInstruments(metadata), operations: rows.map(operationInput), quotes: selectedQuotes, fxRates: rates.map(fxDto), asOf } };
 }
 
 export function cashRepository(db: Database) {

@@ -5,8 +5,9 @@
 - Semantyka finansowa: docs/04-calculations.md. Kontrakty: docs/05-api.md. Pełny zakres: docs/INVESTORKIT-MVP.md.
 - Realizuj małe zadanie z backlogu. Nie generuj całego systemu w jednej zmianie.
 - Oddziel specyfikację docelową od istniejącego kodu. Nie opisuj szkicu ani kontraktu jako działającej integracji.
-- P07 zakończone: regresje przekrojowe i golden1–7, patrz docs/04-calculations.md. A08 zakończone: prywatny dziennik (#journal), If-Match/revision; A09 zakończone: rzeczywiste wyceny zapisane ręcznie, jawne luki; następny I01 (kontrakt parsera), potem I03, adapter XTB nadal wymaga próbki.
-- portfolio-engine zawiera P01–P06: decimal, wspólny replay BUY/SELL/wpłat/wypłat, historyczny koszt PLN i wycenę z diagnostyką oraz symulator i testy spadków bez zapisów, koncentrację i grupy z UNKNOWN. API/UI obsługują instrumenty, transakcje, ręczne ceny/FX i dashboard. Import/AI pozostają niewdrożone; report-engine jest szkieletem.
+- P07 zakończone: regresje przekrojowe i golden1–7, patrz docs/04-calculations.md. A08 zakończone: prywatny dziennik (#journal), If-Match/revision; A09 zakończone: rzeczywiste wyceny zapisane ręcznie, jawne luki; I01/I03 ukończone: ogólny podgląd CSV bez zapisu. Następne I02 (próbka), I04 (adapter), I05 (commit/receipts); XTB nadal SAMPLE_REQUIRED.
+- Marketstack lokalnie: adapter/search/EOD/job i jawne mapowania działają; docs/MARKETSTACK-VERIFICATION.md. Klucz wyłącznie backendowy, NODE_ENV=development, default OFF; production/test nie mogą włączyć dostawcy. Limit trwały60/miesiąc, prywatny cache15min, daily/manual jedna próba/dzieńUTC. Nie mapuj starych tickerów automatycznie, nie traktuj Commercial Use jako zgody SaaS. Publiczne uruchomienie nadal BLOCKED licencją.
+- portfolio-engine zawiera P01–P06: decimal, wspólny replay BUY/SELL/wpłat/wypłat, historyczny koszt PLN i wycenę z diagnostyką oraz symulator i testy spadków bez zapisów, koncentrację i grupy z UNKNOWN. API/UI obsługują instrumenty, transakcje, ręczne ceny/FX i dashboard. Działa wyłącznie podgląd CSV (I01/I03); zapis importu i AI pozostają niewdrożone; report-engine jest szkieletem.
 - Historyczna nazwa tabeli cash_operations obejmuje już wszystkie cztery typy operacji. Nie twórz drugiego niezależnego ledgeru ani salda.
 
 ## Granice architektury
@@ -45,10 +46,12 @@
 - npm run test:integration wymaga TEST_DATABASE_URL: dedykowana, migrowana baza jednorazowa. Nigdy baza produkcyjna.
 - npm run test:e2e wymaga Chromium i TEST_DATABASE_URL. Nie używa istniejących serwerów; lokalnie E2E_WEB_PORT=5174 E2E_API_PORT=3002; projekt dziennika/historii ma osobne instancje5175/3003 (domyślnie porty+1), by nie zatrzymywać aplikacji użytkownika. Test tworzy konta w dedykowanej bazie.
 - Matematyka: golden cases i granice z dokumentacji, w tym SELL częściowy, fees, FX, ułamki, zero i brak wyceny.
-- Import: powtórny i równoległy import, nakładające się eksporty, identyczne legalne transakcje.
+- CSV preview: READ ONLY, bez retencji/commit, jawne kodowanie/separatory/mapowanie, limity5MiB/10000/64/16384, decimal strings i daty ze strefą. Zmiana ustawień kasuje wynik, spóźnione odpowiedzi są ignorowane. Nie traktuj podglądu jako potwierdzenia salda ani wykrycia duplikatów.
+- Import z zapisem (I05): powtórny i równoległy import, nakładające się eksporty, identyczne legalne transakcje.
 - Nie usuwaj testu, by ukryć błąd; nie deklaruj testów jako wykonanych, jeśli środowisko je blokuje.
 - Migracje generuj i przeglądaj. Bez schema push w produkcji.
 - Po etapie aktualizuj README, backlog, HANDOFF i VERIFICATION; zapisuj ograniczenia.
+- Na życzenie właściciela po ukończonym i zweryfikowanym etapie wykonuj commit oraz push do origin; nie pozostawiaj gotowych zmian wyłącznie lokalnie. Przed publikacją sprawdź diff i wyklucz sekrety, prywatne pliki oraz dane użytkownika. Podaj hash commita i rzeczywisty status CI.
 
 ## Ograniczenia zakresu
 - Bez płatności i pełnego automatycznego pobierania raportów na pierwszym etapie.

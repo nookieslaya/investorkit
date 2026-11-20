@@ -60,7 +60,13 @@ export function CashOverview({ portfolioId }: { portfolioId: string }) {
         </fieldset></form>
       </section>
       <section className="panel cash-history" aria-labelledby="history-title"><div className="cash-section-heading"><div><span className="eyebrow">TWOJE PRZEPŁYWY</span><h2 id="history-title">Historia gotówki</h2></div><History size={22} /></div>
-        {history.isPending ? <p role="status">Pobieranie historii…</p> : history.isError ? <p role="alert" className="error">{history.error.message} <button onClick={() => void history.refetch()}>Spróbuj ponownie</button></p> : history.data.items.length === 0 ? <div className="cash-empty"><Wallet size={35} /><h3>Zacznij od pierwszej wpłaty</h3><p>Zapisane operacje pojawią się tutaj. Salda wynikają z Twojej historii.</p></div> : <ul className="cash-list" tabIndex={0} aria-label="Operacje gotówkowe — przewijana historia">{history.data.items.map(item => <li key={item.id}>
+        {history.isPending ? <p role="status">Pobieranie historii…</p> : history.isError ? <p role="alert" className="error">{history.error.message} <button onClick={() => void history.refetch()}>Spróbuj ponownie</button></p> : history.data.items.length === 0 ? <div className="cash-empty"><Wallet size={35} /><h3>Zacznij od pierwszej wpłaty</h3><p>Zapisane operacje pojawią się tutaj. Salda wynikają z Twojej historii.</p></div> : <ul className="cash-list" tabIndex={0} aria-label="Operacje gotówkowe — przewijana historia" onKeyDown={event => {
+          if (event.target !== event.currentTarget || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+          if (event.key === 'Home' || event.key === 'End') {
+            event.preventDefault();
+            event.currentTarget.scrollTop = event.key === 'Home' ? 0 : event.currentTarget.scrollHeight;
+          }
+        }}>{history.data.items.map(item => <li key={item.id}>
           <span className={`cash-direction ${item.kind === 'DEPOSIT' ? 'deposit' : ''}`}>{item.kind === 'DEPOSIT' ? <ArrowDownLeft size={19} /> : <ArrowUpRight size={19} />}</span>
           <div><strong>{item.kind === 'DEPOSIT' ? 'Wpłata' : 'Wypłata'} {item.currency}</strong><small>{new Intl.DateTimeFormat('pl-PL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Warsaw' }).format(new Date(item.occurredAt))}</small>{item.note && <p>{item.note}</p>}<small>Kurs: {formatAmount(item.fxToBase)} PLN · wpis ręczny</small>{item.currency !== 'PLN' && <small>Kurs z {new Intl.DateTimeFormat('pl-PL', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Warsaw' }).format(new Date(item.fxAsOf))}</small>}</div>
           <strong className="cash-row-amount">{item.kind === 'DEPOSIT' ? '+' : '−'}{formatAmount(item.amount)} <small>{item.currency}</small></strong>

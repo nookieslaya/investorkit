@@ -1,6 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
-import { snapshotSchema, portfolioHistorySchema, journalListSchema, journalEntrySchema, journalDeletedSchema, portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema, riskSchema, riskSettingsSchema, stressSchema } from '@investorkit/shared';
-import type { PortfolioHistoryQuery, JournalInput, CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput, RiskSettingsInput, StressInput } from '@investorkit/shared';
+import { csvPreviewSchema, marketStatesSchema, marketSearchSchema, marketStateSchema, snapshotSchema, portfolioHistorySchema, journalListSchema, journalEntrySchema, journalDeletedSchema, portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema, riskSchema, riskSettingsSchema, stressSchema } from '@investorkit/shared';
+import type { CsvPreviewInput, PortfolioHistoryQuery, JournalInput, CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput, RiskSettingsInput, StressInput } from '@investorkit/shared';
 export const auth = createAuthClient();
 export class ApiRequestError extends Error {
   constructor(message: string, readonly code: string, readonly status: number) { super(message); }
@@ -68,3 +68,15 @@ export async function captureValuation(id: string) {
   return snapshotSchema.parse(await request(`/portfolios/${id}/snapshots`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }));
 }
 export async function loadValuationSnapshot(id: string) { return snapshotSchema.parse(await request(`/valuation-snapshots/${id}`)); }
+
+export async function loadMarketStates() { return marketStatesSchema.parse(await request('/market')); }
+export async function searchMarket(query: string, mic: string) { return marketSearchSchema.parse(await request('/market/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query, mic }) })); }
+export async function bindMarket(id: string, selectionId: string) { return marketStateSchema.parse(await request(`/instruments/${id}/market-binding`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ selectionId }) })); }
+export async function chooseMarketSource(id: string, mode: 'manual' | 'marketstack') { return marketStateSchema.parse(await request(`/instruments/${id}/market-binding`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) })); }
+export async function refreshMarket(id: string) { return marketStateSchema.parse(await request(`/instruments/${id}/market-refresh`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })); }
+
+export async function previewCsvFile(id: string, input: CsvPreviewInput, signal: AbortSignal) {
+  return csvPreviewSchema.parse(await request(`/portfolios/${id}/imports/csv-preview`, {
+    method: 'POST', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+  }));
+}

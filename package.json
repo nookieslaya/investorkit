@@ -22,7 +22,8 @@
     "db:migrate": "npm run migrate -w @investorkit/db",
     "setup:env": "node scripts/init-env.mjs",
     "openapi:generate": "node --import tsx scripts/generate-openapi.mts",
-    "openapi:check": "node --import tsx scripts/generate-openapi.mts --check"
+    "openapi:check": "node --import tsx scripts/generate-openapi.mts --check",
+    "marketstack:diagnose": "node --env-file=.env --import tsx scripts/marketstack-diagnostic.mts"
   },
   "devDependencies": {
     "typescript": "7.0.2",

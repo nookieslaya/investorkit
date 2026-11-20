@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  snapshotInputSchema, snapshotSchema, portfolioHistorySchema, portfolioHistoryQuerySchema, journalInputSchema, journalEntrySchema, journalListSchema, journalDeletedSchema, apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
+  csvPreviewInputSchema, csvPreviewSchema, marketSearchInputSchema, marketSearchSchema, marketStatesSchema, marketStateSchema, marketBindingInputSchema, marketModeInputSchema, snapshotInputSchema, snapshotSchema, portfolioHistorySchema, portfolioHistoryQuerySchema, journalInputSchema, journalEntrySchema, journalListSchema, journalDeletedSchema, apiErrorSchema, createPortfolioSchema, portfolioSchema, portfoliosSchema,
   portfolioIdParamsSchema, healthSchema, unavailableSchema, cashSummarySchema, cashHistorySchema, cashOperationInputSchema, cashOperationSchema, instrumentsSchema, createInstrumentSchema, instrumentSchema, quoteInputSchema, quoteSchema, quotesSchema, fxInputSchema, fxSchema, ledgerOperationSchema, operationSchema, operationHistorySchema, valuationSchema, valuationTimeSchema, simulationInputSchema, simulationSchema, riskSettingsInputSchema, riskSettingsSchema, riskSchema, stressInputSchema, stressSchema,
 } from '@investorkit/shared';
 
@@ -23,6 +23,15 @@ const protectedErrors = { ...commonErrors, 401: error('Brak ważnej sesji.') };
 
 // Only implemented first-party operations. Better Auth owns /api/auth/* contracts.
 export const apiContracts: Record<string, Partial<Record<'get' | 'post' | 'patch' | 'delete', OperationContract>>> = {
+  '/api/v1/portfolios/{id}/imports/csv-preview': { post: { operationId: 'csvPreview', summary: 'Odczytaj i zmapuj ogólny CSV do5MiB/10000 wierszy, bez zapisu pliku lub operacji. XTB wymaga próbki.', authenticated: true, params: portfolioIdParamsSchema, body: csvPreviewInputSchema,
+    responses: { 200: { description: 'Surowe wiersze, diagnostyka i propozycje operacji; canCommit zawsze false.', schema: csvPreviewSchema }, ...protectedErrors, 400: error('UUID/body/base64/mapowanie.'), 403: error('Origin.'), 404: error('Brak portfela.'), 413: error('Limit body8MiB (base64 pliku do5MiB).'), 415: error('Content-Type.'), 422: error('Format, kodowanie, quoting, nagłówki lub limit CSV; XTB SAMPLE_REQUIRED.') } } },
+  '/api/v1/market': { get: { operationId: 'marketStates', summary: 'Źródła EOD, daty prób i lokalny budżet dostawcy.', authenticated: true, responses: { 200: { description: 'Własne mapowania i stan.', schema: marketStatesSchema }, ...protectedErrors, 503: error('Integracja wyłączona.') } } },
+  '/api/v1/market/search': { post: { operationId: 'marketSearch', summary: 'Szukaj nazw/tickerów na wybranym MIC; do3 wyników z walutą potwierdzoną EOD, prywatny cache15min.', authenticated: true, body: marketSearchInputSchema, responses: { 200: { description: 'Potwierdzone wyniki lub częściowe wyniki.', schema: marketSearchSchema }, ...protectedErrors, 400: error('Body.'), 403: error('Origin.'), 503: error('Brak danych lub budżetu dostawcy.') } } },
+  '/api/v1/instruments/{id}/market-binding': {
+    post: { operationId: 'bindMarket', summary: 'Jawnie połącz własny instrument z wybranym wynikiem i wybierz EOD; bez automatycznego łączenia tickerów.', authenticated: true, params: portfolioIdParamsSchema, body: marketBindingInputSchema, responses: { 200: { description: 'Źródło EOD.', schema: marketStateSchema }, ...protectedErrors, 400: error('Body.'), 403: error('Origin.'), 404: error('Brak instrumentu.'), 409: error('Inne mapowanie już istnieje.'), 422: error('Wybór wygasł lub giełda/waluta nie pasuje.'), 503: error('Integracja wyłączona.') } },
+    patch: { operationId: 'chooseMarketSource', summary: 'Jawnie wybierz ręczne ceny lub zapisane EOD.', authenticated: true, params: portfolioIdParamsSchema, body: marketModeInputSchema, responses: { 200: { description: 'Wybrane źródło.', schema: marketStateSchema }, ...protectedErrors, 400: error('Body.'), 403: error('Origin.'), 404: error('Brak mapowania.'), 503: error('Integracja wyłączona.') } },
+  },
+  '/api/v1/instruments/{id}/market-refresh': { post: { operationId: 'refreshMarket', summary: 'Aktualizuj EOD maksymalnie raz na dzień UTC, zachowując ostatnią poprawną cenę przy błędzie.', authenticated: true, params: portfolioIdParamsSchema, body: snapshotInputSchema, responses: { 200: { description: 'Ostatnia cena i oddzielny status próby.', schema: marketStateSchema }, ...protectedErrors, 400: error('Body.'), 403: error('Origin.'), 404: error('Brak mapowania.'), 422: error('Źródło ręczne.'), 503: error('Integracja wyłączona.') } } },
   '/api/v1/portfolios/{id}/history': { get: { operationId: 'portfolioHistory', summary: 'Zapisane wyceny i oznaczone przykłady DEMO; luki obejmują brak rzeczywistych zapisów, bez interpolacji.', authenticated: true, params: portfolioIdParamsSchema, historyQuery: true,
     responses: { 200: { description: 'Zapisy i jawne dni bez snapshotu (czas polski).', schema: portfolioHistorySchema }, ...protectedErrors, 400: error('UUID/query.'), 404: error('Brak portfela.'), 422: error('Zakres dłuższy niż366 dni, odwrócony lub przyszły.') } } },
   '/api/v1/portfolios/{id}/snapshots': { post: { operationId: 'captureValuation', summary: 'Zapisz obecną wycenę serwera (także niepełną), bez zmiany finansów i bez datowania wstecz.', authenticated: true, params: portfolioIdParamsSchema, body: snapshotInputSchema,
@@ -117,6 +126,13 @@ export const apiContracts: Record<string, Partial<Record<'get' | 'post' | 'patch
 const jsonSchema = (schema: z.ZodType, io: 'input' | 'output') => z.toJSONSchema(schema, {
   target: 'openapi-3.0', io,
   override: ({ jsonSchema: converted }) => {
+    // OAS3 requires a type beside nullable. Nullable unions need a distinct null-only branch.
+    if (converted.nullable === true && converted.type === undefined) {
+      for (const union of ['oneOf', 'anyOf'] as const) if (Array.isArray(converted[union])) {
+        converted[union] = [...converted[union], { type: 'object', nullable: true, enum: [null] }];
+        delete converted.nullable;
+      }
+    }
     // In OAS3 nullable widens type, but enum must independently admit null.
     if (converted.nullable === true && Array.isArray(converted.enum) && !converted.enum.includes(null)) converted.enum = [...converted.enum, null];
   },

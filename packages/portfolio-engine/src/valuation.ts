@@ -4,7 +4,7 @@ import { FinancialDecimal, parseAmount } from './decimal.js';
 import { PORTFOLIO_ENGINE_VERSION } from './version.js';
 import { replayLedgerState } from './ledger.js';
 
-type Quote = { instrumentId: string; price: string; currency: Currency; asOf: string; source: 'manual' | 'scenario' };
+type Quote = { instrumentId: string; price: string; currency: Currency; asOf: string; source: 'manual' | 'scenario' | 'marketstack' };
 type Rate = { currency: Currency; baseCurrency: 'PLN'; rate: string; asOf: string; source: 'manual' };
 type Issue = 'MISSING_QUOTE' | 'STALE_QUOTE' | 'FUTURE_QUOTE' | 'MISSING_FX' | 'STALE_FX' | 'FUTURE_FX';
 type UsedFx = { rate: string; asOf: string | null; source: 'manual' | 'identity' };

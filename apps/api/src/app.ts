@@ -3,14 +3,15 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { fromNodeHeaders } from 'better-auth/node';
 import { z, ZodError } from 'zod';
-import { snapshotInputSchema, portfolioHistoryQuerySchema, journalInputSchema, createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema, stressInputSchema, riskSettingsInputSchema } from '@investorkit/shared';
+import { csvPreviewInputSchema, marketSearchInputSchema, marketBindingInputSchema, marketModeInputSchema, snapshotInputSchema, portfolioHistoryQuerySchema, journalInputSchema, createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema, stressInputSchema, riskSettingsInputSchema } from '@investorkit/shared';
 import { CashApiError } from './cash-repository.js';
 import { LedgerDomainError, DecimalDomainError, PositionDomainError, ValuationDomainError, SimulationDomainError, RiskDomainError } from '@investorkit/portfolio-engine';
 import { buildOpenApiDocument } from './openapi.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
 import type { portfolioRepository } from './portfolio-repository.js';
-interface Services { auth: Auth; portfolios: ReturnType<typeof portfolioRepository>; ready: () => Promise<void> }
+import type { MarketDataService } from './market-data-service.js';
+interface Services { market?: MarketDataService; auth: Auth; portfolios: ReturnType<typeof portfolioRepository>; ready: () => Promise<void> }
 export async function buildApp(config: Config, services: Services, logging = true) {
   const app = Fastify({
     logger: logging ? { redact: ['req.headers.cookie', 'req.headers.authorization', 'res.headers["set-cookie"]'] } : false,
@@ -79,6 +80,10 @@ export async function buildApp(config: Config, services: Services, logging = tru
       if (!session) return reply.code(401).send(fail('UNAUTHENTICATED', 'Zaloguj się.', req.id));
       req.ownerId = session.user.id;
     });
+    scoped.post('/portfolios/:id/imports/csv-preview', { bodyLimit: 8 * 1024 * 1024, config: { rateLimit: { max: 10, timeWindow: 60000 } } }, async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return services.portfolios.csvPreview(req.ownerId, id, csvPreviewInputSchema.parse(req.body));
+    });
     scoped.get('/portfolios/:id/history', async req => {
       const { id } = portfolioIdParamsSchema.parse(req.params);
       return services.portfolios.portfolioHistory(req.ownerId, id, portfolioHistoryQuerySchema.parse(req.query));
@@ -110,6 +115,28 @@ export async function buildApp(config: Config, services: Services, logging = tru
       if ('revision' in result) reply.header('ETag', `"${result.revision}"`);
       return result;
     } });
+    const market = () => {
+      if (!services.market) throw new CashApiError(503, 'MARKET_UNAVAILABLE', 'Automatyczne dane są wyłączone.');
+      return services.market;
+    };
+    scoped.get('/market', async req => market().states(req.ownerId));
+    scoped.post('/market/search', async req => {
+      const input = marketSearchInputSchema.parse(req.body);
+      return market().search(req.ownerId, input.query, input.mic);
+    });
+    scoped.post('/instruments/:id/market-binding', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return market().bind(req.ownerId, id, marketBindingInputSchema.parse(req.body).selectionId);
+    });
+    scoped.patch('/instruments/:id/market-binding', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return market().mode(req.ownerId, id, marketModeInputSchema.parse(req.body).mode);
+    });
+    scoped.post('/instruments/:id/market-refresh', async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      snapshotInputSchema.parse(req.body);
+      return market().refresh(req.ownerId, id);
+    });
     scoped.get('/instruments', async req => services.portfolios.listInstruments(req.ownerId));
     scoped.post('/instruments', async (req, reply) => reply.code(201).send(await services.portfolios.createInstrument(req.ownerId, createInstrumentSchema.parse(req.body))));
     scoped.get('/instruments/:id/quotes', async req => {
