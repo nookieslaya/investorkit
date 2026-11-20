@@ -22,8 +22,8 @@ export default defineConfig({
   use: { baseURL: origin, trace: 'retain-on-failure', launchOptions: process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {} },
   // Journal and snapshot history share their own servers: parallel signup/CRUD must not consume the other suite's rate limit.
   projects: [
-    { name: 'csv-chromium', testMatch: '**/csv-import.spec.ts', use: { ...devices['Desktop Chrome'], baseURL: csvOrigin, locale: 'pl-PL', timezoneId: 'Europe/Warsaw' } },
-    { name: 'chromium', testIgnore: ['**/journal.spec.ts', '**/history.spec.ts', '**/market.spec.ts', '**/csv-import.spec.ts'], use: { ...devices['Desktop Chrome'] } },
+    { name: 'csv-chromium', testMatch: ['**/csv-import.spec.ts', '**/xtb-import.spec.ts'], use: { ...devices['Desktop Chrome'], baseURL: csvOrigin, locale: 'pl-PL', timezoneId: 'Europe/Warsaw' } },
+    { name: 'chromium', testIgnore: ['**/journal.spec.ts', '**/history.spec.ts', '**/market.spec.ts', '**/csv-import.spec.ts', '**/xtb-import.spec.ts'], use: { ...devices['Desktop Chrome'] } },
     { name: 'journal-chromium', testMatch: ['**/journal.spec.ts', '**/history.spec.ts', '**/market.spec.ts'], use: { ...devices['Desktop Chrome'], baseURL: journalOrigin, locale: 'pl-PL', timezoneId: 'Europe/Warsaw' } },
   ],
   webServer: [

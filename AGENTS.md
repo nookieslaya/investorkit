@@ -5,9 +5,9 @@
 - Semantyka finansowa: docs/04-calculations.md. Kontrakty: docs/05-api.md. Pełny zakres: docs/INVESTORKIT-MVP.md.
 - Realizuj małe zadanie z backlogu. Nie generuj całego systemu w jednej zmianie.
 - Oddziel specyfikację docelową od istniejącego kodu. Nie opisuj szkicu ani kontraktu jako działającej integracji.
-- P07 zakończone: regresje przekrojowe i golden1–7, patrz docs/04-calculations.md. A08 zakończone: prywatny dziennik (#journal), If-Match/revision; A09 zakończone: rzeczywiste wyceny zapisane ręcznie, jawne luki; I01/I03 ukończone: ogólny podgląd CSV bez zapisu. Następne I02 (próbka), I04 (adapter), I05 (commit/receipts); XTB nadal SAMPLE_REQUIRED.
+- P07 zakończone: regresje przekrojowe i golden1–7, patrz docs/04-calculations.md. A08 zakończone: prywatny dziennik (#journal), If-Match/revision; A09 zakończone: rzeczywiste wyceny zapisane ręcznie, jawne luki; I01/I03 ukończone: ogólny podgląd CSV bez zapisu. I02/I04 PARTIAL: działa podgląd jednego udokumentowanego angielskiego układu XLSX, opisany w docs/06-import-reports.md. Pełny xtb-verified nadal SAMPLE_REQUIRED, I05 (commit/receipts) niewdrożony.
 - Marketstack lokalnie: adapter/search/EOD/job i jawne mapowania działają; docs/MARKETSTACK-VERIFICATION.md. Klucz wyłącznie backendowy, NODE_ENV=development, default OFF; production/test nie mogą włączyć dostawcy. Limit trwały60/miesiąc, prywatny cache15min, daily/manual jedna próba/dzieńUTC. Nie mapuj starych tickerów automatycznie, nie traktuj Commercial Use jako zgody SaaS. Publiczne uruchomienie nadal BLOCKED licencją.
-- portfolio-engine zawiera P01–P06: decimal, wspólny replay BUY/SELL/wpłat/wypłat, historyczny koszt PLN i wycenę z diagnostyką oraz symulator i testy spadków bez zapisów, koncentrację i grupy z UNKNOWN. API/UI obsługują instrumenty, transakcje, ręczne ceny/FX i dashboard. Działa wyłącznie podgląd CSV (I01/I03); zapis importu i AI pozostają niewdrożone; report-engine jest szkieletem.
+- portfolio-engine zawiera P01–P06: decimal, wspólny replay BUY/SELL/wpłat/wypłat, historyczny koszt PLN i wycenę z diagnostyką oraz symulator i testy spadków bez zapisów, koncentrację i grupy z UNKNOWN. API/UI obsługują instrumenty, transakcje, ręczne ceny/FX i dashboard. Działają podglądy CSV (I01/I03) i jednego układu XLSX XTB (część I04); zapis importu i AI pozostają niewdrożone; report-engine jest szkieletem.
 - Historyczna nazwa tabeli cash_operations obejmuje już wszystkie cztery typy operacji. Nie twórz drugiego niezależnego ledgeru ani salda.
 
 ## Granice architektury
@@ -47,6 +47,7 @@
 - npm run test:e2e wymaga Chromium i TEST_DATABASE_URL. Nie używa istniejących serwerów; lokalnie E2E_WEB_PORT=5174 E2E_API_PORT=3002; projekt dziennika/historii ma osobne instancje5175/3003 (domyślnie porty+1), by nie zatrzymywać aplikacji użytkownika. Test tworzy konta w dedykowanej bazie.
 - Matematyka: golden cases i granice z dokumentacji, w tym SELL częściowy, fees, FX, ułamki, zero i brak wyceny.
 - CSV preview: READ ONLY, bez retencji/commit, jawne kodowanie/separatory/mapowanie, limity5MiB/10000/64/16384, decimal strings i daty ze strefą. Zmiana ustawień kasuje wynik, spóźnione odpowiedzi są ignorowane. Nie traktuj podglądu jako potwierdzenia salda ani wykrycia duplikatów.
+- XLSX: tylko jeden udokumentowany układ, bez retencji/normalizacji ledgeru. Limity ZIP/XML z XLSX_LIMITS, bez plików dyskowych/fetch/DTD/formuł/makr/external relationships. Nowe warianty wymagają udokumentowania i testów. Waluta i UTC jawnie potwierdzane; brak FX nie staje się1.
 - Import z zapisem (I05): powtórny i równoległy import, nakładające się eksporty, identyczne legalne transakcje.
 - Nie usuwaj testu, by ukryć błąd; nie deklaruj testów jako wykonanych, jeśli środowisko je blokuje.
 - Migracje generuj i przeglądaj. Bez schema push w produkcji.
@@ -55,7 +56,7 @@
 
 ## Ograniczenia zakresu
 - Bez płatności i pełnego automatycznego pobierania raportów na pierwszym etapie.
-- Adapter XTB zablokowany do zweryfikowania próbki eksportu. Nie zgaduj nagłówków/formatu.
+- Pełny adapter xtb-verified pozostaje zablokowany do weryfikacji rzeczywistego eksportu. Na życzenie właściciela działa osobny READ ONLY xtb-xlsx-layout-v1 według jawnego, przypiętego źródła schematu i syntetycznej fixture. Nie zgaduj nowych nagłówków, walut, stref ani reguł księgowania. Nie utożsamiaj podglądu źródła z importem ledgeru.
 - Nie dodawaj rekomendacji kup/sprzedaj, prognoz, live feeds, PIT ani look-through ETF do MVP.
 - UI po polsku, etykiety gotowe do późniejszego i18n; dostępna klawiatura, widoczny focus, błędy i empty states.
 - Ustawienia progów/świeżości są wspólne dla wyceny, symulatora i ryzyka. Nie przywracaj sztywnego72h po zapisaniu ustawień. PATCH wymaga revision/If-Match i blokady portfela; testy spadków i analiza pozostają READ ONLY.

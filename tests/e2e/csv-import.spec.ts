@@ -13,6 +13,7 @@ test('previews/maps a CSV through the real API without financial writes, clears 
   const portfolio=(await portfolioResponse.json()).id as string;
   const before=await (await page.request.get(`/api/v1/portfolios/${portfolio}/operations`)).json();
   await page.goto('/#imports');
+  await page.getByRole('button',{name:'Ogólny CSV',exact:true}).click();
   const preview=page.getByRole('region',{name:'Podgląd CSV',exact:true});
   await expect(preview.getByText('Podgląd nie zapisuje transakcji i nie zmienia portfela.',{exact:true})).toBeVisible();
   await preview.getByLabel('Plik CSV',{exact:true}).setInputFiles({name:'test.csv',mimeType:'text/csv',buffer:Buffer.from(file)});

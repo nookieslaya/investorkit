@@ -1,6 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
-import { csvPreviewSchema, marketStatesSchema, marketSearchSchema, marketStateSchema, snapshotSchema, portfolioHistorySchema, journalListSchema, journalEntrySchema, journalDeletedSchema, portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema, riskSchema, riskSettingsSchema, stressSchema } from '@investorkit/shared';
-import type { CsvPreviewInput, PortfolioHistoryQuery, JournalInput, CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput, RiskSettingsInput, StressInput } from '@investorkit/shared';
+import { xtbPreviewSchema, csvPreviewSchema, marketStatesSchema, marketSearchSchema, marketStateSchema, snapshotSchema, portfolioHistorySchema, journalListSchema, journalEntrySchema, journalDeletedSchema, portfoliosSchema, portfolioSchema, apiErrorSchema, cashSummarySchema, cashHistorySchema, cashOperationSchema, instrumentsSchema, instrumentSchema, quoteSchema, quotesSchema, fxSchema, operationSchema, operationHistorySchema, valuationSchema, simulationSchema, riskSchema, riskSettingsSchema, stressSchema } from '@investorkit/shared';
+import type { XtbPreviewInput, CsvPreviewInput, PortfolioHistoryQuery, JournalInput, CreatePortfolio, CashOperationInput, CreateInstrument, QuoteInput, FxInput, TradeOperation, SimulationInput, RiskSettingsInput, StressInput } from '@investorkit/shared';
 export const auth = createAuthClient();
 export class ApiRequestError extends Error {
   constructor(message: string, readonly code: string, readonly status: number) { super(message); }
@@ -78,5 +78,11 @@ export async function refreshMarket(id: string) { return marketStateSchema.parse
 export async function previewCsvFile(id: string, input: CsvPreviewInput, signal: AbortSignal) {
   return csvPreviewSchema.parse(await request(`/portfolios/${id}/imports/csv-preview`, {
     method: 'POST', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+  }));
+}
+
+export async function previewXtbFile(id: string, input: XtbPreviewInput, signal: AbortSignal) {
+  return xtbPreviewSchema.parse(await request(`/portfolios/${id}/imports/xtb-preview`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input), signal,
   }));
 }

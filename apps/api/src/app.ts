@@ -3,7 +3,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { fromNodeHeaders } from 'better-auth/node';
 import { z, ZodError } from 'zod';
-import { csvPreviewInputSchema, marketSearchInputSchema, marketBindingInputSchema, marketModeInputSchema, snapshotInputSchema, portfolioHistoryQuerySchema, journalInputSchema, createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema, stressInputSchema, riskSettingsInputSchema } from '@investorkit/shared';
+import { xtbPreviewInputSchema, csvPreviewInputSchema, marketSearchInputSchema, marketBindingInputSchema, marketModeInputSchema, snapshotInputSchema, portfolioHistoryQuerySchema, journalInputSchema, createPortfolioSchema, portfolioSchema, portfolioIdParamsSchema, cashOperationInputSchema, cashSummarySchema, cashHistorySchema, createInstrumentSchema, quoteInputSchema, fxInputSchema, ledgerOperationSchema, valuationQuerySchema, simulationInputSchema, stressInputSchema, riskSettingsInputSchema } from '@investorkit/shared';
 import { CashApiError } from './cash-repository.js';
 import { LedgerDomainError, DecimalDomainError, PositionDomainError, ValuationDomainError, SimulationDomainError, RiskDomainError } from '@investorkit/portfolio-engine';
 import { buildOpenApiDocument } from './openapi.js';
@@ -79,6 +79,10 @@ export async function buildApp(config: Config, services: Services, logging = tru
       const session = await services.auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
       if (!session) return reply.code(401).send(fail('UNAUTHENTICATED', 'Zaloguj się.', req.id));
       req.ownerId = session.user.id;
+    });
+    scoped.post('/portfolios/:id/imports/xtb-preview', { bodyLimit: 8 * 1024 * 1024, config: { rateLimit: { max: 10, timeWindow: 60000 } } }, async req => {
+      const { id } = portfolioIdParamsSchema.parse(req.params);
+      return services.portfolios.xtbPreview(req.ownerId, id, xtbPreviewInputSchema.parse(req.body));
     });
     scoped.post('/portfolios/:id/imports/csv-preview', { bodyLimit: 8 * 1024 * 1024, config: { rateLimit: { max: 10, timeWindow: 60000 } } }, async req => {
       const { id } = portfolioIdParamsSchema.parse(req.params);

@@ -19,6 +19,7 @@
     "drizzle-orm": "0.45.4",
     "@investorkit/db": "*",
     "@investorkit/shared": "*",
-    "@investorkit/portfolio-engine": "*"
+    "@investorkit/portfolio-engine": "*",
+    "saxes": "6.0.0"
   }
 }

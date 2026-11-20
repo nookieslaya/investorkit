@@ -28,7 +28,7 @@ Polskojęzyczny SaaS do rozumienia portfela i symulowania zakupów. Ręczny siln
 - OpenAPI 3.0.3 generowane z Zod: [dokument](docs/openapi.json), lokalnie `/api/v1/openapi.json`; testy odpowiedzi i kontrola aktualności w CI.
 
 ## Jeszcze niezaimplementowane
-Import XTB, upload/AI i landing z zapisem zainteresowania. portfolio-engine zawiera P01–P06; API/UI używają wspólnego ledgeru oraz ręcznych cen/FX. report-engine pozostaje szkieletem. Pozostałe tabele raportów/importu są specyfikacją. Brak płatności, danych rynkowych na żywo i automatycznego pobierania raportów.
+Zapis importu XTB do portfela, upload/AI i landing z zapisem zainteresowania. portfolio-engine zawiera P01–P06; API/UI używają wspólnego ledgeru oraz ręcznych cen/FX. report-engine pozostaje szkieletem. Pozostałe tabele raportów/importu są specyfikacją. Brak płatności, danych rynkowych na żywo i automatycznego pobierania raportów.
 
 ## Uruchomienie lokalne
 Wymagania: Node24 LTS, npm11+, Docker z Compose. Rozpakuj archiwum i wejdź do katalogu investorkit.
@@ -69,7 +69,7 @@ Przejrzyj SQL przed zatwierdzeniem. Nie stosujemy drizzle-kit push w produkcji. 
 Obecny auth jest sprawdzony lokalnie, lecz przed publicznym pilotem wymagane są email verification/reset, proces usunięcia/eksportu danych, polityka prywatności, restore drill oraz test E2E w środowisku obsługującym Chromium. Lista w backlogu B04–B06. Brak połączenia z brokerem i przechowywania jego haseł. Ograniczenia procesu in-memory rate limit są opisane w architekturze.
 
 ## Kontynuacja
-F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P07 i A01–A09 ukończone dla ręcznego MVP; I01/I03 ukończone: ogólny podgląd CSV bez zapisu; następne I02 (próbka XTB), I04 (adapter) i I05 (zapis/deduplikacja). Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck,176 testów unit,70 integracyjnych i7 E2E na Node24; szczegóły w raporcie weryfikacji.
+F11 zamknięte: pierwszy GitHub Actions przeszedł, w tym Playwright w Chromium. F12 ukończone: OpenAPI i testy kontraktów. P01–P07 i A01–A09 ukończone dla ręcznego MVP; I01/I03 ukończone: ogólny podgląd CSV bez zapisu; następne I02 (próbka XTB), I04 (adapter) i I05 (zapis/deduplikacja). Widoki inwestycji i gotówki sprawdzone na desktopie/mobile/dark; pełny audyt dostępności pozostaje przed pilotem. Zmieniaj README, backlog i HANDOFF po każdym etapie. Nie zaczynaj od płatności lub integracji AI. Historia Git została odtworzona lokalnie z bundle. Publiczne repozytorium: [nookieslaya/investorkit](https://github.com/nookieslaya/investorkit). Lokalnie na macOS potwierdzono build, typecheck,189 testów unit,73 integracyjne i8 E2E na Node24; szczegóły w raporcie weryfikacji.
 
 CI potwierdza build, typecheck, migrację, 4 testy jednostkowe, 8 integracyjnych i 1 E2E: [pierwszy przebieg](https://github.com/nookieslaya/investorkit/actions/runs/43749258894).
 
@@ -163,3 +163,11 @@ Kontrole I01/I03:176 unit,70 integration i7 E2E PASS, typecheck/build/OpenAPI/no
 Na polecenie właściciela lokalny portfel zastąpiono prywatnym przykładem DEMO na podstawie zdjęcia. Dane zakupów są fikcyjne, pliki pozostają poza repozytorium. Jednorazowe wczytanie administracyjne nie dodaje funkcji zapisu w podglądzie CSV ani adaptera XTB.
 
 20.11.2026: dodano [syntetyczny XLSX w udokumentowanym wariancie układu XTB](tests/fixtures/xtb/README.md), z fikcyjnymi transakcjami i niezależną kontrolą zgodności arkuszy. To przykład do rozwoju adaptera, nie rzeczywisty eksport konta. Obecny podgląd CSV nadal nie odczytuje XLSX; dane aplikacji pozostają bez zmian.
+
+
+## Podgląd raportu XTB XLSX — część I04
+Otwórz http://localhost:5173/#imports (**Import pliku**). Domyślnie widoczny jest „XTB XLSX — podgląd”; ogólny CSV pozostaje pod sąsiednim przyciskiem. Pobierz fikcyjny przykład na tym ekranie, wybierz plik, potwierdź walutę rachunku i UTC dat gotówkowych, kliknij „Odczytaj raport XTB”. Zobaczysz wszystkie trzy arkusze, daty, oryginalne wartości liczbowe, role wierszy oraz uwagi. Strony po50 rekordów; zmiana pliku/ustawień/formatu usuwa wynik i przerywa poprzednie żądanie.
+
+Obsługiwany jest wyłącznie [udokumentowany wariant angielski](tests/fixtures/xtb/README.md), do5MiB i10000 wierszy danych, z nagłówkami w wierszu5. Inne układy nie są zgadywane. Parser ogranicza ZIP/XML, odrzuca formuły, DTD, makra i relacje zewnętrzne. To źródłowy podgląd, **bez zapisu, mapowania instrumentów, deduplikacji między plikami i wyceny**. Pełny adapter XTB nadal wymaga sprawdzenia z rzeczywistym eksportem konta. Nie zmieniono silnika, dotychczasowych kontraktów ani bazy aplikacji.
+
+Kontrole etapu XLSX:189 unit,73 integration i8 E2E PASS; build/typecheck/OpenAPI/noUnused obu aplikacji PASS. Przykład dostępny w działającej lokalnej aplikacji; podgląd nie zmienia danych portfela. Desktop/mobile1280/390 i oba motywy sprawdzone.

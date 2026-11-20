@@ -2,15 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { CSV_FIELDS, CSV_FIELD_LABELS, CSV_LIMITS } from '@investorkit/shared';
 import type { CsvMapping, CsvPreview, CsvPreviewInput } from '@investorkit/shared';
 import { FileUp } from 'lucide-react';
+import { fileBase64 } from '../lib/file-base64';
 import { previewCsvFile } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { FormSelect } from '../components/ui/form-select';
 const PAGE_SIZE = 50;
-function base64(bytes: Uint8Array) {
-  const chunks: string[] = [];
-  for (let index = 0; index < bytes.length; index += 8192) chunks.push(String.fromCharCode(...bytes.subarray(index, index + 8192)));
-  return btoa(chunks.join(''));
-}
 export function CsvImport({ portfolioId }: { portfolioId: string }) {
   const [upload, setUpload] = useState<{ fileName: string; contentBase64: string } | null>(null);
   const [encoding, setEncoding] = useState<CsvPreviewInput['encoding']>('utf-8');
@@ -33,7 +29,7 @@ export function CsvImport({ portfolioId }: { portfolioId: string }) {
     const current = revision.current;
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      if (current === revision.current) setUpload({ fileName: file.name, contentBase64: base64(bytes) });
+      if (current === revision.current) setUpload({ fileName: file.name, contentBase64: fileBase64(bytes) });
     } catch { if (current === revision.current) setError('Nie udało się odczytać pliku. Wybierz go ponownie.'); }
   }
   async function preview() {
@@ -59,12 +55,11 @@ export function CsvImport({ portfolioId }: { portfolioId: string }) {
   const rows = result?.rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) ?? [];
   const displayedColumnCount = Math.max(result?.columns.length ?? 0, ...rows.map(row => row.cells.length));
   const pages = result ? Math.max(1, Math.ceil(result.rows.length / PAGE_SIZE)) : 1;
-  return <section id="imports" className="csv-import" aria-labelledby="csv-title">
+  return <section id="csv-import" className="csv-import" aria-labelledby="csv-title">
     <div className="investment-heading"><div><span className="eyebrow">SPRAWDŹ PLIK PRZED IMPORTEM</span><h2 id="csv-title"><FileUp size={22} />Podgląd CSV</h2></div></div>
-    <p className="cash-help"><strong>Podgląd nie zapisuje transakcji i nie zmienia portfela.</strong> Format i podgląd możesz sprawdzić już teraz. Zapis oraz rozpoznawanie eksportu XTB wymagają osobnego etapu.</p>
+    <p className="cash-help"><strong>Podgląd nie zapisuje transakcji i nie zmienia portfela.</strong> Format i podgląd możesz sprawdzić już teraz. Zapis wymaga osobnego etapu. Podgląd XLSX znajdziesz po wybraniu „XTB XLSX” powyżej.</p>
     <section className="panel csv-settings" aria-label="Plik i ustawienia CSV"><h3>Wybierz plik</h3>
       <form onSubmit={event => { event.preventDefault(); void preview(); }}>
-        <FormSelect label="Format pliku" value="generic-csv" options={[{ value: 'generic-csv', label: 'Ogólny CSV — podgląd i mapowanie' }, { value: 'xtb-verified', label: 'XTB — wymagana próbka eksportu', disabled: true }]} />
         <label>Plik CSV<input ref={input} type="file" accept=".csv,.txt,text/csv,text/plain" onChange={event => void choose(event.target.files?.[0])} /></label>
         <p className="cash-help">Do 5 MiB i 10 000 wierszy danych. Pierwszy niepusty wiersz to nagłówki. XLS/XLSX nie są obsługiwane. <a href="/examples/import-preview.csv" download>Pobierz przykładowy CSV</a> — to przykład ogólny, nie eksport XTB.</p>
         <div className="csv-options"><FormSelect label="Separator kolumn" value={delimiter} onValueChange={value => { invalidate(true); setDelimiter(value as CsvPreviewInput['delimiter']); }} options={[{ value: ';', label: 'Średnik (;)' }, { value: ',', label: 'Przecinek (,)' }, { value: '\t', label: 'Tabulator' }]} />

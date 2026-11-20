@@ -268,3 +268,34 @@ export interface CsvParserAdapter {
   detect(bytes: Uint8Array, metadata: { fileName: string; adapterId: 'generic-csv' | 'xtb-verified' }): CsvDetection;
   preview(input: CsvPreviewInput, instruments: readonly Instrument[], asOf: string): CsvPreview;
 }
+
+// A bounded statement preview for one documented English XLSX layout, not an
+// assertion that all XTB exports are supported or a ledger import contract.
+export const XTB_SHEETS = ['Closed Positions', 'Cash Operations', 'Open Positions'] as const;
+export const XLSX_LIMITS = Object.freeze({ bytes: CSV_LIMITS.bytes, entries: 64, partBytes: 8 * 1024 * 1024,
+  expandedBytes: 16 * 1024 * 1024, rows: 10000, cells: 50000, nodes: 200000, depth: 32 });
+export const xtbPreviewInputSchema = z.object({
+  fileName: csvPreviewInputSchema.shape.fileName,
+  contentBase64: csvPreviewInputSchema.shape.contentBase64,
+  accountCurrency: currencySchema,
+  confirmCashTimesUtc: z.literal(true),
+}).strict();
+export const xtbPreviewSchema = z.object({
+  adapterId: z.literal('xtb-xlsx-layout-v1'), adapterVersion: z.literal('1'),
+  canCommit: z.literal(false), blockedReason: z.literal('PREVIEW_ONLY'),
+  compatibility: z.literal('DOCUMENTED_LAYOUT_ONLY'),
+  fileName: z.string(), fileSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  byteLength: z.number().int().min(1).max(XLSX_LIMITS.bytes), checkedAt: z.iso.datetime(),
+  accountId: z.string().min(1).max(32), accountCurrency: currencySchema, cashTimeZone: z.literal('UTC'),
+  from: z.iso.datetime(), to: z.iso.datetime(), warnings: z.array(z.string().max(400)).max(10),
+  counts: z.object({ cashOperations: z.number().int().nonnegative(), openLots: z.number().int().nonnegative(),
+    closedLots: z.number().int().nonnegative(), rowsWithIssues: z.number().int().nonnegative() }),
+  sheets: z.array(z.object({ name: z.enum(XTB_SHEETS), columns: z.array(z.string().max(120)).max(64),
+    rows: z.array(z.object({ rowNumber: z.number().int().min(6).max(XLSX_LIMITS.rows + 5),
+      role: z.enum(['record', 'group', 'summary']), cells: z.array(z.string().max(CSV_LIMITS.fieldChars)).max(64),
+      dates: z.record(z.string(), z.iso.datetime()), issues: z.array(z.string().max(200)).max(20),
+    })).max(XLSX_LIMITS.rows),
+  })).length(3),
+});
+export type XtbPreviewInput = z.infer<typeof xtbPreviewInputSchema>;
+export type XtbPreview = z.infer<typeof xtbPreviewSchema>;

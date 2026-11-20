@@ -1,6 +1,6 @@
 # Syntetyczny przykład XLSX w udokumentowanym układzie XTB
 
-`account-demo-pln.xlsx` zawiera wyłącznie wymyślone operacje, identyfikatory,
+[`xtb-demo.xlsx`](../../../apps/web/public/examples/xtb-demo.xlsx) zawiera wyłącznie wymyślone operacje, identyfikatory,
 daty i ceny. Powstał na żądanie właściciela projektu. Nazwy XTB, PKO i PZU
 oznaczają instrumenty; kwoty nie są pobrane z rynku ani z konta użytkownika.
 To materiał do rozwoju importera, **nie oryginalny eksport brokera**.
@@ -69,6 +69,8 @@ z komentarzy, wszystkie kolejne salda oraz zgodność zamkniętych i otwartych
 partii z gotówką. Obliczenia kontrolne używają Decimal. Nie jest parserem
 niezaufanych plików użytkownika ani nowym kontraktem API. Bez dostępu do DB.
 
-**Status aplikacji:** XLSX nadal nie jest obsługiwany przez obecny ogólny
-podgląd CSV. Nie zmieniaj rozszerzenia na CSV. Zapis importu i adapter XTB
-pozostają osobnymi zadaniami; plik nie został zapisany do portfela.
+**Status aplikacji (20.11):** ten wariant XLSX jest obsługiwany przez osobny
+podgląd XTB na ekranie Import pliku. Ogólny CSV pozostaje osobnym formatem;
+nie zmieniaj rozszerzenia. To odczyt bez zapisu, uzgodnienia partii i mapowania
+ledgeru. Pełny zweryfikowany adapter i zatwierdzanie importu pozostają kolejnymi
+zadaniami; plik nie został zapisany do portfela.

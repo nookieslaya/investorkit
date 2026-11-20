@@ -16,7 +16,7 @@ HEADERS = {
     "Cash Operations": "Type|Instrument|Ticker|Category|Time|Amount|ID|Comment|Product|Position ID",
     "Open Positions": "Product|Instrument/Position|Ticker|Category|Type|Volume|Value|Current price|Open price|Open time (UTC)|Stop Loss|Take Profit|Net Profit %|Net Profit|Gross Profit|Margin|Open Commission|Swap|Rollover",
 }
-PATH = Path(__file__).with_name("account-demo-pln.xlsx")
+PATH = Path(__file__).resolve().parents[3] / "apps/web/public/examples/xtb-demo.xlsx"
 
 
 def read_sheets():

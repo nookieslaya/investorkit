@@ -15,7 +15,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | F07 | Rate limit, origin guard, errors, log redaction | 2 | F05 | DONE: origin/errors/size/HTTP429 integration |
 | F08 | React/Tailwind/shadcn, Router, Query | 2 | F02 | DONE: build/theme, desktop/mobile/dark i inspekcja zrzutów inwestycji/gotówki |
 | F09 | Rejestracja/logowanie i portfel UI | 2 | F06,F08 | DONE: E2E i użytkownik potwierdzili rejestrację/logowanie/portfel |
-| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie176 unit i70 integration PASS |
+| F10 | Vitest unit + PostgreSQL integration | 2 | F06,F07 | DONE: aktualnie189 unit i73 integration PASS |
 | F11 | Playwright i CI | 2 | F09,F10 | DONE: GitHub Actions PASS, Chromium E2E 1/1 (15.11.2026) |
 | F12 | OpenAPI i contract tests | 2 | F07 | DONE: OpenAPI z Zod, endpoint i artefakt JSON, kontrola aktualności CI oraz testy odpowiedzi |
 | F13 | Select shadcn/ui w formularzach | — | F08 | DONE: 7 pól, strzałki z odstępem16px, stylizowana lista, motywy i klawiatura |
@@ -38,7 +38,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | I01 | Kontrakt parsera i blokada XTB | 1 | S02 | DONE: Zod DTO, detect/preview/provenance, previewOnly i serwerowa blokada SAMPLE_REQUIRED |
 | I02 | Zanonimizowana próbka XTB | — | użytkownik | PARTIAL: syntetyczny XLSX z udokumentowanym schematem i verifierem; nadal brak rzeczywistego eksportu do weryfikacji zgodności |
 | I03 | CSV preview/mapowanie | 3 | I01 | DONE: UI/API, quoting/UTF-8/Windows-1250, limity, błędy, stronicowanie i brak zapisów |
-| I04 | Zweryfikowany adapter XTB | 3 | I02,I03 | BLOCKED: format, waluty, fees |
+| I04 | Zweryfikowany adapter XTB | 3 | I02,I03 | PARTIAL: działa READ ONLY podgląd jednego udokumentowanego układu XLSX; pełne mapowanie/fees/FX i rzeczywisty eksport nadal wymagają weryfikacji |
 | I05 | Receipt dedup i atomowy commit | 3 | I04,A03 | TODO: powtórny/równoległy import |
 | R01 | Prywatny upload i ekstrakcja PDF | 4 | F07 | TODO: limits/timeout/magic bytes |
 | R02 | Bezpieczny URL fetcher | 4 | R01 | TODO: SSRF/redirect/DNS tests |
@@ -103,3 +103,6 @@ DONE: Import CSV/#imports, plik do5MiB, parser stanowy z cytowaniem i nowymi lin
 Kontrole I01/I03 ukończone19.11.2026:176 unit/70 integration/7 E2E, typecheck/build/OpenAPI/noUnused/diff-check PASS. W regresji poprawiono Home/End w historii gotówki bez zmiany danych. Nie uruchamiano nowego CI ani importu na bazie użytkownika.
 
 19.11.2026 — prywatne dane demonstracyjne na podstawie zdjęcia wczytane po wyraźnie zleconym resecie portfela i backup/restore drill. Dane/CSV/manifesty poza Git, konto i budżet dostawcy zachowane. To operacja administracyjna, bez zmiany statusu I04/I05 i bez publicznej obsługi commit.
+
+
+20.11.2026 — część I04: osobny ograniczony podgląd XLSX od wyboru pliku w #imports do serwerowego odczytu i UI trzech arkuszy. Nowy POST xtb-preview, owner scope i READ ONLY, role record/group/summary, daty i dokładne źródłowe liczby oraz diagnostyka. Wspólny ekran Import pliku zachowuje ogólny CSV. Pełny xtb-verified nadal SAMPLE_REQUIRED. To nie import ledgeru: normalizacja i uzgadnianie instrumentów/walut/prowizji/FX, replay, receipts i commit pozostają następne. Syntetyczna fixture jest jednym publicznym plikiem do pobrania; testy korzystają z niego bez kopii.

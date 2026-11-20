@@ -1,4 +1,4 @@
-import { csvRepository } from './imports/csv-repository.js';
+import { importPreviewRepository } from './imports/preview-repository.js';
 import { historyRepository } from './history-repository.js';
 import { journalRepository } from './journal-repository.js';
 import { marketRepository } from './market-repository.js';
@@ -11,7 +11,7 @@ import type { CreatePortfolio } from '@investorkit/shared';
 // Caller must obtain ownerId from the validated server session.
 export function portfolioRepository(db: Database) {
   return {
-    ...csvRepository(db),
+    ...importPreviewRepository(db),
     ...cashRepository(db),
     ...historyRepository(db),
     ...journalRepository(db),
