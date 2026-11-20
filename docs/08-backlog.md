@@ -36,7 +36,7 @@ Statusy: TODO / DONE / BLOCKED / PARTIAL. Estymaty to godziny pracy implementacy
 | A08 | Dziennik CRUD | 3 | A02,F09 | DONE: prywatne wpisy portfel/instrument, plain text, If-Match/revision, szkic przy konflikcie, CRUD i4 warianty UI |
 | A09 | Snapshot history | 2 | A05 | DONE: ręczne rzeczywiste snapshoty, pełne źródła i diagnostyka, zakresy dat, jawne luki, bez backfill |
 | I01 | Kontrakt parsera i blokada XTB | 1 | S02 | DONE: Zod DTO, detect/preview/provenance, previewOnly i serwerowa blokada SAMPLE_REQUIRED |
-| I02 | Zanonimizowana próbka XTB | — | użytkownik | BLOCKED: brak pliku |
+| I02 | Zanonimizowana próbka XTB | — | użytkownik | PARTIAL: syntetyczny XLSX z udokumentowanym schematem i verifierem; nadal brak rzeczywistego eksportu do weryfikacji zgodności |
 | I03 | CSV preview/mapowanie | 3 | I01 | DONE: UI/API, quoting/UTF-8/Windows-1250, limity, błędy, stronicowanie i brak zapisów |
 | I04 | Zweryfikowany adapter XTB | 3 | I02,I03 | BLOCKED: format, waluty, fees |
 | I05 | Receipt dedup i atomowy commit | 3 | I04,A03 | TODO: powtórny/równoległy import |

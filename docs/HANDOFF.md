@@ -143,3 +143,9 @@ Kopia przed resetem .local-backups/before-photo-demo-2026-11-19.dump600, manifes
 
 
 20.11.2026 — właściciel przypomniał o publikowaniu ukończonych etapów. Zasada commit/push po weryfikacji zapisana w AGENTS.md. Zebrano zaległą integrację Marketstack i podgląd CSV do publikacji; ponowione build/typecheck/176 unit/OpenAPI i kontrola sekretów PASS. Prywatne dane i pliki pozostają poza Git; adapter XTB i commit importu nadal niewdrożone. Wynik nowego CI należy odczytać z GitHub, nie utożsamiać z wcześniejszą lokalną regresją.
+
+
+## Syntetyczny wzór XLSX dla importu XTB — 20.11.2026
+Użytkownik doprecyzował: chce fikcyjnych danych w rzeczywistym układzie pliku XTB, nie eksportu InvestorKit. Oficjalna pomoc potwierdza Excel, lecz nie publikuje pełnego schematu; użyto konkretnego publicznego wariantu udokumentowanego w kodzie/fixtures xStation, z przypiętym commitem i źródłami w tests/fixtures/xtb/README.md. Własny XLSX zawiera3 arkusze, numeryczne ID/datowania Excela,8 przepływów,3 otwarte partie i2 zamknięte. Wyłącznie wymyślone operacje, bez danych użytkownika, prowizje jawnie0 i PLN, bez dywidend/obcego FX/CFD. Wszystkie wiersze i sumy kontrolne sprawdza standardowy Python Decimal/ZIP/XML, włączony do CI;9 pasm zrzutów arkuszy obejrzane. Gotówka2930, aktywa2430, razem5360PLN. Wiersze grupujące i powtórzona tożsamość pozycji po częściowym zamknięciu nie mogą dublować transakcji w przyszłym adapterze.
+
+I02 PARTIAL: istnieje źródłowo opisany przykład struktury, ale brak rzeczywistego eksportu do pełnego potwierdzenia zgodności. I04/I05 nadal niewdrożone; obecny ekran CSV nie otwiera XLSX. Nie ogłaszać obsługi importu XTB ani nie zmieniać rozszerzenia. Bez zmian API/silnika/DB i bez wczytania pliku do portfela. Poprzedni commit719ab6f przeszedł pełny CI: https://github.com/nookieslaya/investorkit/actions/runs/44761056499 .

@@ -1,6 +1,9 @@
 # Import i raporty — plan integracji
 
 ## XTB: blokada mapowania
+
+20.11.2026: na polecenie użytkownika przygotowano fikcyjny skoroszyt według publicznie udokumentowanego wariantu xStation, bez zgadywania nagłówków: [plik, źródła i kontrole](../tests/fixtures/xtb/README.md). I02 ma status PARTIAL. To materiał strukturalny do implementacji, nie eksport konta ani potwierdzenie zgodności wszystkich wersji brokera. Poniższa blokada zweryfikowanego adaptera i brak zapisu nadal obowiązują.
+
 Nie dostarczono eksportu. Nie twierdzimy, że wspieramy format XTB. UI umożliwi wybór pliku i mapowanie, ale adapter xtb-verified pozostaje disabled z kodem SAMPLE_REQUIRED. Potrzebna zanonimizowana próbka z nagłówkami, datami, strefą, BUY/SELL, prowizją, różnymi walutami i ułamkami; zachować powtarzalne ID operacji. Sprawdzić, czy faktyczny eksport jest CSV czy XLSX — nie zmieniać rozszerzenia i nie zgadywać.
 Kontrakt parsera: detect(bytes,metadata) → supported/unsupported/needsMapping; preview → normalized rows + issues + provenance; commit wyłącznie zatwierdzonego snapshotu. Limity wierszy/kolumn/pola, separator/encoding/daty jawne; parser CSV zgodny z quoting i newline w komórce. Nie wykonywać formuł; przy eksporcie neutralizować =,+,-,@. Plik traktowany jako dane.
 Deduplikacja: preferowane ID brokera + namespace konta + typ. Fallback hash kanonicznych pól ekonomicznych + multiplicity/occurrence; dwie identyczne legalne transakcje muszą się zachować. Nakładające się eksporty bez stabilnego ID oznaczają niepewność i wymagają decyzji w podglądzie. SHA całego pliku wykrywa tylko identyczny plik, nie zastępuje deduplikacji wierszy. Unique receipt + transakcja przy commit i test równoczesnych importów. Eksport obejmujący niespójny ledger nie jest częściowo zapisywany bez jawnej decyzji użytkownika.

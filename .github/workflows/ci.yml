@@ -29,6 +29,8 @@ jobs:
       - run: npm run openapi:check
       - run: npm run typecheck
       - run: npm test
+      - name: Verify synthetic XTB workbook
+        run: python3 tests/fixtures/xtb/verify.py
       - run: npm run build
       - name: Configure isolated test environment
         run: |

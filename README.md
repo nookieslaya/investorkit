@@ -161,3 +161,5 @@ Obsługa do5MiB/10000 rekordów/64 kolumn, UTF-8 i Windows-1250, separator przec
 Kontrole I01/I03:176 unit,70 integration i7 E2E PASS, typecheck/build/OpenAPI/noUnused PASS. E2E używa1 workera i oddzielnych instancji CSV (lokalnie5176/3004, domyślnie porty podstawowe+2); konfiguracja nie zatrzymuje aplikacji użytkownika5173/3001.
 
 Na polecenie właściciela lokalny portfel zastąpiono prywatnym przykładem DEMO na podstawie zdjęcia. Dane zakupów są fikcyjne, pliki pozostają poza repozytorium. Jednorazowe wczytanie administracyjne nie dodaje funkcji zapisu w podglądzie CSV ani adaptera XTB.
+
+20.11.2026: dodano [syntetyczny XLSX w udokumentowanym wariancie układu XTB](tests/fixtures/xtb/README.md), z fikcyjnymi transakcjami i niezależną kontrolą zgodności arkuszy. To przykład do rozwoju adaptera, nie rzeczywisty eksport konta. Obecny podgląd CSV nadal nie odczytuje XLSX; dane aplikacji pozostają bez zmian.
